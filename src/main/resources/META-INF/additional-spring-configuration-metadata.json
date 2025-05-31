@@ -1,8 +1,0 @@
-{
-  "properties": [
-    {
-      "name": "error.handling.http-status-in-json-response",
-      "type": "java.lang.String",
-      "description": "Description for error.handling.http-status-in-json-response."
-  }
-] }

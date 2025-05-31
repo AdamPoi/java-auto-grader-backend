@@ -3,12 +3,19 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,7 +25,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class User {
+public class User implements UserDetails {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -40,12 +47,6 @@ public class User {
 
     @Column
     private Boolean isActive;
-
-    @Column
-    private OffsetDateTime createdAt;
-
-    @Column
-    private OffsetDateTime updatedAt;
 
     @ManyToMany
     @JoinTable(
@@ -73,12 +74,26 @@ public class User {
     @OneToMany(mappedBy = "student")
     private Set<Submission> studentSubmissions;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime dateCreated;
+    @CreationTimestamp
+    @Column
+    private OffsetDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private OffsetDateTime lastUpdated;
+    @UpdateTimestamp
+    @Column
+    private OffsetDateTime updatedAt;
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<String> roles = getUserRoleRoles().stream()
+                .map(role -> role.getRoleName())
+                .toList();
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+ roles.get(0));
+
+        return List.of(authority);
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
 }

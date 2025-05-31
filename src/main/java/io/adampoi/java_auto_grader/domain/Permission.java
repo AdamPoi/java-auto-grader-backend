@@ -3,6 +3,8 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -35,12 +37,12 @@ public class Permission {
     @ManyToMany(mappedBy = "rolePermissionPermissions")
     private Set<Role> rolePermissionRoles;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime dateCreated;
+    @CreationTimestamp
+    @Column
+    private OffsetDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private OffsetDateTime lastUpdated;
+    @UpdateTimestamp
+    @Column
+    private OffsetDateTime updatedAt;
 
 }

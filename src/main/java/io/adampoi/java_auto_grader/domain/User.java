@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -54,10 +52,10 @@ public class User implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> userRoleRoles;
+    private Set<Role> userRoles;
 
     @OneToMany(mappedBy = "createdByTeacher")
-    private Set<Course> createdByTeacherCourses;
+    private Set<Course> teacherCourses;
 
     @OneToMany(mappedBy = "teacher")
     private Set<Classroom> teacherClassrooms;
@@ -69,7 +67,7 @@ public class User implements UserDetails {
     private Set<StudentClassroom> studentStudentClassrooms;
 
     @OneToMany(mappedBy = "createdByTeacher")
-    private Set<Assignment> createdByTeacherAssignments;
+    private Set<Assignment> teacherAssignments;
 
     @OneToMany(mappedBy = "student")
     private Set<Submission> studentSubmissions;
@@ -84,8 +82,8 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<String> roles = getUserRoleRoles().stream()
-                .map(role -> role.getRoleName())
+        List<String> roles = getUserRoles().stream()
+                .map(role -> role.getName())
                 .toList();
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+ roles.get(0));
 

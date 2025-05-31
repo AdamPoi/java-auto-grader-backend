@@ -1,4 +1,4 @@
-package io.adampoi.java_auto_grader.configs;
+package io.adampoi.java_auto_grader.config;
 
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import org.springframework.context.annotation.Bean;

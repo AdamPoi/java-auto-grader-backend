@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
@@ -29,13 +27,13 @@ public class Permission {
     private UUID id;
 
     @Column(nullable = false, length = 100)
-    private String permissionName;
+    private String name;
 
     @Column(columnDefinition = "text")
     private String description;
 
-    @ManyToMany(mappedBy = "rolePermissionPermissions")
-    private Set<Role> rolePermissionRoles;
+    @ManyToMany(mappedBy = "rolePermissions")
+    private Set<Role> permissionRoles;
 
     @CreationTimestamp
     @Column

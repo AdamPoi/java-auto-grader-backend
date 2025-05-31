@@ -10,12 +10,13 @@ import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,9 +34,9 @@ public class UserResource {
     }
 
     @GetMapping
-    public ApiSuccessResponse<List<UserDTO>> getAllUsers() {
-        return ApiSuccessResponse.<List<UserDTO>>builder()
-                .data(userService.findAll())
+    public ApiSuccessResponse<Page<UserDTO>> getAllUsers(Pageable pageable,@RequestParam Map<String,UserDTO> params) {
+        return ApiSuccessResponse.<Page<UserDTO>>builder()
+                .data(userService.findAll(pageable,params))
                 .statusCode(HttpStatus.OK)
                 .build();
     }
@@ -86,7 +87,7 @@ public class UserResource {
     public ApiSuccessResponse<Map<UUID, String>> getUserRoleRolesValues() {
         Map<UUID, String> roles = roleRepository.findAll(Sort.by("roleId"))
                 .stream()
-                .collect(CustomCollectors.toSortedMap(Role::getId, Role::getRoleName));
+                .collect(CustomCollectors.toSortedMap(Role::getId, Role::getName));
         return ApiSuccessResponse.<Map<UUID, String>>builder()
                 .data(roles)
                 .statusCode(HttpStatus.OK)

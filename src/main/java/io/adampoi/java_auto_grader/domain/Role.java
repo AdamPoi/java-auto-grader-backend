@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
@@ -29,10 +27,10 @@ public class Role {
     private UUID id;
 
     @Column(nullable = false)
-    private String roleName;
+    private String name;
 
-    @ManyToMany(mappedBy = "userRoleRoles")
-    private Set<User> userRoleUsers;
+    @ManyToMany(mappedBy = "userRoles")
+    private Set<User> rolesUser;
 
     @ManyToMany
     @JoinTable(
@@ -40,7 +38,7 @@ public class Role {
             joinColumns = @JoinColumn(name = "role_id",referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
-    private Set<Permission> rolePermissionPermissions;
+    private Set<Permission> rolePermissions;
 
     @CreationTimestamp
     @Column

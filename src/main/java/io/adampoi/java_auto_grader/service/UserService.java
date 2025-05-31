@@ -6,13 +6,16 @@ import io.adampoi.java_auto_grader.repository.*;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -44,12 +47,30 @@ public class UserService {
         this.submissionRepository = submissionRepository;
     }
 
-    public List<UserDTO> findAll() {
-        final List<User> users = userRepository.findAll(Sort.by("id"));
-        return users.stream()
+    public Page<UserDTO> findAll(final Pageable pageable,Map<String,UserDTO> params) {
+        Specification<User> specification = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (Objects.nonNull(params.get("firstName"))) {
+                predicates.add(builder.or(
+                        builder.like(root.get("firstName"), "%" + params.get("firstName") + "%"),
+                        builder.like(root.get("lastName"), "%" + params.get("lastName") + "%")
+                ));
+            }
+            if (Objects.nonNull(params.get("email"))) {
+                predicates.add(builder.like(root.get("email"), "%" + params.get("email") + "%"));
+            }
+
+            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
+        };
+        final Page<User> page = userRepository.findAll(specification, pageable);
+        return new PageImpl<>(page.getContent()
+                .stream()
                 .map(user -> mapToDTO(user, new UserDTO()))
-                .toList();
+                .collect(Collectors.toList()),
+                pageable, page.getTotalElements());
     }
+
+
 
     public UserDTO get(final UUID userId) {
         return userRepository.findById(userId)
@@ -83,7 +104,7 @@ public class UserService {
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setUserRoleRoles(user.getUserRoleRoles().stream()
+        userDTO.setUserRoleRoles(user.getUserRoles().stream()
                 .map(role -> role.getId())
                 .toList());
         return userDTO;
@@ -102,7 +123,7 @@ public class UserService {
         if (userRoleRoles.size() != (userDTO.getUserRoleRoles() == null ? 0 : userDTO.getUserRoleRoles().size())) {
             throw new NotFoundException("one of userRoleRoles not found");
         }
-        user.setUserRoleRoles(new HashSet<>(userRoleRoles));
+        user.setUserRoles(new HashSet<>(userRoleRoles));
         return user;
     }
 

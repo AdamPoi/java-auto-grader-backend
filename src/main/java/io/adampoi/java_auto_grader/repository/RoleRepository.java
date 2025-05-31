@@ -10,8 +10,11 @@ import java.util.UUID;
 
 public interface RoleRepository extends JpaRepository<Role, UUID> {
 
-    Role findFirstByRolePermissionPermissions(Permission permission);
+    Role findFirstByRolePermissions(Permission permission);
 
-    List<Role> findAllByRolePermissionPermissions(Permission permission);
+    List<Role> findAllByRolePermissions(Permission permission);
 
+    boolean existsByName(String name);
+
+    List<Role> findByName(String name);
 }

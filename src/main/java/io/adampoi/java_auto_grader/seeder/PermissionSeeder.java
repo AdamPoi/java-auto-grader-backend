@@ -2,7 +2,6 @@ package io.adampoi.java_auto_grader.seeder;
 
 import io.adampoi.java_auto_grader.domain.Permission;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;

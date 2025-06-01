@@ -1,12 +1,14 @@
 package io.adampoi.java_auto_grader.seeder;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
 @Profile("development")
+@Slf4j
 public class DataSeeder implements CommandLineRunner {
 
     private final PermissionSeeder permissionSeeder;
@@ -23,11 +25,13 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        System.out.println("Data seeding started...");
+        log.info("Starting data seeding...");
         permissionSeeder.seedPermissions();
+        log.info("Permissions seeding completed.");
         roleSeeder.seedRoles();
+        log.info("Roles seeding completed.");
         userSeeder.seedUsers();
-
-        System.out.println("Data seeding completed!");
+        log.info("Users seeding completed.");
+        log.info("Data seeding completed.");
     }
 }

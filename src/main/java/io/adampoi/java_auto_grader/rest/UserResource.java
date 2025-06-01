@@ -9,13 +9,13 @@ import io.adampoi.java_auto_grader.util.CustomCollectors;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -24,8 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/api/users",
-        produces = MediaType.APPLICATION_JSON_VALUE,
-        consumes = MediaType.APPLICATION_JSON_VALUE)
+        produces = MediaType.APPLICATION_JSON_VALUE)
 public class UserResource {
 
     private final UserService userService;
@@ -37,12 +36,12 @@ public class UserResource {
     }
 
     @GetMapping
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = "201")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ApiSuccessResponse<Page<UserDTO>> getAllUsers(Pageable pageable, @RequestParam Map<String, UserDTO> params) {
         return ApiSuccessResponse.<Page<UserDTO>>builder()
                 .data(userService.findAll(pageable, params))
-                .statusCode(HttpStatus.OK)
+                .statusCode(HttpStatus.CREATED)
                 .build();
     }
 
@@ -57,7 +56,8 @@ public class UserResource {
 
     @PostMapping
     @ApiResponse(responseCode = "201")
-    public ApiSuccessResponse<UUID> createUser(@RequestBody @Valid final UserDTO userDTO) {
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ApiSuccessResponse<UUID> createUser(@RequestBody @Validated(UserDTO.CreateGroup.class) final UserDTO userDTO) {
         final UUID createdUserId = userService.create(userDTO);
         return ApiSuccessResponse.<UUID>builder()
                 .data(createdUserId)
@@ -66,9 +66,9 @@ public class UserResource {
 
     }
 
-    @PutMapping("/{userId}")
+    @PatchMapping("/{userId}")
     public ApiSuccessResponse<UUID> updateUser(@PathVariable(name = "userId") final UUID userId,
-                                               @RequestBody @Valid final UserDTO userDTO) {
+                                               @RequestBody @Validated(UserDTO.UpdateGroup.class) UserDTO userDTO) {
         userService.update(userId, userDTO);
         return ApiSuccessResponse.<UUID>builder()
                 .data(userId)
@@ -78,6 +78,7 @@ public class UserResource {
 
     @DeleteMapping("/{userId}")
     @ApiResponse(responseCode = "204")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ApiSuccessResponse<Void> deleteUser(@PathVariable(name = "userId") final UUID userId) {
         final ReferencedWarning referencedWarning = userService.getReferencedWarning(userId);
         if (referencedWarning != null) {
@@ -89,8 +90,8 @@ public class UserResource {
                 .build();
     }
 
-    @GetMapping("/userRoleRolesValues")
-    public ApiSuccessResponse<Map<UUID, String>> getUserRoleRolesValues() {
+    @GetMapping("/roles")
+    public ApiSuccessResponse<Map<UUID, String>> getUserRolesValues() {
         Map<UUID, String> roles = roleRepository.findAll(Sort.by("roleId"))
                 .stream()
                 .collect(CustomCollectors.toSortedMap(Role::getId, Role::getName));

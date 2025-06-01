@@ -17,29 +17,27 @@ import java.util.UUID;
 public class UserDTO {
 
     private UUID id;
-
     @NotNull
     @Size(max = 100)
     @Email()
     private String email;
-
-    @NotNull
+    @NotNull(groups = CreateGroup.class)
     @Size(max = 255)
     private String password;
-
     @Size(max = 50)
     private String firstName;
-
     @Size(max = 50)
     private String lastName;
-
     @JsonProperty("isActive")
     private Boolean isActive;
-
     private OffsetDateTime createdAt;
-
     private OffsetDateTime updatedAt;
+    private List<UUID> UserRoles;
 
-    private List<UUID> userRoleRoles;
+    public interface CreateGroup {
+    }
+
+    public interface UpdateGroup {
+    }
 
 }

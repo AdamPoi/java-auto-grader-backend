@@ -103,7 +103,7 @@ public class UserService {
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setUserRoleRoles(user.getUserRoles().stream()
+        userDTO.setUserRoles(user.getUserRoles().stream()
                 .map(role -> role.getId())
                 .toList());
         return userDTO;
@@ -117,12 +117,12 @@ public class UserService {
         user.setIsActive(userDTO.getIsActive());
         user.setCreatedAt(userDTO.getCreatedAt());
         user.setUpdatedAt(userDTO.getUpdatedAt());
-        final List<Role> userRoleRoles = roleRepository.findAllById(
-                userDTO.getUserRoleRoles() == null ? List.of() : userDTO.getUserRoleRoles());
-        if (userRoleRoles.size() != (userDTO.getUserRoleRoles() == null ? 0 : userDTO.getUserRoleRoles().size())) {
-            throw new NotFoundException("one of userRoleRoles not found");
+        final List<Role> UserRoles = roleRepository.findAllById(
+                userDTO.getUserRoles() == null ? List.of() : userDTO.getUserRoles());
+        if (UserRoles.size() != (userDTO.getUserRoles() == null ? 0 : userDTO.getUserRoles().size())) {
+            throw new NotFoundException("one of User Roles not found");
         }
-        user.setUserRoles(new HashSet<>(userRoleRoles));
+        user.setUserRoles(new HashSet<>(UserRoles));
         return user;
     }
 

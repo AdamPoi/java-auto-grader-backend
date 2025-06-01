@@ -93,7 +93,8 @@ public class AuthService {
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
         user.setIsActive(true);
-//
         return user;
     }
+
+
 }

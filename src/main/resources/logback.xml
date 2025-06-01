@@ -1,0 +1,81 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
+    <springProperty scope="context" name="springAppName" source="spring.application.name"
+                    defaultValue="application"/>
+    <springProperty scope="context" name="logPath" source="logging.file.path" defaultValue="./logs"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p})
+                %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint}
+                %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}
+            </pattern>
+        </encoder>
+    </appender>
+
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logPath}/${springAppName}.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId:-NO_CID}] -
+                %msg%n%ex
+            </pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${logPath}/${springAppName}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+            <maxFileSize>10MB</maxFileSize>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <appender name="CONSOLE_ERROR_ONLY" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId:-NO_CID}] -
+                %msg%n%ex
+            </pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/> <!-- General console logging for the application -->
+        <appender-ref ref="ASYNC_FILE"/> <!-- All root logs go to file -->
+    </root>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <!-- Logger for your application packages (excluding the aspect for this specific rule) -->
+    <logger name="io.adampoi.java_auto_grader" level="DEBUG" additivity="false">
+        <!-- Assuming io.adampoi.aop is where your aspect is.
+             If not, adjust this logger's name to be more general for your app
+             and ensure the aspect logger below correctly targets the aspect. -->
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </logger>
+
+    <!-- Logger specifically for the LoggingAspect -->
+    <logger name="io.adampoi.java_auto_grader.aspect.LoggingAspect" level="DEBUG" additivity="false">
+        <!-- Aspect's DEBUG/INFO/WARN logs will go to ASYNC_FILE -->
+        <appender-ref ref="ASYNC_FILE"/>
+        <!-- Aspect's ERROR logs will go to CONSOLE_ERROR_ONLY (and also to ASYNC_FILE due to above ref) -->
+        <appender-ref ref="CONSOLE_ERROR_ONLY"/>
+    </logger>
+
+    <!-- Other specific loggers -->
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.hibernate.SQL" level="ERROR"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+
+</configuration>

@@ -1,4 +1,4 @@
-package io.adampoi.java_auto_grader;
+package io.adampoi.java_auto_grader.config;
 
 import io.adampoi.java_auto_grader.resolvers.AuthenticationUserResolver;
 import org.springframework.context.annotation.Configuration;

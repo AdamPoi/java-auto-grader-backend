@@ -46,6 +46,7 @@ public class UserResource {
 
     @GetMapping("/{userId}")
     public ApiSuccessResponse<UserDTO> getUser(@PathVariable(name = "userId") final UUID userId) {
+
         return ApiSuccessResponse.<UserDTO>builder()
                 .data(userService.get(userId))
                 .statusCode(HttpStatus.OK)

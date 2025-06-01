@@ -10,9 +10,11 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -33,11 +35,12 @@ public class RefreshTokenService {
         this.jwtService = jwtService;
     }
 
+    @Transactional
     public RefreshToken create(User user) {
-        RefreshToken existedRefreshToken = refreshTokenRepository.findByUser(user).
-                orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
-        if (existedRefreshToken != null) {
-            refreshTokenRepository.delete(existedRefreshToken);
+        Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
+        if (existingToken.isPresent()) {
+            refreshTokenRepository.delete(existingToken.get());
+            refreshTokenRepository.flush();
         }
 
         RefreshToken refreshToken = RefreshToken.builder()

@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.SignatureException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -59,8 +61,8 @@ public class GlobalExceptionHandler {
         List<FieldErrorDetail> fieldErrors = new ArrayList<>();
         fieldErrors.add(new FieldErrorDetail(
                 exception.getName(),
-                "Type mismatch: expected " + exception.getRequiredType().getSimpleName(),
-                exception.getValue().toString()
+                "Type mismatch: expected " + (exception.getRequiredType() != null ? exception.getRequiredType().getSimpleName() : null),
+                exception.getValue() != null ? exception.getValue().toString() : null
         ));
 
         ApiErrorResponse errorResponse = ApiErrorResponse.builder()
@@ -153,8 +155,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleGenericException(
             Exception exception, HttpServletRequest request) {
-        // TODO send this stack trace to an observability tool
-        exception.printStackTrace();
+        log.error("Unknown internal server error at path: {}", request.getRequestURI(), exception);
+//        exception.printStackTrace();
 
         ApiErrorResponse errorResponse = ApiErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

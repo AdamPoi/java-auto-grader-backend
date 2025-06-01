@@ -60,7 +60,7 @@ public class UserService {
                 predicates.add(builder.like(root.get("email"), "%" + params.get("email") + "%"));
             }
 
-            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
+            return query != null ? query.where(predicates.toArray(new Predicate[]{})).getRestriction() : null;
         };
         final Page<User> page = userRepository.findAll(specification, pageable);
         return new PageImpl<>(page.getContent()
@@ -104,7 +104,7 @@ public class UserService {
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
         userDTO.setUserRoles(user.getUserRoles().stream()
-                .map(role -> role.getId())
+                .map(Role::getId)
                 .toList());
         return userDTO;
     }

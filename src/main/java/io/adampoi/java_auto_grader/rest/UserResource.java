@@ -22,7 +22,9 @@ import java.util.UUID;
 
 
 @RestController
-@RequestMapping(value = "/api/users", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/users",
+        produces = MediaType.APPLICATION_JSON_VALUE,
+        consumes = MediaType.APPLICATION_JSON_VALUE)
 public class UserResource {
 
     private final UserService userService;
@@ -34,9 +36,10 @@ public class UserResource {
     }
 
     @GetMapping
-    public ApiSuccessResponse<Page<UserDTO>> getAllUsers(Pageable pageable,@RequestParam Map<String,UserDTO> params) {
+    @ApiResponse(responseCode = "200")
+    public ApiSuccessResponse<Page<UserDTO>> getAllUsers(Pageable pageable, @RequestParam Map<String, UserDTO> params) {
         return ApiSuccessResponse.<Page<UserDTO>>builder()
-                .data(userService.findAll(pageable,params))
+                .data(userService.findAll(pageable, params))
                 .statusCode(HttpStatus.OK)
                 .build();
     }
@@ -62,7 +65,7 @@ public class UserResource {
 
     @PutMapping("/{userId}")
     public ApiSuccessResponse<UUID> updateUser(@PathVariable(name = "userId") final UUID userId,
-            @RequestBody @Valid final UserDTO userDTO) {
+                                               @RequestBody @Valid final UserDTO userDTO) {
         userService.update(userId, userDTO);
         return ApiSuccessResponse.<UUID>builder()
                 .data(userId)

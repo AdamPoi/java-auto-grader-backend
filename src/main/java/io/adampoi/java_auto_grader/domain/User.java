@@ -31,7 +31,7 @@ public class User implements UserDetails {
     @UuidGenerator
     private UUID id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -46,7 +46,7 @@ public class User implements UserDetails {
     @Column
     private Boolean isActive;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -82,10 +82,14 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<String> roles = getUserRoles().stream()
-                .map(role -> role.getName())
+        if (userRoles == null || userRoles.isEmpty()) {
+            return List.of(new SimpleGrantedAuthority("ROLE_USER")); // default role
+        }
+
+        List<String> roles = userRoles.stream()
+                .map(Role::getName)
                 .toList();
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+ roles.get(0));
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roles.get(0));
 
         return List.of(authority);
     }

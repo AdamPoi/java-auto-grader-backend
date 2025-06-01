@@ -1,6 +1,7 @@
 package io.adampoi.java_auto_grader.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -19,6 +20,7 @@ public class UserDTO {
 
     @NotNull
     @Size(max = 100)
+    @Email()
     private String email;
 
     @NotNull

@@ -22,6 +22,7 @@ public class JacksonConfig {
                         DeserializationFeature.ACCEPT_FLOAT_AS_INT,
                         SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
                 );
+
     }
 
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import org.springframework.http.HttpStatusCode;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 
 @Getter
@@ -20,4 +19,15 @@ public class ApiErrorResponse {
     private HttpStatusCode statusCode;
     private List<FieldErrorDetail> fieldErrors;
 
+    public static class ErrorWrapper {
+        private ApiErrorResponse error;
+
+        public ErrorWrapper(ApiErrorResponse error) {
+            this.error = error;
+        }
+
+        public ApiErrorResponse getError() {
+            return error;
+        }
+    }
 }

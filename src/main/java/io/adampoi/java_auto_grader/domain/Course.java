@@ -27,7 +27,7 @@ public class Course {
     @UuidGenerator
     private UUID id;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, unique = true)
     private String code;
 
     @Column(nullable = false)
@@ -46,7 +46,7 @@ public class Course {
     private OffsetDateTime enrollmentEndDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_teacher_id",referencedColumnName = "id")
+    @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
     @OneToMany(mappedBy = "course")

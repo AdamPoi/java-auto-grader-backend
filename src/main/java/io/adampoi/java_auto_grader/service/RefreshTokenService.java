@@ -1,0 +1,82 @@
+package io.adampoi.java_auto_grader.service;
+
+import io.adampoi.java_auto_grader.domain.RefreshToken;
+import io.adampoi.java_auto_grader.domain.User;
+import io.adampoi.java_auto_grader.repository.RefreshTokenRepository;
+import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.Date;
+
+@Service
+@Slf4j
+public class RefreshTokenService {
+
+    final
+    RefreshTokenRepository refreshTokenRepository;
+    final
+    UserRepository userRepository;
+    private final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    private final JwtService jwtService;
+    @Value("${security.jwt.secret-key}")
+    private String SECRET_KEY;
+
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, UserRepository userRepository, JwtService jwtService) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.userRepository = userRepository;
+        this.jwtService = jwtService;
+    }
+
+    public RefreshToken create(User user) {
+        RefreshToken existedRefreshToken = refreshTokenRepository.findByUser(user).
+                orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
+        if (existedRefreshToken != null) {
+            refreshTokenRepository.delete(existedRefreshToken);
+        }
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token(generateRefreshToken(user))
+                .expiredAt(Instant.now().plusMillis(REFRESH_TOKEN_EXPIRATION))
+                .build();
+
+        return refreshTokenRepository.save(refreshToken);
+    }
+
+    public String refresh(String token) {
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenAndExpiredAtAfter(token, Instant.now())
+                .orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
+
+        String newAccessToken = jwtService.generateToken(refreshToken.getUser());
+
+        return newAccessToken;
+    }
+
+
+    public void delete(String refreshToken) {
+        RefreshToken existedRefreshToken = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
+        if (existedRefreshToken != null) {
+            refreshTokenRepository.delete(existedRefreshToken);
+        }
+    }
+
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
+                .claim("userId", user.getId().toString())
+                .claim("tokenType", "refresh")
+                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+                .compact();
+    }
+
+
+}

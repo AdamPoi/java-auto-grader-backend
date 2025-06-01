@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
@@ -29,16 +27,16 @@ public class TestCase {
     private UUID id;
 
     @Column(nullable = false)
-    private String testCaseName;
+    private String name;
 
     @Column(columnDefinition = "text")
     private String description;
 
     @Column(nullable = false)
-    private String testCaseType;
+    private String type;
 
     @Column(nullable = false, columnDefinition = "text")
-    private String testCaseDetails;
+    private String details;
 
     @Column(nullable = false)
     private Integer score;
@@ -47,7 +45,7 @@ public class TestCase {
     private Integer executionOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignment_id",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)
     private Assignment assignment;
 
     @OneToMany(mappedBy = "testCase")

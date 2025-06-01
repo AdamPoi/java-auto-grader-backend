@@ -3,9 +3,9 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.UserDTO;
 import io.adampoi.java_auto_grader.repository.*;
-import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -47,7 +47,7 @@ public class UserService {
         this.submissionRepository = submissionRepository;
     }
 
-    public Page<UserDTO> findAll(final Pageable pageable,Map<String,UserDTO> params) {
+    public Page<UserDTO> findAll(final Pageable pageable, Map<String, UserDTO> params) {
         Specification<User> specification = (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (Objects.nonNull(params.get("firstName"))) {
@@ -71,11 +71,10 @@ public class UserService {
     }
 
 
-
     public UserDTO get(final UUID userId) {
         return userRepository.findById(userId)
                 .map(user -> mapToDTO(user, new UserDTO()))
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
     public UUID create(final UserDTO userDTO) {
@@ -86,7 +85,7 @@ public class UserService {
 
     public void update(final UUID userId, final UserDTO userDTO) {
         final User user = userRepository.findById(userId)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         mapToEntity(userDTO, user);
         userRepository.save(user);
     }
@@ -130,7 +129,7 @@ public class UserService {
     public ReferencedWarning getReferencedWarning(final UUID userId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final User user = userRepository.findById(userId)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         final Course createdByTeacherCourse = courseRepository.findFirstByCreatedByTeacher(user);
         if (createdByTeacherCourse != null) {
             referencedWarning.setKey("user.course.createdByTeacher.referenced");

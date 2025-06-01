@@ -12,6 +12,8 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import java.util.Map;
+
 @RestControllerAdvice(basePackages = "io.adampoi.java_auto_grader.rest")
 public class GlobalApiResponseAdvice implements ResponseBodyAdvice<Object> {
 
@@ -27,28 +29,27 @@ public class GlobalApiResponseAdvice implements ResponseBodyAdvice<Object> {
 
         if (body instanceof ApiSuccessResponse<?>) {
             ApiSuccessResponse<?> apiResponse = (ApiSuccessResponse<?>) body;
-            // Extract status code from ApiSuccessResponse and set it in HTTP response
             if (apiResponse.getStatusCode() != null) {
                 response.setStatusCode(HttpStatus.valueOf(apiResponse.getStatusCode().value()));
             }
-            // Return the body without the status code
             return ApiSuccessResponse.builder()
                     .data(apiResponse.getData())
                     .message(apiResponse.getMessage())
                     .build();
         }
 
+
         if (body instanceof ApiErrorResponse) {
             ApiErrorResponse errorResponse = (ApiErrorResponse) body;
-            // Extract status code from ApiErrorResponse and set it in HTTP response
             if (errorResponse.getStatusCode() != null) {
                 response.setStatusCode(HttpStatus.valueOf(errorResponse.getStatusCode().value()));
             }
-            // Return the body without the status code
-            return ApiErrorResponse.builder()
+            return Map.of("error", ApiErrorResponse.builder()
+                    .status(errorResponse.getStatus())
                     .message(errorResponse.getMessage())
+                    .path(errorResponse.getPath())
                     .fieldErrors(errorResponse.getFieldErrors())
-                    .build();
+                    .build());
         }
 
         if (body == null) {

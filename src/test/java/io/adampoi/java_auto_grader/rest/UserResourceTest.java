@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,7 +42,7 @@ public class UserResourceTest {
     private RoleRepository roleRepository;
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:READ"})
     public void getAllUsers_ReturnsOk() throws Exception {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(UUID.randomUUID());
@@ -57,11 +56,11 @@ public class UserResourceTest {
 
         mockMvc.perform(get("/api/users")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:CREATE"})
     public void createUser_ReturnsCreated() throws Exception {
         UserDTO userDTO = new UserDTO();
         userDTO.setEmail("test@example.com");
@@ -76,12 +75,12 @@ public class UserResourceTest {
 
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isCreated());
     }
 
     @Test
+    @WithMockUser(authorities = {"USER:READ"})
     public void getUser_ReturnsOk() throws Exception {
-        //Arrange
         UserDTO userDTO = new UserDTO();
         userDTO.setId(UUID.randomUUID());
         userDTO.setEmail("test@example.com");
@@ -90,12 +89,12 @@ public class UserResourceTest {
 
         mockMvc.perform(get("/api/users/" + userDTO.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is2xxSuccessful())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.email").value(userDTO.getEmail()));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:UPDATE"})
     public void updateUser_ReturnsOk() throws Exception {
         UUID userId = UUID.randomUUID();
         UserDTO userDTO = new UserDTO();
@@ -109,21 +108,21 @@ public class UserResourceTest {
         mockMvc.perform(patch("/api/users/" + userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:DELETE"})
     public void deleteUser_ReturnsOk() throws Exception {
         UUID userId = UUID.randomUUID();
         doNothing().when(userService).delete(userId);
 
         mockMvc.perform(delete("/api/users/" + userId))
-                .andExpect(status().is2xxSuccessful());
+                .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:READ"})
     public void getUser_NotFound_ReturnsNotFound() throws Exception {
         UUID userId = UUID.randomUUID();
         when(userService.get(userId)).thenThrow(new EntityNotFoundException("User not found"));
@@ -134,7 +133,7 @@ public class UserResourceTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:UPDATE"})
     public void updateUser_NotFound_ReturnsNotFound() throws Exception {
         UUID userId = UUID.randomUUID();
         UserDTO userDTO = new UserDTO();
@@ -150,7 +149,7 @@ public class UserResourceTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = {"USER:DELETE"})
     public void deleteUser_NotFound_ReturnsNotFound() throws Exception {
         UUID userId = UUID.randomUUID();
         doThrow(new EntityNotFoundException("User not found")).when(userService).delete(userId);
@@ -160,24 +159,25 @@ public class UserResourceTest {
     }
 
     @Test
-    @WithAnonymousUser
-    public void getAllUsers_WithoutAdminRole_ReturnsForbidden() throws Exception {
+    @WithMockUser(authorities = {})
+    public void getAllUsers_WithNoAuthority_ReturnsForbidden() throws Exception {
         mockMvc.perform(get("/api/users")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void getAllUsers_WithUserRole_ReturnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/users")
+    @WithMockUser(authorities = {})
+    public void getUserById_WithNoAuthority_ReturnsForbidden() throws Exception {
+        UUID userId = UUID.randomUUID();
+        mockMvc.perform(get("/api/users/" + userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithAnonymousUser
-    public void createUser_WithoutAdminRole_ReturnsForbidden() throws Exception {
+    @WithMockUser(authorities = {})
+    public void createUser_WithNoAuthority_ReturnsForbidden() throws Exception {
         UserDTO userDTO = new UserDTO();
         userDTO.setEmail("test@example.com");
         userDTO.setPassword("password");
@@ -189,11 +189,61 @@ public class UserResourceTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void deleteUser_WithAnonymousUser_ReturnsForbidden() throws Exception {
+    @WithMockUser(authorities = {})
+    public void updateUser_WithNoAuthority_ReturnsNotFound() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserDTO userDTO = new UserDTO();
+        userDTO.setEmail("updated@example.com");
+
+        doThrow(new EntityNotFoundException("User not found"))
+                .when(userService).update(org.mockito.ArgumentMatchers.eq(userId), org.mockito.ArgumentMatchers.any());
+
+        mockMvc.perform(patch("/api/users/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTO)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = {})
+    public void deleteUser_WithNoAuthority_ReturnsForbidden() throws Exception {
         UUID userId = UUID.randomUUID();
 
         mockMvc.perform(delete("/api/users/" + userId))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = {"USER:CREATE"})
+    public void createUser_WithValidationError_ReturnsBadRequest() throws Exception {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setEmail("");
+        userDTO.setPassword("");
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
+
+    @Test
+    @WithMockUser(authorities = {"USER:UPDATE"})
+    public void updateUser_WithValidationError_ReturnsBadRequest() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UserDTO userDTO = new UserDTO();
+
+        userDTO.setEmail("");
+        userDTO.setPassword("");
+        userDTO.setFirstName("");
+        userDTO.setLastName("");
+
+        mockMvc.perform(patch("/api/users/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
     }
 }

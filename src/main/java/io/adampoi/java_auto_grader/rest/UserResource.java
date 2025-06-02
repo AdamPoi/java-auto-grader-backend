@@ -36,16 +36,18 @@ public class UserResource {
     }
 
     @GetMapping
-    @ApiResponse(responseCode = "201")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiResponse(responseCode = "200")
+    @PreAuthorize("hasAuthority('USER:READ')")
     public ApiSuccessResponse<Page<UserDTO>> getAllUsers(Pageable pageable, @RequestParam Map<String, UserDTO> params) {
+
         return ApiSuccessResponse.<Page<UserDTO>>builder()
                 .data(userService.findAll(pageable, params))
-                .statusCode(HttpStatus.CREATED)
+                .statusCode(HttpStatus.OK)
                 .build();
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("hasAuthority('USER:READ')")
     public ApiSuccessResponse<UserDTO> getUser(@PathVariable(name = "userId") final UUID userId) {
 
         return ApiSuccessResponse.<UserDTO>builder()
@@ -56,29 +58,29 @@ public class UserResource {
 
     @PostMapping
     @ApiResponse(responseCode = "201")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ApiSuccessResponse<UUID> createUser(@RequestBody @Validated(UserDTO.CreateGroup.class) final UserDTO userDTO) {
-        final UUID createdUserId = userService.create(userDTO);
-        return ApiSuccessResponse.<UUID>builder()
-                .data(createdUserId)
+    @PreAuthorize("hasAuthority('USER:CREATE')")
+    public ApiSuccessResponse<UserDTO> createUser(@RequestBody @Validated(UserDTO.CreateGroup.class) final UserDTO userDTO) {
+        final UserDTO createdUser = userService.create(userDTO);
+        return ApiSuccessResponse.<UserDTO>builder()
+                .data(createdUser)
                 .statusCode(HttpStatus.CREATED)
                 .build();
-
     }
 
     @PatchMapping("/{userId}")
-    public ApiSuccessResponse<UUID> updateUser(@PathVariable(name = "userId") final UUID userId,
-                                               @RequestBody @Validated(UserDTO.UpdateGroup.class) UserDTO userDTO) {
-        userService.update(userId, userDTO);
-        return ApiSuccessResponse.<UUID>builder()
-                .data(userId)
+    @PreAuthorize("hasAuthority('USER:UPDATE')")
+    public ApiSuccessResponse<UserDTO> updateUser(@PathVariable(name = "userId") final UUID userId,
+                                                  @RequestBody @Validated(UserDTO.UpdateGroup.class) UserDTO userDTO) {
+        final UserDTO updatedUser = userService.update(userId, userDTO);
+        return ApiSuccessResponse.<UserDTO>builder()
+                .data(updatedUser)
                 .statusCode(HttpStatus.OK)
                 .build();
     }
 
     @DeleteMapping("/{userId}")
     @ApiResponse(responseCode = "204")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('USER:DELETE')")
     public ApiSuccessResponse<Void> deleteUser(@PathVariable(name = "userId") final UUID userId) {
         final ReferencedWarning referencedWarning = userService.getReferencedWarning(userId);
         if (referencedWarning != null) {

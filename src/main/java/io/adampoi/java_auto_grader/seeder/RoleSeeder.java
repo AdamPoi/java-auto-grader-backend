@@ -34,10 +34,10 @@ public class RoleSeeder {
             Role teacherRole = new Role();
             teacherRole.setName("TEACHER");
             Set<Permission> teacherPermissions = permissionRepository.findByNameIn(Arrays.asList(
-                    "COURSE_CREATE", "COURSE_READ", "COURSE_UPDATE",
-                    "CLASSROOM_CREATE", "CLASSROOM_READ", "CLASSROOM_UPDATE", "CLASSROOM_DELETE",
-                    "ASSIGNMENT_CREATE", "ASSIGNMENT_READ", "ASSIGNMENT_UPDATE", "ASSIGNMENT_DELETE",
-                    "SUBMISSION_READ", "USER_READ"
+                    "COURSE:CREATE", "COURSE:READ", "COURSE:LIST", "COURSE:UPDATE",
+                    "CLASSROOM:CREATE", "CLASSROOM:READ", "CLASSROOM:LIST", "CLASSROOM:UPDATE", "CLASSROOM:DELETE",
+                    "ASSIGNMENT:CREATE", "ASSIGNMENT:READ", "ASSIGNMENT:LIST", "ASSIGNMENT:UPDATE", "ASSIGNMENT:DELETE",
+                    "SUBMISSION:READ", "SUBMISSION:LIST", "USER:READ", "USER:LIST"
             ));
             teacherRole.setRolePermissions(teacherPermissions);
             roleRepository.save(teacherRole);
@@ -47,8 +47,8 @@ public class RoleSeeder {
             Role studentRole = new Role();
             studentRole.setName("STUDENT");
             Set<Permission> studentPermissions = permissionRepository.findByNameIn(Arrays.asList(
-                    "COURSE_READ", "CLASSROOM_READ", "ASSIGNMENT_READ",
-                    "SUBMISSION_CREATE", "SUBMISSION_READ", "SUBMISSION_UPDATE"
+                    "COURSE:READ", "CLASSROOM:READ", "ASSIGNMENT:READ",
+                    "SUBMISSION:CREATE", "SUBMISSION:READ", "SUBMISSION:UPDATE"
             ));
             studentRole.setRolePermissions(studentPermissions);
             roleRepository.save(studentRole);

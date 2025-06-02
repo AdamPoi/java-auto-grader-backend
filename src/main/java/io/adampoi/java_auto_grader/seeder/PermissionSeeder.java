@@ -23,11 +23,11 @@ public class PermissionSeeder {
                 "ASSIGNMENT", "SUBMISSION"
         );
 
-        List<String> actions = Arrays.asList("CREATE", "READ", "UPDATE", "DELETE");
+        List<String> actions = Arrays.asList("CREATE", "LIST", "READ", "UPDATE", "DELETE");
 
         for (String domain : domains) {
             for (String action : actions) {
-                String name = domain + "_" + action;
+                String name = domain + ":" + action;
                 if (!permissionRepository.existsByName(name)) {
                     Permission permission = new Permission();
                     permission.setName(name);

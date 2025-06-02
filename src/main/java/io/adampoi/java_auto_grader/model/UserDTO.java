@@ -1,9 +1,11 @@
 package io.adampoi.java_auto_grader.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.groups.Default;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,33 +13,49 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-
 @Getter
 @Setter
 public class UserDTO {
 
     private UUID id;
-    @NotNull
-    @Size(max = 100)
+
+    @NotNull(groups = CreateGroup.class)
+    @Size(min = 3, max = 100)
     @Email()
     private String email;
+
     @NotNull(groups = CreateGroup.class)
-    @Size(max = 255)
+    @Size(min = 6, max = 255)
+    @JsonIgnore
     private String password;
-    @Size(max = 50)
+
+    @NotNull(groups = CreateGroup.class)
+    @Size(min = 3, max = 255)
     private String firstName;
-    @Size(max = 50)
+
+    @NotNull(groups = CreateGroup.class)
+    @Size(min = 3, max = 255)
     private String lastName;
+
     @JsonProperty("isActive")
     private Boolean isActive;
+
+    @JsonIgnore
     private OffsetDateTime createdAt;
+
+    @JsonIgnore
     private OffsetDateTime updatedAt;
+
+    @JsonIgnore
     private List<UUID> UserRoles;
 
-    public interface CreateGroup {
+    private List<String> roles;
+
+    private List<String> permissions;
+
+    public interface CreateGroup extends Default {
     }
 
-    public interface UpdateGroup {
+    public interface UpdateGroup extends Default {
     }
-
 }

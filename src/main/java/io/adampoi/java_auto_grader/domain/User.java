@@ -3,6 +3,7 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -12,10 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 
 @Entity
@@ -23,6 +21,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
+@Slf4j
 public class User implements UserDetails {
 
     @Id
@@ -82,17 +81,26 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (userRoles == null || userRoles.isEmpty()) {
-            return List.of(new SimpleGrantedAuthority("ROLE_USER")); // default role
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        if (userRoles != null && !userRoles.isEmpty()) {
+            for (Role role : userRoles) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+                log.info("role" + role.getName());
+
+                if (role.getRolePermissions() != null) {
+                    for (Permission permission : role.getRolePermissions()) {
+                        authorities.add(new SimpleGrantedAuthority(permission.getName()));
+                        log.info("permission" + permission.getName());
+                    }
+                }
+            }
+        } else {
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
-
-        List<String> roles = userRoles.stream()
-                .map(Role::getName)
-                .toList();
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roles.get(0));
-
-        return List.of(authority);
+        return authorities;
     }
+
 
     @Override
     public String getUsername() {

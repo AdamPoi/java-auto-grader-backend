@@ -32,10 +32,10 @@ public class Role {
     @ManyToMany(mappedBy = "userRoles")
     private Set<User> rolesUser;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",
-            joinColumns = @JoinColumn(name = "role_id",referencedColumnName = "id"),
+            joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private Set<Permission> rolePermissions;

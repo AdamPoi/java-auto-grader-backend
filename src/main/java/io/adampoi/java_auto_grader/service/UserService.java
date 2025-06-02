@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -30,13 +31,15 @@ public class UserService {
     private final StudentClassroomRepository studentClassroomRepository;
     private final AssignmentRepository assignmentRepository;
     private final SubmissionRepository submissionRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public UserService(final UserRepository userRepository, final RoleRepository roleRepository,
                        final CourseRepository courseRepository, final ClassroomRepository classroomRepository,
                        final TeacherCourseRepository teacherCourseRepository,
                        final StudentClassroomRepository studentClassroomRepository,
                        final AssignmentRepository assignmentRepository,
-                       final SubmissionRepository submissionRepository) {
+                       final SubmissionRepository submissionRepository,
+                       BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.courseRepository = courseRepository;
@@ -45,6 +48,7 @@ public class UserService {
         this.studentClassroomRepository = studentClassroomRepository;
         this.assignmentRepository = assignmentRepository;
         this.submissionRepository = submissionRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Page<UserDTO> findAll(final Pageable pageable, Map<String, UserDTO> params) {
@@ -77,17 +81,22 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
-    public UUID create(final UserDTO userDTO) {
+    public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
         mapToEntity(userDTO, user);
-        return userRepository.save(user).getId();
+        User savedUser = userRepository.save(user);
+        return mapToDTO(savedUser, new UserDTO());
+
     }
 
-    public void update(final UUID userId, final UserDTO userDTO) {
+    public UserDTO update(final UUID userId, final UserDTO userDTO) {
         final User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         mapToEntity(userDTO, user);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        mapToDTO(savedUser, new UserDTO());
+        return mapToDTO(savedUser, new UserDTO());
+
     }
 
     public void delete(final UUID userId) {
@@ -110,19 +119,34 @@ public class UserService {
     }
 
     private User mapToEntity(final UserDTO userDTO, final User user) {
-        user.setEmail(userDTO.getEmail());
-        user.setPassword(userDTO.getPassword());
-        user.setFirstName(userDTO.getFirstName());
-        user.setLastName(userDTO.getLastName());
-        user.setIsActive(userDTO.getIsActive());
-        user.setCreatedAt(userDTO.getCreatedAt());
-        user.setUpdatedAt(userDTO.getUpdatedAt());
-        final List<Role> UserRoles = roleRepository.findAllById(
-                userDTO.getUserRoles() == null ? List.of() : userDTO.getUserRoles());
-        if (UserRoles.size() != (userDTO.getUserRoles() == null ? 0 : userDTO.getUserRoles().size())) {
-            throw new NotFoundException("one of User Roles not found");
+        if (userDTO.getEmail() != null) {
+            user.setEmail(userDTO.getEmail());
         }
-        user.setUserRoles(new HashSet<>(UserRoles));
+        if (userDTO.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        }
+        if (userDTO.getFirstName() != null) {
+            user.setFirstName(userDTO.getFirstName());
+        }
+        if (userDTO.getLastName() != null) {
+            user.setLastName(userDTO.getLastName());
+        }
+        if (userDTO.getIsActive() != null) {
+            user.setIsActive(userDTO.getIsActive());
+        }
+        if (userDTO.getCreatedAt() != null) {
+            user.setCreatedAt(userDTO.getCreatedAt());
+        }
+        if (userDTO.getUpdatedAt() != null) {
+            user.setUpdatedAt(userDTO.getUpdatedAt());
+        }
+        if (userDTO.getUserRoles() != null) {
+            final List<Role> UserRoles = roleRepository.findAllById(userDTO.getUserRoles());
+            if (UserRoles.size() != userDTO.getUserRoles().size()) {
+                throw new NotFoundException("one of User Roles not found");
+            }
+            user.setUserRoles(new HashSet<>(UserRoles));
+        }
         return user;
     }
 

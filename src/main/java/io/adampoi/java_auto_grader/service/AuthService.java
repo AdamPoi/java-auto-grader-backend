@@ -1,10 +1,11 @@
 package io.adampoi.java_auto_grader.service;
 
+import io.adampoi.java_auto_grader.domain.Permission;
+import io.adampoi.java_auto_grader.domain.Role;
 import io.adampoi.java_auto_grader.domain.User;
-import io.adampoi.java_auto_grader.model.LoginRequestDTO;
-import io.adampoi.java_auto_grader.model.RegisterRequestDTO;
-import io.adampoi.java_auto_grader.model.UserDTO;
-import io.adampoi.java_auto_grader.repository.RoleRepository;
+import io.adampoi.java_auto_grader.model.response.LoginRequestDTO;
+import io.adampoi.java_auto_grader.model.dto.RegisterRequestDTO;
+import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,23 +22,15 @@ public class AuthService {
 
     private final UserRepository userRepository;
 
-    private final RoleRepository roleRepository;
 
     private final PasswordEncoder passwordEncoder;
 
     private final AuthenticationManager authenticationManager;
-    private final UserService userService;
-    private final JwtService jwtService;
-    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserService userService, JwtService jwtService, RefreshTokenService refreshTokenService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
-        this.userService = userService;
-        this.jwtService = jwtService;
-        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional(readOnly = true)
@@ -81,11 +74,19 @@ public class AuthService {
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setUserRoleRoles(user.getUserRoles().stream()
-                .map(role -> role.getId())
+
+        userDTO.setRoles(user.getUserRoles().stream()
+                .map(Role::getName)
+                .toList());
+
+        userDTO.setPermissions(user.getUserRoles().stream()
+                .flatMap(role -> role.getRolePermissions().stream())
+                .map(Permission::getName)
+                .distinct()
                 .toList());
         return userDTO;
     }
+
 
     private User mapToUserEntity(final RegisterRequestDTO userDTO, final User user) {
         user.setEmail(userDTO.getEmail());

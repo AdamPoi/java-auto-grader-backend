@@ -1,7 +1,7 @@
 package io.adampoi.java_auto_grader.advice;
 
-import io.adampoi.java_auto_grader.model.ApiErrorResponse;
-import io.adampoi.java_auto_grader.model.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.ApiErrorResponse;
+import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

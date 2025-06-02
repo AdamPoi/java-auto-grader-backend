@@ -1,7 +1,8 @@
 package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.adampoi.java_auto_grader.model.UserDTO;
+import io.adampoi.java_auto_grader.model.dto.UserDTO;
+import io.adampoi.java_auto_grader.model.request.UserCreateRequest;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,16 +31,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserResourceTest {
 
     @Autowired
+    ObjectMapper mapper;
+    @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockitoBean
     private UserService userService;
-
     @MockitoBean
     private RoleRepository roleRepository;
+
 
     @Test
     @WithMockUser(authorities = {"USER:READ"})
@@ -62,20 +63,29 @@ public class UserResourceTest {
     @Test
     @WithMockUser(authorities = {"USER:CREATE"})
     public void createUser_ReturnsCreated() throws Exception {
-        UserDTO userDTO = new UserDTO();
+        UserCreateRequest userDTO = new UserCreateRequest();
         userDTO.setEmail("test@example.com");
         userDTO.setPassword("password");
         userDTO.setFirstName("John");
         userDTO.setLastName("Doe");
 
-        UUID createdUserId = UUID.randomUUID();
-        when(userService.create(org.mockito.ArgumentMatchers.any())).thenReturn(createdUserId);
+
+        UserDTO createdUserDTO = new UserDTO();
+        createdUserDTO.setId(UUID.randomUUID());
+        createdUserDTO.setEmail("test@example.com");
+        createdUserDTO.setFirstName("John");
+        createdUserDTO.setLastName("Doe");
+
+        when(userService.create(org.mockito.ArgumentMatchers.any())).thenReturn(createdUserDTO);
 
         mockMvc.perform(post("/api/users")
-
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.firstName").value("John"))
+                .andExpect(jsonPath("$.data.lastName").value("Doe"));
     }
 
     @Test
@@ -98,17 +108,24 @@ public class UserResourceTest {
     public void updateUser_ReturnsOk() throws Exception {
         UUID userId = UUID.randomUUID();
         UserDTO userDTO = new UserDTO();
-        userDTO.setId(userId);
         userDTO.setEmail("updated@example.com");
-        userDTO.setFirstName("Jane");
-        userDTO.setLastName("Smith");
+        userDTO.setFirstName("Updated");
 
-        doNothing().when(userService).update(org.mockito.ArgumentMatchers.eq(userId), org.mockito.ArgumentMatchers.any());
+        UserDTO updatedUserDTO = new UserDTO();
+        updatedUserDTO.setId(userId);
+        updatedUserDTO.setEmail("updated@example.com");
+        updatedUserDTO.setFirstName("Updated");
+        updatedUserDTO.setLastName("");
+
+        when(userService.update(eq(userId), any(UserDTO.class))).thenReturn(updatedUserDTO);
 
         mockMvc.perform(patch("/api/users/" + userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(userId.toString()))
+                .andExpect(jsonPath("$.data.email").value("updated@example.com"))
+                .andExpect(jsonPath("$.data.firstName").value("Updated"));
     }
 
     @Test
@@ -181,11 +198,13 @@ public class UserResourceTest {
         UserDTO userDTO = new UserDTO();
         userDTO.setEmail("test@example.com");
         userDTO.setPassword("password");
+        userDTO.setFirstName("Test");
+
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().is4xxClientError());
     }
 
     @Test

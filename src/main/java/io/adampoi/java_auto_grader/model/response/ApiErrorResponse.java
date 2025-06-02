@@ -1,4 +1,4 @@
-package io.adampoi.java_auto_grader.model;
+package io.adampoi.java_auto_grader.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

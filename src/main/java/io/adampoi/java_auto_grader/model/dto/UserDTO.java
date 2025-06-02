@@ -1,4 +1,4 @@
-package io.adampoi.java_auto_grader.model;
+package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,15 +26,14 @@ public class UserDTO {
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 6, max = 255)
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 3, max = 255)
     private String firstName;
 
-    @NotNull(groups = CreateGroup.class)
-    @Size(min = 3, max = 255)
+    @Size(min = 0, max = 255)
     private String lastName;
 
     @JsonProperty("isActive")
@@ -47,7 +46,7 @@ public class UserDTO {
     private OffsetDateTime updatedAt;
 
     @JsonIgnore
-    private List<UUID> UserRoles;
+    private List<UUID> userRoles;
 
     private List<String> roles;
 

@@ -1,4 +1,4 @@
-package io.adampoi.java_auto_grader.model;
+package io.adampoi.java_auto_grader.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

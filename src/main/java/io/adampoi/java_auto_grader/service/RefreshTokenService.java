@@ -5,13 +5,14 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.repository.RefreshTokenRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
@@ -56,9 +57,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = refreshTokenRepository.findByTokenAndExpiredAtAfter(token, Instant.now())
                 .orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
 
-        String newAccessToken = jwtService.generateToken(refreshToken.getUser());
-
-        return newAccessToken;
+        return jwtService.generateToken(refreshToken.getUser());
     }
 
 
@@ -71,13 +70,14 @@ public class RefreshTokenService {
     }
 
     public String generateRefreshToken(User user) {
+        SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
         return Jwts.builder()
-                .setSubject(user.getEmail())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
+                .subject(user.getEmail())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
                 .claim("userId", user.getId().toString())
                 .claim("tokenType", "refresh")
-                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+                .signWith(key)
                 .compact();
     }
 

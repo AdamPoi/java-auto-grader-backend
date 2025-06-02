@@ -2,7 +2,13 @@ package io.adampoi.java_auto_grader.rest;
 
 import io.adampoi.java_auto_grader.domain.RefreshToken;
 import io.adampoi.java_auto_grader.domain.User;
-import io.adampoi.java_auto_grader.model.*;
+import io.adampoi.java_auto_grader.model.dto.RefreshTokenRequestDTO;
+import io.adampoi.java_auto_grader.model.dto.RegisterRequestDTO;
+import io.adampoi.java_auto_grader.model.dto.UserDTO;
+import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.LoginRequestDTO;
+import io.adampoi.java_auto_grader.model.response.LoginResponseDTO;
+import io.adampoi.java_auto_grader.model.response.TokenResponseDTO;
 import io.adampoi.java_auto_grader.service.AuthService;
 import io.adampoi.java_auto_grader.service.JwtService;
 import io.adampoi.java_auto_grader.service.RefreshTokenService;

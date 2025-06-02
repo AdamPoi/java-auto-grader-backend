@@ -3,13 +3,14 @@ package io.adampoi.java_auto_grader.repository;
 import io.adampoi.java_auto_grader.domain.RefreshToken;
 import io.adampoi.java_auto_grader.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.Optional;
 
 @Repository
-public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Integer> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Integer>, JpaSpecificationExecutor<RefreshToken> {
 
 
     Optional<RefreshToken> findByTokenAndExpiredAt(String token, Instant expiredAt);

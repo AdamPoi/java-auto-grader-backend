@@ -1,7 +1,7 @@
 package io.adampoi.java_auto_grader.exceptions;
 
-import io.adampoi.java_auto_grader.model.ApiErrorResponse;
-import io.adampoi.java_auto_grader.model.FieldErrorDetail;
+import io.adampoi.java_auto_grader.model.response.ApiErrorResponse;
+import io.adampoi.java_auto_grader.model.response.FieldErrorDetail;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,6 +27,19 @@ import java.util.UUID;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler(AccessDeniedException.class)
+
+    public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleAccessDeniedException(
+            AccessDeniedException exception, HttpServletRequest request) {
+        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .message("You are not authorized to access this resource")
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
+    }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleEntityNotFoundException(
@@ -122,18 +135,6 @@ public class GlobalExceptionHandler {
                 .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleAccessDeniedException(
-            AccessDeniedException exception, HttpServletRequest request) {
-        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
-                .status(HttpStatus.FORBIDDEN.value())
-                .message("You are not authorized to access this resource")
-                .path(request.getRequestURI())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
-    }
 
     @ExceptionHandler({SignatureException.class, ExpiredJwtException.class})
     public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleJwtException(

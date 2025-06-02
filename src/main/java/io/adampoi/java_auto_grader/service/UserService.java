@@ -1,7 +1,7 @@
 package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.*;
-import io.adampoi.java_auto_grader.model.UserDTO;
+import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.repository.*;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
@@ -81,6 +81,7 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
+
     public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
         mapToEntity(userDTO, user);
@@ -112,9 +113,11 @@ public class UserService {
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setUserRoles(user.getUserRoles().stream()
-                .map(Role::getId)
-                .toList());
+        userDTO.setUserRoles(user.getUserRoles() != null ?
+                user.getUserRoles().stream()
+                        .map(Role::getId)
+                        .toList() :
+                Collections.emptyList());
         return userDTO;
     }
 

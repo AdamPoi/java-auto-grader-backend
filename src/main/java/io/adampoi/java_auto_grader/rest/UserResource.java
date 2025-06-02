@@ -1,14 +1,16 @@
 package io.adampoi.java_auto_grader.rest;
 
 import io.adampoi.java_auto_grader.domain.Role;
-import io.adampoi.java_auto_grader.model.ApiSuccessResponse;
-import io.adampoi.java_auto_grader.model.UserDTO;
+import io.adampoi.java_auto_grader.model.dto.UserDTO;
+import io.adampoi.java_auto_grader.model.request.UserCreateRequest;
+import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.service.UserService;
 import io.adampoi.java_auto_grader.util.CustomCollectors;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -35,9 +37,9 @@ public class UserResource {
         this.roleRepository = roleRepository;
     }
 
+    @PreAuthorize("hasAuthority('USER:READ')")
     @GetMapping
     @ApiResponse(responseCode = "200")
-    @PreAuthorize("hasAuthority('USER:READ')")
     public ApiSuccessResponse<Page<UserDTO>> getAllUsers(Pageable pageable, @RequestParam Map<String, UserDTO> params) {
 
         return ApiSuccessResponse.<Page<UserDTO>>builder()
@@ -46,8 +48,8 @@ public class UserResource {
                 .build();
     }
 
-    @GetMapping("/{userId}")
     @PreAuthorize("hasAuthority('USER:READ')")
+    @GetMapping("/{userId}")
     public ApiSuccessResponse<UserDTO> getUser(@PathVariable(name = "userId") final UUID userId) {
 
         return ApiSuccessResponse.<UserDTO>builder()
@@ -56,19 +58,21 @@ public class UserResource {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('USER:CREATE')")
     @PostMapping
     @ApiResponse(responseCode = "201")
-    @PreAuthorize("hasAuthority('USER:CREATE')")
-    public ApiSuccessResponse<UserDTO> createUser(@RequestBody @Validated(UserDTO.CreateGroup.class) final UserDTO userDTO) {
+    public ApiSuccessResponse<UserDTO> createUser(@RequestBody @Valid UserCreateRequest userDTO) {
+
         final UserDTO createdUser = userService.create(userDTO);
+
         return ApiSuccessResponse.<UserDTO>builder()
                 .data(createdUser)
                 .statusCode(HttpStatus.CREATED)
                 .build();
     }
 
-    @PatchMapping("/{userId}")
     @PreAuthorize("hasAuthority('USER:UPDATE')")
+    @PatchMapping("/{userId}")
     public ApiSuccessResponse<UserDTO> updateUser(@PathVariable(name = "userId") final UUID userId,
                                                   @RequestBody @Validated(UserDTO.UpdateGroup.class) UserDTO userDTO) {
         final UserDTO updatedUser = userService.update(userId, userDTO);
@@ -78,9 +82,9 @@ public class UserResource {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('USER:DELETE')")
     @DeleteMapping("/{userId}")
     @ApiResponse(responseCode = "204")
-    @PreAuthorize("hasAuthority('USER:DELETE')")
     public ApiSuccessResponse<Void> deleteUser(@PathVariable(name = "userId") final UUID userId) {
         final ReferencedWarning referencedWarning = userService.getReferencedWarning(userId);
         if (referencedWarning != null) {

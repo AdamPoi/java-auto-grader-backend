@@ -47,7 +47,7 @@ public class RoleService {
                 pageable,
                 page.getTotalElements()
         );
-        return io.adampoi.java_auto_grader.model.response.PageResponse.from(dtoPage);
+        return PageResponse.from(dtoPage);
     }
 
     public RoleDTO get(final UUID roleId) {

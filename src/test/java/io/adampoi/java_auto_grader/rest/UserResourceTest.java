@@ -3,6 +3,7 @@ package io.adampoi.java_auto_grader.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.model.request.UserCreateRequest;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -43,7 +44,7 @@ public class UserResourceTest {
 
 
     @Test
-    @WithMockUser(authorities = {"USER:READ"})
+    @WithMockUser(authorities = {"USER:LIST"})
     public void getAllUsers_ReturnsOk() throws Exception {
         UserDTO userDTO = new UserDTO();
         userDTO.setId(UUID.randomUUID());
@@ -53,7 +54,7 @@ public class UserResourceTest {
         Page<UserDTO> userDTOPage = new PageImpl<>(userDTOList);
 
         when(userService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(userDTOPage);
+                .thenReturn(PageResponse.from(userDTOPage));
 
         mockMvc.perform(get("/api/users")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -177,25 +178,25 @@ public class UserResourceTest {
 
     @Test
     @WithMockUser(authorities = {})
-    public void getAllUsers_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void getAllUsers_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/users")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {})
-    public void getUserById_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void getUserById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         UUID userId = UUID.randomUUID();
         mockMvc.perform(get("/api/users/" + userId)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {})
-    public void createUser_WithNoAuthority_ReturnsForbidden() throws Exception {
-        UserDTO userDTO = new UserDTO();
+    public void createUser_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+        UserCreateRequest userDTO = new UserCreateRequest();
         userDTO.setEmail("test@example.com");
         userDTO.setPassword("password");
         userDTO.setFirstName("Test");
@@ -204,7 +205,7 @@ public class UserResourceTest {
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -220,16 +221,16 @@ public class UserResourceTest {
         mockMvc.perform(patch("/api/users/" + userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDTO)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {})
-    public void deleteUser_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void deleteUser_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         UUID userId = UUID.randomUUID();
 
         mockMvc.perform(delete("/api/users/" + userId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

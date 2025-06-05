@@ -36,6 +36,8 @@ dependencies {
     implementation 'ch.qos.logback:logback-core'
     implementation 'ch.qos.logback:logback-classic'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.github.acoboh:query-filter-jpa-3'
+    implementation 'io.github.acoboh:query-filter-jpa-openapi-3:0.4.0'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 //	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'

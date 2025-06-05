@@ -43,7 +43,7 @@ public class PermissionService {
                 pageable,
                 page.getTotalElements()
         );
-        return io.adampoi.java_auto_grader.model.response.PageResponse.from(dtoPage);
+        return PageResponse.from(dtoPage);
     }
 
     public PermissionDTO get(final UUID permissionId) {

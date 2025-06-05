@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.PermissionDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.PermissionService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ public class PermissionResourceTest {
 
 
     @Test
-    @WithMockUser(authorities = {"PERMISSION:READ"})
+    @WithMockUser(authorities = {"PERMISSION:LIST"})
     public void getAllPermissions_ReturnsOk() throws Exception {
         PermissionDTO permissionDTO = new PermissionDTO();
         permissionDTO.setId(UUID.randomUUID());
@@ -50,7 +51,7 @@ public class PermissionResourceTest {
         Page<PermissionDTO> permissionDTOPage = new PageImpl<>(permissionDTOList);
 
         when(permissionService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(permissionDTOPage);
+                .thenReturn(PageResponse.from(permissionDTOPage));
 
         mockMvc.perform(get("/api/permissions")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -160,55 +161,55 @@ public class PermissionResourceTest {
 
     @Test
     @WithMockUser(authorities = {}) // No authority
-    public void getAllPermissions_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void getAllPermissions_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/permissions")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {}) // No authority
-    public void getPermissionById_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void getPermissionById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         UUID permissionId = UUID.randomUUID();
         mockMvc.perform(get("/api/permissions/" + permissionId)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {}) // No authority
-    public void createPermission_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void createPermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:FORBIDDEN_CREATE");
+        permissionDTO.setName("PERMISSION:Unauthorized_CREATE");
         permissionDTO.setDescription("Test Permission");
 
         mockMvc.perform(post("/api/permissions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {}) // No authority
-    public void updatePermission_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void updatePermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         UUID permissionId = UUID.randomUUID();
         PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:FORBIDDEN_UPDATE");
+        permissionDTO.setName("PERMISSION:Unauthorized_UPDATE");
         permissionDTO.setDescription("Test Permission");
 
         mockMvc.perform(patch("/api/permissions/" + permissionId) // Using patch
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(authorities = {}) // No authority
-    public void deletePermission_WithNoAuthority_ReturnsForbidden() throws Exception {
+    public void deletePermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         UUID permissionId = UUID.randomUUID();
 
         mockMvc.perform(delete("/api/permissions/" + permissionId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,9 +32,10 @@ public class GlobalExceptionHandler {
 
     public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleAccessDeniedException(
             AccessDeniedException exception, HttpServletRequest request) {
+        String message = exception.getMessage().isBlank() ? "You are not authorized to access this resource" : exception.getMessage();
         ApiErrorResponse errorResponse = ApiErrorResponse.builder()
                 .status(HttpStatus.FORBIDDEN.value())
-                .message("You are not authorized to access this resource")
+                .message(message)
                 .path(request.getRequestURI())
                 .build();
 
@@ -143,13 +145,17 @@ public class GlobalExceptionHandler {
                 ? "The JWT token has expired"
                 : "The JWT signature is invalid";
 
+        HttpStatus status = exception instanceof ExpiredJwtException
+                ? HttpStatus.UNAUTHORIZED
+                : HttpStatus.BAD_REQUEST;
+
         ApiErrorResponse errorResponse = ApiErrorResponse.builder()
-                .status(HttpStatus.FORBIDDEN.value())
+                .status(status.value())
                 .message(message)
                 .path(request.getRequestURI())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        return ResponseEntity.status(status)
                 .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
     }
 
@@ -241,4 +247,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
     }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
+
+        String supportedMethods = String.join(", ", exception.getSupportedMethods());
+        String message = String.format("Request method '%s' not supported. Supported methods are: %s",
+                exception.getMethod(), supportedMethods);
+
+        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
+                .status(HttpStatus.METHOD_NOT_ALLOWED.value())
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
+    }
+
 }

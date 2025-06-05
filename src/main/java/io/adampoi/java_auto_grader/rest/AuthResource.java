@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +25,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/api/auth",
-        produces = MediaType.APPLICATION_JSON_VALUE,
-        consumes = MediaType.APPLICATION_JSON_VALUE)
+        produces = MediaType.APPLICATION_JSON_VALUE)
 public class AuthResource {
 
     private final AuthService authService;
@@ -70,6 +70,7 @@ public class AuthResource {
 
     @GetMapping("/me")
     @ApiResponse(responseCode = "200")
+    @PreAuthorize("isAuthenticated()")
     public ApiSuccessResponse<UserDTO> getCurrentUser(Authentication authentication) {
         return ApiSuccessResponse.<UserDTO>builder()
                 .data(authService.getCurrentUser(authentication))
@@ -82,7 +83,9 @@ public class AuthResource {
     public ApiSuccessResponse<TokenResponseDTO> refreshToken(@RequestBody @Valid RefreshTokenRequestDTO refreshTokenRequestDTO) {
         String accessToken = refreshTokenService.refresh(refreshTokenRequestDTO.getRefreshToken());
         TokenResponseDTO tokenResponse = TokenResponseDTO.builder().
-                accessToken(accessToken).build();
+                accessToken(accessToken)
+                .expireIn(jwtService.getExpirationTime())
+                .build();
         return ApiSuccessResponse.<TokenResponseDTO>builder()
                 .data(tokenResponse)
                 .statusCode(HttpStatus.OK)

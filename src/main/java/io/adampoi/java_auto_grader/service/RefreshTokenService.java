@@ -6,9 +6,9 @@ import io.adampoi.java_auto_grader.repository.RefreshTokenRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +55,7 @@ public class RefreshTokenService {
 
     public String refresh(String token) {
         RefreshToken refreshToken = refreshTokenRepository.findByTokenAndExpiredAtAfter(token, Instant.now())
-                .orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
+                .orElseThrow(() -> new AccessDeniedException("Refresh token not valid or expired. Please login again."));
 
         return jwtService.generateToken(refreshToken.getUser());
     }
@@ -63,7 +63,7 @@ public class RefreshTokenService {
 
     public void delete(String refreshToken) {
         RefreshToken existedRefreshToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new EntityNotFoundException("Refresh token not found or expired"));
+                .orElseThrow(() -> new AccessDeniedException("Refresh token not valid or expired. Please login again."));
         if (existedRefreshToken != null) {
             refreshTokenRepository.delete(existedRefreshToken);
         }

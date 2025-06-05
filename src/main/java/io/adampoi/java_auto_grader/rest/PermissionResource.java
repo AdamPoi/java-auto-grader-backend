@@ -1,20 +1,26 @@
 package io.adampoi.java_auto_grader.rest;
 
+import io.adampoi.java_auto_grader.domain.Permission;
+import io.adampoi.java_auto_grader.filter.PermissionFilterDef;
 import io.adampoi.java_auto_grader.model.dto.PermissionDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.PermissionService;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.data.domain.Page;
+import io.github.acoboh.query.filter.jpa.annotations.QFParam;
+import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +28,7 @@ import java.util.UUID;
         value = "/api/permissions",
         produces = MediaType.APPLICATION_JSON_VALUE
 )
+@Tag(name = "Permissions")
 public class PermissionResource {
 
     private final PermissionService permissionService;
@@ -30,21 +37,23 @@ public class PermissionResource {
         this.permissionService = permissionService;
     }
 
+    @PreAuthorize("hasAuthority('PERMISSION:LIST')")
     @GetMapping
-    @ApiResponse(responseCode = "200")
-    @PreAuthorize("hasAuthority('PERMISSION:READ')")
-    public ApiSuccessResponse<Page<PermissionDTO>> getAllPermissions(
-            Pageable pageable,
-            @RequestParam(required = false) Map<String, PermissionDTO> params
-    ) {
-        return ApiSuccessResponse.<Page<PermissionDTO>>builder()
-                .data(permissionService.findAll(pageable, params))
+    @Operation(summary = "Get Permission",
+            description = "Get all permissions with pagination and filtering capabilities")
+    public ApiSuccessResponse<PageResponse<PermissionDTO>> getAllPermissions(
+            @RequestParam(required = false, defaultValue = "") @QFParam(PermissionFilterDef.class) QueryFilter<Permission> filter,
+            @ParameterObject @PageableDefault(page = 0, size = 10) Pageable params) {
+        return ApiSuccessResponse.<PageResponse<PermissionDTO>>builder()
+                .data(permissionService.findAll(filter, params))
                 .statusCode(HttpStatus.OK)
                 .build();
     }
 
-    @GetMapping("/{permissionId}")
     @PreAuthorize("hasAuthority('PERMISSION:READ')")
+    @GetMapping("/{permissionId}")
+    @Operation(summary = "Get Permission",
+            description = "Get a permission by its ID")
     public ApiSuccessResponse<PermissionDTO> getPermission(
             @PathVariable("permissionId") UUID permissionId
     ) {
@@ -54,9 +63,10 @@ public class PermissionResource {
                 .build();
     }
 
-    @PostMapping
-    @ApiResponse(responseCode = "201")
     @PreAuthorize("hasAuthority('PERMISSION:CREATE')")
+    @PostMapping
+    @Operation(summary = "Create Permission",
+            description = "Create a new permission")
     public ApiSuccessResponse<UUID> createPermission(
             @RequestBody @Validated(PermissionDTO.CreateGroup.class) PermissionDTO permissionDTO
     ) {
@@ -67,8 +77,10 @@ public class PermissionResource {
                 .build();
     }
 
-    @PatchMapping("/{permissionId}")
     @PreAuthorize("hasAuthority('PERMISSION:UPDATE')")
+    @PatchMapping("/{permissionId}")
+    @Operation(summary = "Update Permission",
+            description = "Update an existing permission")
     public ApiSuccessResponse<UUID> updatePermission(
             @PathVariable("permissionId") UUID permissionId,
             @RequestBody @Validated(PermissionDTO.UpdateGroup.class) PermissionDTO permissionDTO
@@ -80,9 +92,10 @@ public class PermissionResource {
                 .build();
     }
 
-    @DeleteMapping("/{permissionId}")
-    @ApiResponse(responseCode = "204")
     @PreAuthorize("hasAuthority('PERMISSION:DELETE')")
+    @DeleteMapping("/{permissionId}")
+    @Operation(summary = "Delete Permission",
+            description = "Delete an existing permission")
     public ApiSuccessResponse<Void> deletePermission(
             @PathVariable("permissionId") UUID permissionId
     ) {

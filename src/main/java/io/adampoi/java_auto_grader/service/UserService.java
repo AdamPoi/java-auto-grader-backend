@@ -2,27 +2,39 @@ package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.*;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
 @Service
 @Transactional
+@Slf4j
 public class UserService {
 
+
+    private static final ExampleMatcher SEARCH_CONDITIONS_MATCH_ANY = ExampleMatcher
+            .matchingAny()
+            .withMatcher("birthDate", ExampleMatcher.GenericPropertyMatchers.exact())
+            .withMatcher("firstName", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase())
+            .withMatcher("lastName", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase())
+            .withIgnorePaths("employeeId", "gender", "hireDate", "salaries", "titles");
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final CourseRepository courseRepository;
@@ -51,29 +63,19 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Page<UserDTO> findAll(final Pageable pageable, Map<String, UserDTO> params) {
-        Specification<User> specification = (root, query, builder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (Objects.nonNull(params.get("firstName"))) {
-                predicates.add(builder.or(
-                        builder.like(root.get("firstName"), "%" + params.get("firstName") + "%"),
-                        builder.like(root.get("lastName"), "%" + params.get("lastName") + "%")
-                ));
-            }
-            if (Objects.nonNull(params.get("email"))) {
-                predicates.add(builder.like(root.get("email"), "%" + params.get("email") + "%"));
-            }
+    public PageResponse<UserDTO> findAll(QueryFilter<User> filter, Pageable pageable) {
+        final Page<User> page = userRepository.findAll(filter, pageable);
 
-            return query != null ? query.where(predicates.toArray(new Predicate[]{})).getRestriction() : null;
-        };
-        final Page<User> page = userRepository.findAll(specification, pageable);
-        return new PageImpl<>(page.getContent()
-                .stream()
-                .map(user -> mapToDTO(user, new UserDTO()))
-                .collect(Collectors.toList()),
-                pageable, page.getTotalElements());
+        Page<UserDTO> dtoPage = new PageImpl<>(
+                page.getContent()
+                        .stream()
+                        .map(user -> mapToDTO(user, new UserDTO()))
+                        .collect(Collectors.toList()),
+                pageable,
+                page.getTotalElements()
+        );
+        return PageResponse.from(dtoPage);
     }
-
 
     public UserDTO get(final UUID userId) {
         return userRepository.findById(userId)
@@ -105,19 +107,18 @@ public class UserService {
     }
 
     private UserDTO mapToDTO(final User user, final UserDTO userDTO) {
+
         userDTO.setId(user.getId());
         userDTO.setEmail(user.getEmail());
-        userDTO.setPassword(user.getPassword());
         userDTO.setFirstName(user.getFirstName());
         userDTO.setLastName(user.getLastName());
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setUserRoles(user.getUserRoles() != null ?
+        userDTO.setRoles(
                 user.getUserRoles().stream()
-                        .map(Role::getId)
-                        .toList() :
-                Collections.emptyList());
+                        .map(Role::getName)
+                        .toList());
         return userDTO;
     }
 

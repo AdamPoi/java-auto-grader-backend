@@ -3,7 +3,6 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -21,7 +20,6 @@ import java.util.*;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-@Slf4j
 public class User implements UserDetails {
 
     @Id
@@ -86,12 +84,10 @@ public class User implements UserDetails {
         if (userRoles != null && !userRoles.isEmpty()) {
             for (Role role : userRoles) {
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
-                log.info("role" + role.getName());
 
                 if (role.getRolePermissions() != null) {
                     for (Permission permission : role.getRolePermissions()) {
                         authorities.add(new SimpleGrantedAuthority(permission.getName()));
-                        log.info("permission" + permission.getName());
                     }
                 }
             }

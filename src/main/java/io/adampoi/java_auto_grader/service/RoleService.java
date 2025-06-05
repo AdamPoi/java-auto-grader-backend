@@ -3,20 +3,22 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.domain.Permission;
 import io.adampoi.java_auto_grader.domain.Role;
 import io.adampoi.java_auto_grader.model.dto.RoleDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
-import jakarta.persistence.criteria.Predicate;
+import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,22 +36,18 @@ public class RoleService {
         this.userRepository = userRepository;
     }
 
-    public Page<RoleDTO> findAll(final Pageable pageable, Map<String, RoleDTO> params) {
-        Specification<Role> specification = (root, query, builder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (Objects.nonNull(params.get("name"))) {
-                predicates.add(builder.like(root.get("name"), "%" + params.get("name") + "%"));
-            }
+    public PageResponse<RoleDTO> findAll(QueryFilter<Role> filter, Pageable pageable) {
+        final Page<Role> page = roleRepository.findAll(filter, pageable);
 
-            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
-        };
-
-        final Page<Role> page = roleRepository.findAll(specification, pageable);
-        return new PageImpl<>(page.getContent()
-                .stream()
-                .map(role -> mapToDTO(role, new RoleDTO()))
-                .collect(Collectors.toList()),
-                pageable, page.getTotalElements());
+        Page<io.adampoi.java_auto_grader.model.dto.RoleDTO> dtoPage = new PageImpl<>(
+                page.getContent()
+                        .stream()
+                        .map(role -> mapToDTO(role, new io.adampoi.java_auto_grader.model.dto.RoleDTO()))
+                        .collect(Collectors.toList()),
+                pageable,
+                page.getTotalElements()
+        );
+        return io.adampoi.java_auto_grader.model.response.PageResponse.from(dtoPage);
     }
 
     public RoleDTO get(final UUID roleId) {

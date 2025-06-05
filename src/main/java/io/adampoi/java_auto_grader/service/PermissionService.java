@@ -2,22 +2,22 @@ package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.Permission;
 import io.adampoi.java_auto_grader.model.dto.PermissionDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,9 +32,18 @@ public class PermissionService {
         this.roleRepository = roleRepository;
     }
 
-    public Page<PermissionDTO> findAll(final Pageable pageable, final Map<String, PermissionDTO> params) {
-        final Page<Permission> permissions = permissionRepository.findAll(buildSpecification(params), pageable);
-        return permissions.map(permission -> mapToDTO(permission, new PermissionDTO()));
+    public PageResponse<PermissionDTO> findAll(QueryFilter<Permission> filter, Pageable pageable) {
+        final Page<Permission> page = permissionRepository.findAll(filter, pageable);
+
+        Page<io.adampoi.java_auto_grader.model.dto.PermissionDTO> dtoPage = new PageImpl<>(
+                page.getContent()
+                        .stream()
+                        .map(permission -> mapToDTO(permission, new io.adampoi.java_auto_grader.model.dto.PermissionDTO()))
+                        .collect(Collectors.toList()),
+                pageable,
+                page.getTotalElements()
+        );
+        return io.adampoi.java_auto_grader.model.response.PageResponse.from(dtoPage);
     }
 
     public PermissionDTO get(final UUID permissionId) {

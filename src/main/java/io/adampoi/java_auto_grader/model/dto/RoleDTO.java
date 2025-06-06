@@ -1,6 +1,7 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
@@ -21,9 +22,11 @@ public class RoleDTO {
     private String Name;
 
     @JsonIgnore
-    private List<UUID> rolePermissionPermissions;
+    private List<UUID> rolePermissions;
 
-    private List<String> permissions;
+    @JsonManagedReference
+    private List<PermissionDTO> permissions;
+
 
     public interface CreateGroup extends Default {
     }

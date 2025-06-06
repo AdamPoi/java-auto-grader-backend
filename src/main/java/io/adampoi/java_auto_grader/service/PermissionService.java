@@ -32,6 +32,13 @@ public class PermissionService {
         this.roleRepository = roleRepository;
     }
 
+    public static PermissionDTO mapToDTO(final Permission permission, final PermissionDTO permissionDTO) {
+        permissionDTO.setId(permission.getId());
+        permissionDTO.setName(permission.getName());
+        permissionDTO.setDescription(permission.getDescription());
+        return permissionDTO;
+    }
+
     public PageResponse<PermissionDTO> findAll(QueryFilter<Permission> filter, Pageable pageable) {
         final Page<Permission> page = permissionRepository.findAll(filter, pageable);
 
@@ -67,13 +74,6 @@ public class PermissionService {
 
     public void delete(final UUID permissionId) {
         permissionRepository.deleteById(permissionId);
-    }
-
-    private PermissionDTO mapToDTO(final Permission permission, final PermissionDTO permissionDTO) {
-        permissionDTO.setId(permission.getId());
-        permissionDTO.setName(permission.getName());
-        permissionDTO.setDescription(permission.getDescription());
-        return permissionDTO;
     }
 
     private Permission mapToEntity(final PermissionDTO permissionDTO, final Permission permission) {

@@ -27,46 +27,40 @@ public class UserSeeder {
 
     public void seedUsers() {
         // Admin user
-        if (!userRepository.existsByEmail("admin@example.com")) {
-            User admin = new User();
-            admin.setEmail("admin@example.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setFirstName("Admin");
-            admin.setLastName("User");
-            admin.setIsActive(true);
-            Role adminRole = roleRepository.findByName("admin")
-                    .orElseThrow(() -> new EntityNotFoundException("Role not found"));
-            admin.setUserRoles(Set.of(adminRole));
-            userRepository.save(admin);
-        }
+        User admin = userRepository.getUserByEmail("admin@example.com").orElse(new User());
+        admin.setEmail("admin@example.com");
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setFirstName("Admin");
+        admin.setLastName("User");
+        admin.setIsActive(true);
+        Role adminRole = roleRepository.findByName("admin")
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
+        admin.setUserRoles(Set.of(adminRole));
+        userRepository.save(admin);
 
         // Teacher user
-        if (!userRepository.existsByEmail("teacher@example.com")) {
-            User teacher = new User();
-            teacher.setEmail("teacher@example.com");
-            teacher.setPassword(passwordEncoder.encode("teacher123"));
-            teacher.setFirstName("John");
-            teacher.setLastName("Teacher");
-            teacher.setIsActive(true);
-            Role teacherRole = roleRepository.findByName("teacher")
-                    .orElseThrow(() -> new EntityNotFoundException("Role not found"));
+        User teacher = userRepository.getUserByEmail("teacher@example.com").orElse(new User());
+        teacher.setEmail("teacher@example.com");
+        teacher.setPassword(passwordEncoder.encode("teacher123"));
+        teacher.setFirstName("John");
+        teacher.setLastName("Teacher");
+        teacher.setIsActive(true);
+        Role teacherRole = roleRepository.findByName("teacher")
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
 
-            teacher.setUserRoles(Set.of(teacherRole));
-            userRepository.save(teacher);
-        }
+        teacher.setUserRoles(Set.of(teacherRole));
+        userRepository.save(teacher);
 
         // Student user
-        if (!userRepository.existsByEmail("student@example.com")) {
-            User student = new User();
-            student.setEmail("student@example.com");
-            student.setPassword(passwordEncoder.encode("student123"));
-            student.setFirstName("Jane");
-            student.setLastName("Student");
-            student.setIsActive(true);
-            Role studentRole = roleRepository.findByName("student")
-                    .orElseThrow(() -> new EntityNotFoundException("Role not found"));
-            student.setUserRoles(Set.of(studentRole));
-            userRepository.save(student);
-        }
+        User student = userRepository.getUserByEmail("student@example.com").orElse(new User());
+        student.setEmail("student@example.com");
+        student.setPassword(passwordEncoder.encode("student123"));
+        student.setFirstName("Jane");
+        student.setLastName("Student");
+        student.setIsActive(true);
+        Role studentRole = roleRepository.findByName("student")
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
+        student.setUserRoles(Set.of(studentRole));
+        userRepository.save(student);
     }
 }

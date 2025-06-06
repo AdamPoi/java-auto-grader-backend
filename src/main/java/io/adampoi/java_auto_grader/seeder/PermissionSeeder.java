@@ -20,7 +20,7 @@ public class PermissionSeeder {
         List<String> domains = Arrays.asList(
                 "USER", "ROLE", "COURSE", "CLASSROOM",
                 "TEACHER_COURSE", "STUDENT_CLASSROOM",
-                "ASSIGNMENT", "SUBMISSION"
+                "ASSIGNMENT", "SUBMISSION", "PERMISSION"
         );
 
         List<String> actions = Arrays.asList("CREATE", "LIST", "READ", "UPDATE", "DELETE");

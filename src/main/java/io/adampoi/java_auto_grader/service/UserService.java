@@ -77,9 +77,7 @@ public class UserService {
 
     public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
-        if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
-        }
+       
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         mapToEntity(userDTO, user);
         User savedUser = userRepository.save(user);

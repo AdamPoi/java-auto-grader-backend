@@ -53,9 +53,6 @@ public class AuthService {
 
 
     public UUID register(RegisterRequestDTO registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new IllegalArgumentException("Email already exists: " + registerRequest.getEmail());
-        }
         final User user = new User();
         mapToUserEntity(registerRequest, user);
 

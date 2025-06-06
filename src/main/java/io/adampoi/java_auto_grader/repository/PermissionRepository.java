@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,4 +14,6 @@ public interface PermissionRepository extends JpaRepository<Permission, UUID>, J
     boolean existsByName(String name);
 
     Set<Permission> findByNameIn(Collection<String> names);
+
+    Optional<Permission> findByName(String name);
 }

@@ -1,7 +1,7 @@
 package io.adampoi.java_auto_grader.service;
 
-import io.adampoi.java_auto_grader.domain.Permission;
 import io.adampoi.java_auto_grader.domain.Role;
+import io.adampoi.java_auto_grader.model.dto.PermissionDTO;
 import io.adampoi.java_auto_grader.model.dto.RoleDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
@@ -16,8 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -76,21 +75,21 @@ public class RoleService {
     private RoleDTO mapToDTO(final Role role, final RoleDTO roleDTO) {
         roleDTO.setId(role.getId());
         roleDTO.setName(role.getName());
-        roleDTO.setRolePermissionPermissions(role.getRolePermissions().stream()
-                .map(permission -> permission.getId())
-                .toList());
+        roleDTO.setPermissions(role.getRolePermissions().stream()
+                .map(permission -> PermissionService.mapToDTO(permission, new PermissionDTO()))
+                .collect(Collectors.toList()));
         return roleDTO;
     }
 
     private Role mapToEntity(final RoleDTO roleDTO, final Role role) {
         role.setName(roleDTO.getName());
-        final List<Permission> rolePermissionPermissions = permissionRepository.findAllById(
-                roleDTO.getRolePermissionPermissions() == null ? List.of() : roleDTO.getRolePermissionPermissions());
-        if (rolePermissionPermissions.size() != (roleDTO.getRolePermissionPermissions() == null ? 0
-                : roleDTO.getRolePermissionPermissions().size())) {
-            throw new NotFoundException("one of rolePermissionPermissions not found");
+        if (!roleDTO.getPermissions().isEmpty()) {
+            role.setRolePermissions(roleDTO.getPermissions().stream()
+                    .map(permission -> permissionRepository.findById(permission.getId()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toSet()));
         }
-        role.setRolePermissions(new HashSet<>(rolePermissionPermissions));
         return role;
     }
 

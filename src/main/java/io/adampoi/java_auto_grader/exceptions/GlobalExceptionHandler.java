@@ -8,6 +8,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,6 +26,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static io.adampoi.java_auto_grader.util.ExceptionUtil.extractFieldName;
+import static io.adampoi.java_auto_grader.util.ExceptionUtil.extractRejectedValue;
 
 @RestControllerAdvice
 @Slf4j
@@ -264,5 +269,92 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
     }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleDataIntegrityViolationException(
+            DataIntegrityViolationException exception, HttpServletRequest request) {
+
+        String message = "Data integrity violation";
+        List<FieldErrorDetail> fieldErrors = new ArrayList<>();
+
+        if (exception.getCause() != null) {
+            String causeMessage = exception.getCause().getMessage().toLowerCase();
+            String fieldName = extractFieldName(exception.getCause().getMessage());
+            String rejectedValue = extractRejectedValue(exception.getCause().getMessage());
+            String errorMessage;
+
+            if (causeMessage.contains("duplicate")) {
+                message = "A record with this information already exists";
+                errorMessage = String.format("This %s already exists", fieldName);
+            } else if (causeMessage.contains("foreign key")) {
+                message = "Referenced record does not exist";
+                errorMessage = "Referenced record does not exist";
+            } else if (causeMessage.contains("not null")) {
+                message = "Required field cannot be empty";
+                errorMessage = String.format("This %s is required", fieldName);
+            } else {
+                errorMessage = "Data integrity constraint violated";
+            }
+
+            fieldErrors.add(new FieldErrorDetail(
+                    fieldName != null ? fieldName : "field",
+                    errorMessage,
+                    rejectedValue
+            ));
+        }
+
+        log.warn("Data integrity violation at path: {} - {}", request.getRequestURI(), exception.getMessage());
+
+        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .message(message)
+                .path(request.getRequestURI())
+                .fieldErrors(fieldErrors.isEmpty() ? null : fieldErrors)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
+    }
+
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleDataAccessException(
+            DataAccessException exception, HttpServletRequest request) {
+
+        log.error("Database access error at path: {}", request.getRequestURI(), exception);
+
+        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message("Database operation failed")
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
+    }
+
+//    @ExceptionHandler(SQLException.class)
+//    public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleSQLException(
+//            SQLException exception, HttpServletRequest request) {
+//
+//        log.error("SQL error at path: {} - SQL State: {}, Error Code: {}",
+//                request.getRequestURI(), exception.getSQLState(), exception.getErrorCode(), exception);
+//
+//        String message = "Database operation failed";
+//
+//        if (exception.getErrorCode() == 1062 || // MySQL duplicate entry
+//                exception.getErrorCode() == 23505) { // PostgreSQL unique violation
+//            message = "A record with this information already exists";
+//        }
+//
+//        ApiErrorResponse errorResponse = ApiErrorResponse.builder()
+//                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+//                .message(message)
+//                .path(request.getRequestURI())
+//                .build();
+//
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
+//    }
 
 }

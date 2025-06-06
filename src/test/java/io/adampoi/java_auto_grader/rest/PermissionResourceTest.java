@@ -44,7 +44,7 @@ public class PermissionResourceTest {
     public void getAllPermissions_ReturnsOk() throws Exception {
         PermissionDTO permissionDTO = new PermissionDTO();
         permissionDTO.setId(UUID.randomUUID());
-        permissionDTO.setName("PERMISSION:TEST_READ"); // Assuming 'value' field
+        permissionDTO.setName("PERMISSION:TEST_READ");
         permissionDTO.setDescription("Test Permission");
 
         List<PermissionDTO> permissionDTOList = Collections.singletonList(permissionDTO);
@@ -62,7 +62,7 @@ public class PermissionResourceTest {
     @WithMockUser(authorities = {"PERMISSION:CREATE"})
     public void createPermission_ReturnsCreated() throws Exception {
         PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:NEW_CREATE"); // Assuming 'value' field
+        permissionDTO.setName("PERMISSION:NEW_CREATE");
         permissionDTO.setDescription("Test Permission");
 
         UUID createdPermissionId = UUID.randomUUID();
@@ -81,7 +81,7 @@ public class PermissionResourceTest {
         UUID permissionId = UUID.randomUUID();
         PermissionDTO permissionDTO = new PermissionDTO();
         permissionDTO.setId(permissionId);
-        permissionDTO.setName("PERMISSION:TEST_GET"); // Assuming 'value' field
+        permissionDTO.setName("PERMISSION:TEST_GET");
         permissionDTO.setDescription("Test Permission");
 
         when(permissionService.get(permissionId)).thenReturn(permissionDTO);
@@ -99,12 +99,12 @@ public class PermissionResourceTest {
         UUID permissionId = UUID.randomUUID();
         PermissionDTO permissionDTO = new PermissionDTO();
         permissionDTO.setId(permissionId);
-        permissionDTO.setName("PERMISSION:UPDATED"); // Assuming 'value' field
+        permissionDTO.setName("PERMISSION:UPDATED");
         permissionDTO.setDescription("Test Permission");
 
         doNothing().when(permissionService).update(org.mockito.ArgumentMatchers.eq(permissionId), org.mockito.ArgumentMatchers.any(PermissionDTO.class));
 
-        mockMvc.perform(patch("/api/permissions/" + permissionId) // Using patch
+        mockMvc.perform(patch("/api/permissions/" + permissionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(permissionDTO)))
                 .andExpect(status().isOk());

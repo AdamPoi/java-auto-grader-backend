@@ -18,10 +18,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -69,6 +71,9 @@ public class UserResourceTest {
         userDTO.setPassword("password");
         userDTO.setFirstName("John");
         userDTO.setLastName("Doe");
+        userDTO.setRoles(Arrays.asList("admin", "teacher"));
+        userDTO.setIsActive(true);
+        userDTO.setPermissions(Collections.emptyList());
 
 
         UserDTO createdUserDTO = new UserDTO();
@@ -76,6 +81,9 @@ public class UserResourceTest {
         createdUserDTO.setEmail("test@example.com");
         createdUserDTO.setFirstName("John");
         createdUserDTO.setLastName("Doe");
+        createdUserDTO.setRoles(Arrays.asList("admin", "teacher"));
+        createdUserDTO.setIsActive(true);
+        createdUserDTO.setPermissions(Collections.emptyList());
 
         when(userService.create(org.mockito.ArgumentMatchers.any())).thenReturn(createdUserDTO);
 
@@ -86,7 +94,13 @@ public class UserResourceTest {
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.email").value("test@example.com"))
                 .andExpect(jsonPath("$.data.firstName").value("John"))
-                .andExpect(jsonPath("$.data.lastName").value("Doe"));
+                .andExpect(jsonPath("$.data.lastName").value("Doe"))
+                .andExpect(jsonPath("$.data.roles", hasSize(2)))
+                .andExpect(jsonPath("$.data.roles[0]").value("admin"))
+                .andExpect(jsonPath("$.data.roles[1]").value("teacher"))
+                .andExpect(jsonPath("$.data.isActive").value(true))
+                .andExpect(jsonPath("$.data.permissions").isEmpty());
+        ;
     }
 
     @Test

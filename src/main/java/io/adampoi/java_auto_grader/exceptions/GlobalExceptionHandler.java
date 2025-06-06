@@ -29,17 +29,16 @@ import java.util.UUID;
 @Slf4j
 public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
-
     public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleAccessDeniedException(
             AccessDeniedException exception, HttpServletRequest request) {
-        String message = exception.getMessage().isBlank() ? "You are not authorized to access this resource" : exception.getMessage();
+        String message = exception.getMessage().isBlank() || exception.getMessage().equals("Access Denied") ? "You are not authorized to access this resource" : exception.getMessage();
         ApiErrorResponse errorResponse = ApiErrorResponse.builder()
-                .status(HttpStatus.FORBIDDEN.value())
+                .status(HttpStatus.UNAUTHORIZED.value())
                 .message(message)
                 .path(request.getRequestURI())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiErrorResponse.ErrorWrapper(errorResponse));
     }
 

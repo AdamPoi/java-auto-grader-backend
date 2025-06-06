@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,4 +29,9 @@ public class RegisterRequestDTO {
 
     @NotBlank(message = "Last name is required")
     private String lastName;
+    
+    private boolean isActive = true;
+
+    @NotBlank(message = "Role is required")
+    private Set<String> roles;
 }

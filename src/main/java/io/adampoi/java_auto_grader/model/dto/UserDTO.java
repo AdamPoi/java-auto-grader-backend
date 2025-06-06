@@ -3,6 +3,7 @@ package io.adampoi.java_auto_grader.model.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
@@ -37,7 +38,7 @@ public class UserDTO {
     private String lastName;
 
     @JsonProperty("isActive")
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     @JsonIgnore
     private OffsetDateTime createdAt;
@@ -48,6 +49,8 @@ public class UserDTO {
     @JsonIgnore
     private List<UUID> userRoles;
 
+    @NotNull(groups = CreateGroup.class)
+    @NotEmpty(groups = CreateGroup.class)
     private List<String> roles;
 
     private List<String> permissions;

@@ -4,6 +4,7 @@ import io.adampoi.java_auto_grader.domain.Role;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +34,8 @@ public class UserSeeder {
             admin.setFirstName("Admin");
             admin.setLastName("User");
             admin.setIsActive(true);
-            Role adminRole = roleRepository.findByName("ADMIN").getFirst();
+            Role adminRole = roleRepository.findByName("admin")
+                    .orElseThrow(() -> new EntityNotFoundException("Role not found"));
             admin.setUserRoles(Set.of(adminRole));
             userRepository.save(admin);
         }
@@ -46,7 +48,9 @@ public class UserSeeder {
             teacher.setFirstName("John");
             teacher.setLastName("Teacher");
             teacher.setIsActive(true);
-            Role teacherRole = roleRepository.findByName("TEACHER").getFirst();
+            Role teacherRole = roleRepository.findByName("teacher")
+                    .orElseThrow(() -> new EntityNotFoundException("Role not found"));
+
             teacher.setUserRoles(Set.of(teacherRole));
             userRepository.save(teacher);
         }
@@ -59,7 +63,8 @@ public class UserSeeder {
             student.setFirstName("Jane");
             student.setLastName("Student");
             student.setIsActive(true);
-            Role studentRole = roleRepository.findByName("STUDENT").getFirst();
+            Role studentRole = roleRepository.findByName("student")
+                    .orElseThrow(() -> new EntityNotFoundException("Role not found"));
             student.setUserRoles(Set.of(studentRole));
             userRepository.save(student);
         }

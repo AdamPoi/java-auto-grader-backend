@@ -4,21 +4,18 @@ import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.*;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,12 +26,6 @@ import java.util.stream.Collectors;
 public class UserService {
 
 
-    private static final ExampleMatcher SEARCH_CONDITIONS_MATCH_ANY = ExampleMatcher
-            .matchingAny()
-            .withMatcher("birthDate", ExampleMatcher.GenericPropertyMatchers.exact())
-            .withMatcher("firstName", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase())
-            .withMatcher("lastName", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase())
-            .withIgnorePaths("employeeId", "gender", "hireDate", "salaries", "titles");
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final CourseRepository courseRepository;
@@ -86,6 +77,10 @@ public class UserService {
 
     public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
+        if (userRepository.existsByEmail(userDTO.getEmail())) {
+            throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
+        }
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         mapToEntity(userDTO, user);
         User savedUser = userRepository.save(user);
         return mapToDTO(savedUser, new UserDTO());
@@ -107,7 +102,6 @@ public class UserService {
     }
 
     private UserDTO mapToDTO(final User user, final UserDTO userDTO) {
-
         userDTO.setId(user.getId());
         userDTO.setEmail(user.getEmail());
         userDTO.setFirstName(user.getFirstName());
@@ -115,10 +109,9 @@ public class UserService {
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setRoles(
-                user.getUserRoles().stream()
-                        .map(Role::getName)
-                        .toList());
+        userDTO.setRoles(user.getUserRoles().stream()
+                .map(Role::getName)
+                .toList());
         return userDTO;
     }
 
@@ -144,12 +137,12 @@ public class UserService {
         if (userDTO.getUpdatedAt() != null) {
             user.setUpdatedAt(userDTO.getUpdatedAt());
         }
-        if (userDTO.getUserRoles() != null) {
-            final List<Role> UserRoles = roleRepository.findAllById(userDTO.getUserRoles());
-            if (UserRoles.size() != userDTO.getUserRoles().size()) {
-                throw new NotFoundException("one of User Roles not found");
-            }
-            user.setUserRoles(new HashSet<>(UserRoles));
+        if (!userDTO.getRoles().isEmpty()) {
+            user.setUserRoles(userDTO.getRoles().stream()
+                    .map(roleRepository::findByName)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toSet()));
         }
         return user;
     }

@@ -23,16 +23,16 @@ public class RoleSeeder {
     }
 
     public void seedRoles() {
-        if (!roleRepository.existsByName("ADMIN")) {
+        if (!roleRepository.existsByName("admin")) {
             Role adminRole = new Role();
-            adminRole.setName("ADMIN");
+            adminRole.setName("admin");
             adminRole.setRolePermissions(new HashSet<>(permissionRepository.findAll()));
             roleRepository.save(adminRole);
         }
 
-        if (!roleRepository.existsByName("TEACHER")) {
+        if (!roleRepository.existsByName("teacher")) {
             Role teacherRole = new Role();
-            teacherRole.setName("TEACHER");
+            teacherRole.setName("teacher");
             Set<Permission> teacherPermissions = permissionRepository.findByNameIn(Arrays.asList(
                     "COURSE:CREATE", "COURSE:READ", "COURSE:LIST", "COURSE:UPDATE",
                     "CLASSROOM:CREATE", "CLASSROOM:READ", "CLASSROOM:LIST", "CLASSROOM:UPDATE", "CLASSROOM:DELETE",
@@ -43,9 +43,9 @@ public class RoleSeeder {
             roleRepository.save(teacherRole);
         }
 
-        if (!roleRepository.existsByName("STUDENT")) {
+        if (!roleRepository.existsByName("student")) {
             Role studentRole = new Role();
-            studentRole.setName("STUDENT");
+            studentRole.setName("student");
             Set<Permission> studentPermissions = permissionRepository.findByNameIn(Arrays.asList(
                     "COURSE:READ", "CLASSROOM:READ", "ASSIGNMENT:READ",
                     "SUBMISSION:CREATE", "SUBMISSION:READ", "SUBMISSION:UPDATE"

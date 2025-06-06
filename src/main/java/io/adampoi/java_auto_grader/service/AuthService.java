@@ -3,9 +3,10 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.domain.Permission;
 import io.adampoi.java_auto_grader.domain.Role;
 import io.adampoi.java_auto_grader.domain.User;
-import io.adampoi.java_auto_grader.model.response.LoginRequestDTO;
 import io.adampoi.java_auto_grader.model.dto.RegisterRequestDTO;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
+import io.adampoi.java_auto_grader.model.response.LoginRequestDTO;
+import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,7 +16,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
@@ -26,11 +29,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     private final AuthenticationManager authenticationManager;
+    private final RoleRepository roleRepository;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.roleRepository = roleRepository;
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +98,15 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
-        user.setIsActive(true);
+        user.setIsActive(userDTO.isActive());
+        if (!userDTO.getRoles().isEmpty()) {
+            user.setUserRoles(userDTO.getRoles().stream()
+                    .map(roleRepository::findByName)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toSet()));
+        }
+
         return user;
     }
 

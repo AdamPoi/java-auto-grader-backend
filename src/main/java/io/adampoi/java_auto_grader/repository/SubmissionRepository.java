@@ -1,7 +1,6 @@
 package io.adampoi.java_auto_grader.repository;
 
 import io.adampoi.java_auto_grader.domain.Assignment;
-import io.adampoi.java_auto_grader.domain.Classroom;
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +15,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID>, J
 
     Submission findFirstByStudent(User user);
 
-    Submission findFirstByClassroom(Classroom classroom);
 
 }

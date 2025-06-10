@@ -39,25 +39,22 @@ public class Classroom {
     private OffsetDateTime enrollmentEndDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "course_id", referencedColumnName = "id", nullable = false)
     private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id",referencedColumnName = "id")
+    @JoinColumn(name = "teacher_id", referencedColumnName = "id")
     private User teacher;
 
-    @OneToMany(mappedBy = "classroom")
-    private Set<StudentClassroom> classroomStudentClassrooms;
-
-    @OneToMany(mappedBy = "classroom")
-    private Set<Submission> classroomSubmissions;
+    @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<StudentClassroom> classroomStudents;
 
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

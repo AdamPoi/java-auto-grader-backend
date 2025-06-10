@@ -6,7 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
@@ -49,22 +48,18 @@ public class Course {
     @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Classroom> courseClassrooms;
 
-    @OneToMany(mappedBy = "course")
-    private Set<TeacherCourse> courseTeacherCourses;
-
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> courseAssignments;
 
-    @CreatedDate
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

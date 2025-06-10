@@ -32,15 +32,15 @@ public class Permission {
     @Column(columnDefinition = "text")
     private String description;
 
-    @ManyToMany(mappedBy = "rolePermissions")
+    @ManyToMany(mappedBy = "rolePermissions", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Role> permissionRoles;
 
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

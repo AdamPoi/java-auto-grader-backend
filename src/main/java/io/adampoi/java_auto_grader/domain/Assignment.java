@@ -48,25 +48,23 @@ public class Assignment {
     private Integer maxAttempts;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "course_id", referencedColumnName = "id", nullable = false)
     private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_teacher_id",referencedColumnName = "id")
+    @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
-    @OneToMany(mappedBy = "assignment")
-    private Set<TestCase> assignmentTestCases;
 
     @OneToMany(mappedBy = "assignment")
     private Set<Submission> assignmentSubmissions;
 
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

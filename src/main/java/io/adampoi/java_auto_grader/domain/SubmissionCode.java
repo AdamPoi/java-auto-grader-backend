@@ -6,20 +6,17 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-
 @Entity
-@Table(name = "submission_test_results")
+@Table(name = "submission_codes")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class SubmissionTestResult {
+public class SubmissionCode {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -28,34 +25,27 @@ public class SubmissionTestResult {
     private UUID id;
 
     @Column(nullable = false)
-    private Boolean passed;
+    private String fileName;
+
+    @Column(nullable = false, columnDefinition = "text")
+    private String sourceCode;
 
     @Column
-    private Integer score;
-
-    @Column(columnDefinition = "text")
-    private String actualOutput;
-
-    @Column(columnDefinition = "text")
-    private String errorMessage;
+    private String packagePath;
 
     @Column
-    private Integer executionTime;
+    private String className;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submission_id",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "submission_id", referencedColumnName = "id", nullable = false)
     private Submission submission;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "test_case_id",referencedColumnName = "id", nullable = false)
-    private TestCase testCase;
-
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

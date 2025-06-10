@@ -29,10 +29,10 @@ public class RefreshToken {
     private String token;
 
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column
+    @Column(nullable = false)
     private Instant expiredAt;
 
     @OneToOne

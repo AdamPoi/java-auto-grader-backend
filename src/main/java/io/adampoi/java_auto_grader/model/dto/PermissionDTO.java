@@ -1,5 +1,6 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
@@ -19,6 +20,9 @@ public class PermissionDTO {
 
     @Size(max = 255, groups = {CreateGroup.class, UpdateGroup.class})
     private String description;
+
+    @JsonBackReference
+    private RoleDTO role;
 
     public interface CreateGroup extends Default {
     }

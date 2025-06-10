@@ -30,7 +30,6 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final CourseRepository courseRepository;
     private final ClassroomRepository classroomRepository;
-    private final TeacherCourseRepository teacherCourseRepository;
     private final StudentClassroomRepository studentClassroomRepository;
     private final AssignmentRepository assignmentRepository;
     private final SubmissionRepository submissionRepository;
@@ -38,7 +37,6 @@ public class UserService {
 
     public UserService(final UserRepository userRepository, final RoleRepository roleRepository,
                        final CourseRepository courseRepository, final ClassroomRepository classroomRepository,
-                       final TeacherCourseRepository teacherCourseRepository,
                        final StudentClassroomRepository studentClassroomRepository,
                        final AssignmentRepository assignmentRepository,
                        final SubmissionRepository submissionRepository,
@@ -47,7 +45,6 @@ public class UserService {
         this.roleRepository = roleRepository;
         this.courseRepository = courseRepository;
         this.classroomRepository = classroomRepository;
-        this.teacherCourseRepository = teacherCourseRepository;
         this.studentClassroomRepository = studentClassroomRepository;
         this.assignmentRepository = assignmentRepository;
         this.submissionRepository = submissionRepository;
@@ -77,7 +74,7 @@ public class UserService {
 
     public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
-       
+
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         mapToEntity(userDTO, user);
         User savedUser = userRepository.save(user);
@@ -161,12 +158,7 @@ public class UserService {
             referencedWarning.addParam(teacherClassroom.getId());
             return referencedWarning;
         }
-        final TeacherCourse teacherTeacherCourse = teacherCourseRepository.findFirstByTeacher(user);
-        if (teacherTeacherCourse != null) {
-            referencedWarning.setKey("user.teacherCourse.teacher.referenced");
-            referencedWarning.addParam(teacherTeacherCourse.getId());
-            return referencedWarning;
-        }
+
         final StudentClassroom studentStudentClassroom = studentClassroomRepository.findFirstByStudent(user);
         if (studentStudentClassroom != null) {
             referencedWarning.setKey("user.studentClassroom.student.referenced");

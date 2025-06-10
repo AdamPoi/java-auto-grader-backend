@@ -24,26 +24,24 @@ public class StudentClassroom {
     @UuidGenerator
     private UUID id;
 
-    @Column
-    private OffsetDateTime enrollmentDate;
-
-    @Column
-    private Boolean isActive;
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", referencedColumnName = "id")
+    @JoinColumn(name = "student_id", referencedColumnName = "id", unique = true)
     private User student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "classroom_id", referencedColumnName = "id")
+    @JoinColumn(name = "classroom_id", referencedColumnName = "id", unique = true)
     private Classroom classroom;
 
+
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Entity
@@ -51,36 +52,32 @@ public class User implements UserDetails {
     )
     private Set<Role> userRoles;
 
-    @OneToMany(mappedBy = "createdByTeacher")
+    @OneToMany(mappedBy = "createdByTeacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Course> teacherCourses;
 
-    @OneToMany(mappedBy = "teacher")
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Classroom> teacherClassrooms;
 
-    @OneToMany(mappedBy = "teacher")
-    private Set<TeacherCourse> teacherTeacherCourses;
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<StudentClassroom> studentClassrooms;
 
-    @OneToMany(mappedBy = "student")
-    private Set<StudentClassroom> studentStudentClassrooms;
-
-    @OneToMany(mappedBy = "createdByTeacher")
+    @OneToMany(mappedBy = "createdByTeacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> teacherAssignments;
 
-    @OneToMany(mappedBy = "student")
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Submission> studentSubmissions;
 
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
-
         if (userRoles != null && !userRoles.isEmpty()) {
             for (Role role : userRoles) {
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
@@ -92,7 +89,7 @@ public class User implements UserDetails {
                 }
             }
         } else {
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
         }
         return authorities;
     }
@@ -102,4 +99,33 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
+
+    public boolean hasRole(String roleName) {
+        return userRoles.stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
+    }
+
+    public boolean isAdmin() {
+        return hasRole("ADMIN");
+    }
+
+    public boolean isSuperAdmin() {
+        return hasRole("SUPERADMIN");
+    }
+
+    public boolean isTeacher() {
+        return hasRole("TEACHER");
+    }
+
+    public boolean isStudent() {
+        return hasRole("STUDENT");
+    }
+
+    public Set<String> getRoleNames() {
+        return userRoles.stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+    }
+
+
 }

@@ -6,8 +6,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
@@ -46,33 +44,29 @@ public class Submission {
     @Column
     private OffsetDateTime gradingCompletedAt;
 
-    @Column(nullable = false, length = 512)
-    private String submissionBasePath;
+    @Column
+    private String mainClassName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignment_id",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)
     private Assignment assignment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "student_id", referencedColumnName = "id", nullable = false)
     private User student;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "classroom_id",referencedColumnName = "id", nullable = false)
-    private Classroom classroom;
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<GradeExecution> gradeExecutions;
 
-    @OneToMany(mappedBy = "submission")
-    private Set<SubmissionFile> submissionSubmissionFiles;
-
-    @OneToMany(mappedBy = "submission")
-    private Set<SubmissionTestResult> submissionSubmissionTestResults;
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<SubmissionCode> submissionCodes;
 
     @CreationTimestamp
-    @Column
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column
+    @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
 
 }

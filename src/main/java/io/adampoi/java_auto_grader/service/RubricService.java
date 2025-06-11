@@ -1,0 +1,126 @@
+package io.adampoi.java_auto_grader.service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import io.adampoi.java_auto_grader.domain.Rubric;
+import io.adampoi.java_auto_grader.model.dto.RubricDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
+import io.adampoi.java_auto_grader.repository.RubricRepository;
+import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Transactional
+@Slf4j
+public class RubricService {
+
+    private final RubricRepository rubricRepository;
+
+    public RubricService(final RubricRepository rubricRepository) {
+        this.rubricRepository = rubricRepository;
+    }
+
+    public PageResponse<RubricDTO> findAll(QueryFilter<Rubric> filter, Pageable pageable) {
+        final Page<Rubric> page = rubricRepository.findAll(filter, pageable);
+
+        Page<RubricDTO> dtoPage = new PageImpl<>(
+                page.getContent()
+                        .stream()
+                        .map(rubric -> mapToDTO(rubric, new RubricDTO()))
+                        .collect(Collectors.toList()),
+                pageable,
+                page.getTotalElements());
+        return PageResponse.from(dtoPage);
+    }
+
+    public RubricDTO get(final UUID rubricId) {
+        return rubricRepository.findById(rubricId)
+                .map(rubric -> mapToDTO(rubric, new RubricDTO()))
+                .orElseThrow(() -> new EntityNotFoundException("Rubric not found"));
+    }
+
+    public RubricDTO create(final RubricDTO rubricDTO) {
+        final Rubric rubric = new Rubric();
+        mapToEntity(rubricDTO, rubric);
+        Rubric savedRubric = rubricRepository.save(rubric);
+        return mapToDTO(savedRubric, new RubricDTO());
+
+    }
+
+    public RubricDTO update(final UUID rubricId, final RubricDTO rubricDTO) {
+        final Rubric rubric = rubricRepository.findById(rubricId)
+                .orElseThrow(() -> new EntityNotFoundException("Rubric not found"));
+        mapToEntity(rubricDTO, rubric);
+        Rubric savedRubric = rubricRepository.save(rubric);
+        return mapToDTO(savedRubric, new RubricDTO());
+
+    }
+
+    public void delete(final UUID rubricId) {
+        rubricRepository.deleteById(rubricId);
+    }
+
+    private RubricDTO mapToDTO(final Rubric rubric, final RubricDTO rubricDTO) {
+        rubricDTO.setId(rubric.getId());
+        rubricDTO.setName(rubric.getName());
+        rubricDTO.setDescription(rubric.getDescription());
+        rubricDTO.setMaxPoints(rubric.getMaxPoints());
+        rubricDTO.setDisplayOrder(rubric.getDisplayOrder());
+        rubricDTO.setIsActive(rubric.getIsActive());
+        rubricDTO.setAssignment(rubric.getAssignment().getId());
+        // Assuming RubricGrade has an ID and you want to map a Set of RubricGrade IDs
+        rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
+                .map(rubricGrade -> rubricGrade.getId()) // Assuming RubricGrade has getId()
+                .collect(Collectors.toSet()));
+        rubricDTO.setCreatedAt(rubric.getCreatedAt());
+        rubricDTO.setUpdatedAt(rubric.getUpdatedAt());
+        return rubricDTO;
+    }
+
+    private Rubric mapToEntity(final RubricDTO rubricDTO, final Rubric rubric) {
+        if (rubricDTO.getName() != null) {
+            rubric.setName(rubricDTO.getName());
+        }
+        if (rubricDTO.getDescription() != null) {
+            rubric.setDescription(rubricDTO.getDescription());
+        }
+        if (rubricDTO.getMaxPoints() != null) {
+            rubric.setMaxPoints(rubricDTO.getMaxPoints());
+        }
+        if (rubricDTO.getDisplayOrder() != null) {
+            rubric.setDisplayOrder(rubricDTO.getDisplayOrder());
+        }
+        if (rubricDTO.getIsActive() != null) {
+            rubric.setIsActive(rubricDTO.getIsActive());
+        }
+        // Assuming you have a way to fetch the Assignment entity by ID
+        // rubric.setAssignment(assignmentRepository.findById(rubricDTO.getAssignment()).orElse(null));
+        // Assuming you have a way to fetch RubricGrade entities by ID
+        // rubric.setRubricGrades(rubricDTO.getRubricGrades().stream()
+        // .map(rubricGradeId ->
+        // rubricGradeRepository.findById(rubricGradeId).orElse(null))
+        // .filter(java.util.Objects::nonNull)
+        // .collect(Collectors.toSet()));
+        if (rubricDTO.getCreatedAt() != null) {
+            rubric.setCreatedAt(rubricDTO.getCreatedAt());
+        }
+        if (rubricDTO.getUpdatedAt() != null) {
+            rubric.setUpdatedAt(rubricDTO.getUpdatedAt());
+        }
+        return rubric;
+    }
+
+    public ReferencedWarning getReferencedWarning(final UUID rubricId) {
+        // Implement logic to check for referenced entities if necessary
+        return null;
+    }
+}

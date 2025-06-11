@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.model.request.UserCreateRequest;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
-import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -34,15 +33,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserResourceTest {
 
     @Autowired
-    ObjectMapper mapper;
-    @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
     @MockitoBean
     private UserService userService;
-    @MockitoBean
-    private RoleRepository roleRepository;
 
 
     @Test

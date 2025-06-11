@@ -1,0 +1,248 @@
+2025-06-11 08:14:45.777 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricResourceTest]: RubricResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:14:46.073 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricResourceTest
+2025-06-11 08:15:18.353 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:15:18.474 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:15:48.104 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RoleResourceTest]: RoleResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:15:48.235 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RoleResourceTest
+2025-06-11 08:15:59.710 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:15:59.845 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:16:31.416 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricResourceTest]: RubricResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:16:31.532 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricResourceTest
+2025-06-11 08:19:34.359 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricResourceTest]: RubricResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:19:34.508 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricResourceTest
+2025-06-11 08:19:49.550 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:19:49.675 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:20:34.508 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:20:34.633 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:22:24.418 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RoleResourceTest]: RoleResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:22:24.624 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RoleResourceTest
+2025-06-11 08:22:38.975 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:22:39.098 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:22:52.299 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:22:52.451 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:23:03.650 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:23:03.779 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:23:19.518 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:23:19.654 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:23:44.815 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RoleResourceTest]: RoleResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:23:44.951 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RoleResourceTest
+2025-06-11 08:24:10.461 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:24:10.593 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:25:29.206 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:25:29.341 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:26:12.956 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:26:13.094 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:26:33.806 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:26:33.940 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 08:26:45.942 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RoleResourceTest]: RoleResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:26:46.111 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RoleResourceTest
+2025-06-11 08:26:51.997 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricResourceTest]: RubricResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:26:52.156 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricResourceTest
+2025-06-11 08:27:22.528 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RoleResourceTest]: RoleResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:27:22.827 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RoleResourceTest
+2025-06-11 08:27:36.765 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:27:36.922 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:28:02.482 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:28:02.603 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 08:28:12.279 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 08:28:12.402 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 15:05:12.944 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:05:13.142 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest
+2025-06-11 15:06:21.433 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:06:21.560 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:23:38.958 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.PermissionResourceTest]: PermissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:23:39.096 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.PermissionResourceTest
+2025-06-11 15:23:50.191 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RoleResourceTest]: RoleResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:23:50.333 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RoleResourceTest
+2025-06-11 15:24:03.412 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:24:03.543 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:24:56.640 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.ClassroomResourceTest]: ClassroomResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:24:56.764 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.ClassroomResourceTest
+2025-06-11 15:25:17.458 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.ClassroomResourceTest]: ClassroomResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:25:17.608 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.ClassroomResourceTest
+2025-06-11 15:27:14.558 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.ClassroomResourceTest]: ClassroomResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:27:14.701 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.ClassroomResourceTest
+2025-06-11 15:28:07.704 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.ClassroomResourceTest]: ClassroomResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:28:07.847 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.ClassroomResourceTest
+2025-06-11 15:29:24.298 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:29:24.431 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:31:58.659 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:31:58.794 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:32:12.630 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.CourseResourceTest]: CourseResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:32:12.754 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.CourseResourceTest
+2025-06-11 15:33:20.836 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.CourseResourceTest]: CourseResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:33:20.982 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.CourseResourceTest
+2025-06-11 15:33:34.697 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.GradeExecutionResourceTest]: GradeExecutionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:33:34.820 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.GradeExecutionResourceTest
+2025-06-11 15:34:03.597 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricGradeResourceTest]: RubricGradeResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:34:03.757 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricGradeResourceTest
+2025-06-11 15:34:13.726 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricResourceTest]: RubricResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:34:13.853 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricResourceTest
+2025-06-11 15:34:18.418 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.StudentClassroomResourceTest]: StudentClassroomResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:34:18.586 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.StudentClassroomResourceTest
+2025-06-11 15:34:32.328 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.SubmissionCodeResourceTest]: SubmissionCodeResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:34:32.466 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.SubmissionCodeResourceTest
+2025-06-11 15:34:43.321 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.RubricResourceTest]: RubricResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:34:43.450 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.RubricResourceTest
+2025-06-11 15:34:53.502 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.SubmissionResourceTest]: SubmissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:34:53.628 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.SubmissionResourceTest
+2025-06-11 15:35:21.885 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:35:22.052 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:35:31.328 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:35:31.466 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:40:46.106 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:40:46.231 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:41:50.526 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:41:50.661 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:51:04.091 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:51:04.231 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:53:38.079 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:53:38.198 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:54:04.516 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:54:04.638 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:54:21.932 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:54:22.050 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 15:59:46.655 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 15:59:46.786 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 16:00:28.916 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:00:29.068 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 16:00:53.488 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:00:53.620 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 16:01:12.390 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.CourseResourceTest]: CourseResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:01:12.531 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.CourseResourceTest
+2025-06-11 16:02:17.676 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.CourseResourceTest]: CourseResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:02:17.818 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.CourseResourceTest
+2025-06-11 16:02:26.554 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:02:26.670 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 16:04:20.239 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.StudentClassroomResourceTest]: StudentClassroomResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:04:20.392 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.StudentClassroomResourceTest
+2025-06-11 16:05:01.541 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.SubmissionResourceTest]: SubmissionResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:05:01.662 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.SubmissionResourceTest
+2025-06-11 16:06:58.797 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.AssignmentResourceTest]: AssignmentResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:06:58.921 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.AssignmentResourceTest
+2025-06-11 16:08:10.244 [Test worker] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils [NO_CID] -
+                Could not detect default configuration classes for test class [io.adampoi.java_auto_grader.rest.UserResourceTest]: UserResourceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2025-06-11 16:08:10.371 [Test worker] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper [NO_CID] -
+                Found @SpringBootConfiguration io.adampoi.java_auto_grader.JavaAutoGraderApplication for test class io.adampoi.java_auto_grader.rest.UserResourceTest

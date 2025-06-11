@@ -42,14 +42,14 @@ public class PermissionService {
     public PageResponse<PermissionDTO> findAll(QueryFilter<Permission> filter, Pageable pageable) {
         final Page<Permission> page = permissionRepository.findAll(filter, pageable);
 
-        Page<io.adampoi.java_auto_grader.model.dto.PermissionDTO> dtoPage = new PageImpl<>(
+        Page<PermissionDTO> dtoPage = new PageImpl<>(
                 page.getContent()
                         .stream()
-                        .map(permission -> mapToDTO(permission, new io.adampoi.java_auto_grader.model.dto.PermissionDTO()))
+                        .map(permission -> mapToDTO(permission,
+                                new PermissionDTO()))
                         .collect(Collectors.toList()),
                 pageable,
-                page.getTotalElements()
-        );
+                page.getTotalElements());
         return PageResponse.from(dtoPage);
     }
 
@@ -59,17 +59,19 @@ public class PermissionService {
                 .orElseThrow(() -> new NotFoundException("Permission not found"));
     }
 
-    public UUID create(final PermissionDTO permissionDTO) {
+    public PermissionDTO create(final PermissionDTO permissionDTO) {
         final Permission permission = new Permission();
         mapToEntity(permissionDTO, permission);
-        return permissionRepository.save(permission).getId();
+        Permission savedPermission = permissionRepository.save(permission);
+        return mapToDTO(savedPermission, new PermissionDTO());
     }
 
-    public void update(final UUID permissionId, final PermissionDTO permissionDTO) {
+    public PermissionDTO update(final UUID permissionId, final PermissionDTO permissionDTO) {
         final Permission permission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new NotFoundException("Permission not found"));
         mapToEntity(permissionDTO, permission);
-        permissionRepository.save(permission);
+        Permission savedPermission = permissionRepository.save(permission);
+        return mapToDTO(savedPermission, new PermissionDTO());
     }
 
     public void delete(final UUID permissionId) {
@@ -103,5 +105,4 @@ public class PermissionService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
-
 }

@@ -38,14 +38,13 @@ public class RoleService {
     public PageResponse<RoleDTO> findAll(QueryFilter<Role> filter, Pageable pageable) {
         final Page<Role> page = roleRepository.findAll(filter, pageable);
 
-        Page<io.adampoi.java_auto_grader.model.dto.RoleDTO> dtoPage = new PageImpl<>(
+        Page<RoleDTO> dtoPage = new PageImpl<>(
                 page.getContent()
                         .stream()
-                        .map(role -> mapToDTO(role, new io.adampoi.java_auto_grader.model.dto.RoleDTO()))
+                        .map(role -> mapToDTO(role, new RoleDTO()))
                         .collect(Collectors.toList()),
                 pageable,
-                page.getTotalElements()
-        );
+                page.getTotalElements());
         return PageResponse.from(dtoPage);
     }
 
@@ -104,5 +103,4 @@ public class RoleService {
         }
         return null;
     }
-
 }

@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.model.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.groups.Default;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,7 +21,7 @@ public class SubmissionDTO {
     @NotNull
     private Integer attemptNumber;
 
-    @Size(max = 255)
+    @Size(min = 3, max = 255)
     private String status;
 
     private String graderFeedback;
@@ -29,17 +30,15 @@ public class SubmissionDTO {
 
     private OffsetDateTime gradingCompletedAt;
 
-    @NotNull
-    @Size(max = 512)
-    private String submissionBasePath;
-
-    @NotNull
+    @NotNull(groups = CreateGroup.class)
     private UUID assignment;
 
-    @NotNull
+    @NotNull(groups = CreateGroup.class)
     private UUID student;
 
-    @NotNull
-    private UUID classroom;
+    public interface CreateGroup extends Default {
+    }
 
+    public interface UpdateGroup extends Default {
+    }
 }

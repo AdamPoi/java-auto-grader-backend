@@ -238,36 +238,35 @@ public class RubricResourceTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // Validation tests for RubricDTO would be needed here, similar to
-    // UserResourceTest
-    // @Test
-    // @WithMockUser(authorities = {"RUBRIC:CREATE"})
-    // public void createRubric_WithValidationError_ReturnsBadRequest() throws
-    // Exception {
-    // RubricDTO rubricDTO = new RubricDTO();
-    // rubricDTO.setName(""); // Example validation error
 
-    // mockMvc.perform(post("/api/rubrics")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(rubricDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"RUBRIC:CREATE"})
+    public void createRubric_WithValidationError_ReturnsBadRequest() throws
+            Exception {
+        RubricDTO rubricDTO = new RubricDTO();
+        rubricDTO.setName("");
 
-    // @Test
-    // @WithMockUser(authorities = {"RUBRIC:UPDATE"})
-    // public void updateRubric_WithValidationError_ReturnsBadRequest() throws
-    // Exception {
-    // UUID rubricId = UUID.randomUUID();
-    // RubricDTO rubricDTO = new RubricDTO();
-    // rubricDTO.setName(""); // Example validation error
+        mockMvc.perform(post("/api/rubrics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 
-    // mockMvc.perform(patch("/api/rubrics/" + rubricId)
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(rubricDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"RUBRIC:UPDATE"})
+    public void updateRubric_WithValidationError_ReturnsBadRequest() throws
+            Exception {
+        UUID rubricId = UUID.randomUUID();
+        RubricDTO rubricDTO = new RubricDTO();
+        rubricDTO.setName("");
+
+        mockMvc.perform(patch("/api/rubrics/" + rubricId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 }

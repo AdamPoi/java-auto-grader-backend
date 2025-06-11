@@ -20,10 +20,10 @@ public class StudentClassroomDTO {
     @JsonProperty("isActive")
     private Boolean isActive;
 
-    @NotNull(groups = CreateGroup.class)
+    @NotNull
     private UUID student;
 
-    @NotNull(groups = CreateGroup.class)
+    @NotNull
     private UUID classroom;
 
     public interface CreateGroup extends Default {

@@ -32,8 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CourseResourceTest {
 
     @Autowired
-    ObjectMapper mapper;
-    @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
@@ -51,7 +49,7 @@ public class CourseResourceTest {
         Page<CourseDTO> courseDTOPage = new PageImpl<>(courseDTOList);
 
         when(courseService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(courseDTOPage); // Note: CourseService.findAll now returns Page<CourseDTO>
+                .thenReturn(courseDTOPage);
 
         mockMvc.perform(get("/api/courses")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -243,36 +241,35 @@ public class CourseResourceTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // Validation tests for CourseDTO would be needed here, similar to
-    // UserResourceTest
-    // @Test
-    // @WithMockUser(authorities = {"COURSE:CREATE"})
-    // public void createCourse_WithValidationError_ReturnsBadRequest() throws
-    // Exception {
-    // CourseDTO courseDTO = new CourseDTO();
-    // courseDTO.setName(""); // Example validation error
 
-    // mockMvc.perform(post("/api/courses")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(courseDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"COURSE:CREATE"})
+    public void createCourse_WithValidationError_ReturnsBadRequest() throws
+            Exception {
+        CourseDTO courseDTO = new CourseDTO();
+        courseDTO.setName("");
 
-    // @Test
-    // @WithMockUser(authorities = {"COURSE:UPDATE"})
-    // public void updateCourse_WithValidationError_ReturnsBadRequest() throws
-    // Exception {
-    // UUID courseId = UUID.randomUUID();
-    // CourseDTO courseDTO = new CourseDTO();
-    // courseDTO.setName(""); // Example validation error
+        mockMvc.perform(post("/api/courses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(courseDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 
-    // mockMvc.perform(patch("/api/courses/" + courseId)
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(courseDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"COURSE:UPDATE"})
+    public void updateCourse_WithValidationError_ReturnsBadRequest() throws
+            Exception {
+        UUID courseId = UUID.randomUUID();
+        CourseDTO courseDTO = new CourseDTO();
+        courseDTO.setName("");
+
+        mockMvc.perform(patch("/api/courses/" + courseId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(courseDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 }

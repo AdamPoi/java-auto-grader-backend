@@ -20,12 +20,12 @@ public class CourseDTO {
 
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
-    @Size(max = 20)
+    @Size(min = 3, max = 20)
     private String Code;
 
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
-    @Size(max = 255)
+    @Size(min = 3, max = 255)
     private String Name;
 
     private String description;

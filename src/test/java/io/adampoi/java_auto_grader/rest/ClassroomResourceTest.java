@@ -51,7 +51,7 @@ public class ClassroomResourceTest {
         Page<ClassroomDTO> classroomDTOPage = new PageImpl<>(classroomDTOList);
 
         when(classroomService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(classroomDTOPage); // Note: ClassroomService.findAll now returns Page<ClassroomDTO>
+                .thenReturn(classroomDTOPage);
 
         mockMvc.perform(get("/api/classrooms")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -245,7 +245,7 @@ public class ClassroomResourceTest {
     public void createClassroom_WithValidationError_ReturnsBadRequest() throws
             Exception {
         ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName(""); // Example validation error
+        classroomDTO.setName("");
 
         mockMvc.perform(post("/api/classrooms")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -261,7 +261,7 @@ public class ClassroomResourceTest {
             Exception {
         UUID classroomId = UUID.randomUUID();
         ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName(""); // Example validation error
+        classroomDTO.setName("");
 
         mockMvc.perform(patch("/api/classrooms/" + classroomId)
                         .contentType(MediaType.APPLICATION_JSON)

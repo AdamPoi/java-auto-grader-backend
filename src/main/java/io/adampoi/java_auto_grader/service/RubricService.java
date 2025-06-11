@@ -1,13 +1,5 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.Rubric;
 import io.adampoi.java_auto_grader.model.dto.RubricDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
@@ -17,6 +9,13 @@ import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -77,9 +76,8 @@ public class RubricService {
         rubricDTO.setDisplayOrder(rubric.getDisplayOrder());
         rubricDTO.setIsActive(rubric.getIsActive());
         rubricDTO.setAssignment(rubric.getAssignment().getId());
-        // Assuming RubricGrade has an ID and you want to map a Set of RubricGrade IDs
         rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
-                .map(rubricGrade -> rubricGrade.getId()) // Assuming RubricGrade has getId()
+                .map(rubricGrade -> rubricGrade.getId())
                 .collect(Collectors.toSet()));
         rubricDTO.setCreatedAt(rubric.getCreatedAt());
         rubricDTO.setUpdatedAt(rubric.getUpdatedAt());
@@ -102,9 +100,7 @@ public class RubricService {
         if (rubricDTO.getIsActive() != null) {
             rubric.setIsActive(rubricDTO.getIsActive());
         }
-        // Assuming you have a way to fetch the Assignment entity by ID
         // rubric.setAssignment(assignmentRepository.findById(rubricDTO.getAssignment()).orElse(null));
-        // Assuming you have a way to fetch RubricGrade entities by ID
         // rubric.setRubricGrades(rubricDTO.getRubricGrades().stream()
         // .map(rubricGradeId ->
         // rubricGradeRepository.findById(rubricGradeId).orElse(null))
@@ -120,7 +116,7 @@ public class RubricService {
     }
 
     public ReferencedWarning getReferencedWarning(final UUID rubricId) {
-        // Implement logic to check for referenced entities if necessary
+        // TODO: Implement logic to check for referenced entities if necessary
         return null;
     }
 }

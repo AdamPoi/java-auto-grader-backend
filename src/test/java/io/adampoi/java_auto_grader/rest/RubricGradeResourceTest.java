@@ -1,22 +1,10 @@
 package io.adampoi.java_auto_grader.rest;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.adampoi.java_auto_grader.domain.RubricGrade;
+import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
+import io.adampoi.java_auto_grader.service.RubricGradeService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,19 +16,23 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
-import io.adampoi.java_auto_grader.domain.RubricGrade;
-import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
-import io.adampoi.java_auto_grader.service.RubricGradeService;
-import jakarta.persistence.EntityNotFoundException;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 public class RubricGradeResourceTest {
 
-    @Autowired
-    ObjectMapper mapper;
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -49,7 +41,7 @@ public class RubricGradeResourceTest {
     private RubricGradeService rubricGradeService;
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:LIST" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:LIST"})
     public void getAllRubricGrades_ReturnsOk() throws Exception {
         RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
         rubricGradeDTO.setId(UUID.randomUUID());
@@ -59,15 +51,15 @@ public class RubricGradeResourceTest {
         Page<RubricGradeDTO> rubricGradeDTOPage = new PageImpl<>(rubricGradeDTOList);
 
         when(rubricGradeService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(rubricGradeDTOPage); // Note: RubricGradeService.findAll now returns Page<RubricGradeDTO>
+                .thenReturn(rubricGradeDTOPage);
 
         mockMvc.perform(get("/api/rubric-grades")
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:CREATE" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:CREATE"})
     public void createRubricGrade_ReturnsCreated() throws Exception {
         RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
         rubricGradeDTO.setName("New Rubric Grade");
@@ -91,8 +83,8 @@ public class RubricGradeResourceTest {
         when(rubricGradeService.create(org.mockito.ArgumentMatchers.any())).thenReturn(createdRubricGradeDTO);
 
         mockMvc.perform(post("/api/rubric-grades")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.name").value("New Rubric Grade"))
@@ -105,7 +97,7 @@ public class RubricGradeResourceTest {
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:READ" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:READ"})
     public void getRubricGrade_ReturnsOk() throws Exception {
         RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
         rubricGradeDTO.setId(UUID.randomUUID());
@@ -114,13 +106,13 @@ public class RubricGradeResourceTest {
         when(rubricGradeService.get(rubricGradeDTO.getId())).thenReturn(rubricGradeDTO);
 
         mockMvc.perform(get("/api/rubric-grades/" + rubricGradeDTO.getId())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value(rubricGradeDTO.getName()));
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:UPDATE" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:UPDATE"})
     public void updateRubricGrade_ReturnsOk() throws Exception {
         UUID rubricGradeId = UUID.randomUUID();
         RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
@@ -140,8 +132,8 @@ public class RubricGradeResourceTest {
         when(rubricGradeService.update(eq(rubricGradeId), any(RubricGradeDTO.class))).thenReturn(updatedRubricGradeDTO);
 
         mockMvc.perform(patch("/api/rubric-grades/" + rubricGradeId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(rubricGradeId.toString()))
                 .andExpect(jsonPath("$.data.name").value("Updated Rubric Grade"))
@@ -149,7 +141,7 @@ public class RubricGradeResourceTest {
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:DELETE" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:DELETE"})
     public void deleteRubricGrade_ReturnsOk() throws Exception {
         UUID rubricGradeId = UUID.randomUUID();
         doNothing().when(rubricGradeService).delete(rubricGradeId);
@@ -159,18 +151,18 @@ public class RubricGradeResourceTest {
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:READ" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:READ"})
     public void getRubricGrade_NotFound_ReturnsNotFound() throws Exception {
         UUID rubricGradeId = UUID.randomUUID();
         when(rubricGradeService.get(rubricGradeId)).thenThrow(new EntityNotFoundException("RubricGrade not found"));
 
         mockMvc.perform(get("/api/rubric-grades/" + rubricGradeId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:UPDATE" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:UPDATE"})
     public void updateRubricGrade_NotFound_ReturnsNotFound() throws Exception {
         UUID rubricGradeId = UUID.randomUUID();
         RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
@@ -181,13 +173,13 @@ public class RubricGradeResourceTest {
                 .update(org.mockito.ArgumentMatchers.eq(rubricGradeId), org.mockito.ArgumentMatchers.any());
 
         mockMvc.perform(patch("/api/rubric-grades/" + rubricGradeId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser(authorities = { "RUBRIC_GRADE:DELETE" })
+    @WithMockUser(authorities = {"RUBRIC_GRADE:DELETE"})
     public void deleteRubricGrade_NotFound_ReturnsNotFound() throws Exception {
         UUID rubricGradeId = UUID.randomUUID();
         doThrow(new EntityNotFoundException("RubricGrade not found")).when(rubricGradeService).delete(rubricGradeId);
@@ -200,7 +192,7 @@ public class RubricGradeResourceTest {
     @WithMockUser(authorities = {})
     public void getAllRubricGrades_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/rubric-grades")
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -209,7 +201,7 @@ public class RubricGradeResourceTest {
     public void getRubricGradeById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         UUID rubricGradeId = UUID.randomUUID();
         mockMvc.perform(get("/api/rubric-grades/" + rubricGradeId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -220,8 +212,8 @@ public class RubricGradeResourceTest {
         rubricGradeDTO.setName("New Rubric Grade");
 
         mockMvc.perform(post("/api/rubric-grades")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -237,8 +229,8 @@ public class RubricGradeResourceTest {
                 .update(org.mockito.ArgumentMatchers.eq(rubricGradeId), org.mockito.ArgumentMatchers.any());
 
         mockMvc.perform(patch("/api/rubric-grades/" + rubricGradeId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -251,36 +243,35 @@ public class RubricGradeResourceTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // Validation tests for RubricGradeDTO would be needed here, similar to
-    // UserResourceTest
-    // @Test
-    // @WithMockUser(authorities = {"RUBRIC_GRADE:CREATE"})
-    // public void createRubricGrade_WithValidationError_ReturnsBadRequest() throws
-    // Exception {
-    // RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
-    // rubricGradeDTO.setName(""); // Example validation error
 
-    // mockMvc.perform(post("/api/rubric-grades")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(rubricGradeDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"RUBRIC_GRADE:CREATE"})
+    public void createRubricGrade_WithValidationError_ReturnsBadRequest() throws
+            Exception {
+        RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
+        rubricGradeDTO.setName("");
 
-    // @Test
-    // @WithMockUser(authorities = {"RUBRIC_GRADE:UPDATE"})
-    // public void updateRubricGrade_WithValidationError_ReturnsBadRequest() throws
-    // Exception {
-    // UUID rubricGradeId = UUID.randomUUID();
-    // RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
-    // rubricGradeDTO.setName(""); // Example validation error
+        mockMvc.perform(post("/api/rubric-grades")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 
-    // mockMvc.perform(patch("/api/rubric-grades/" + rubricGradeId)
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(rubricGradeDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"RUBRIC_GRADE:UPDATE"})
+    public void updateRubricGrade_WithValidationError_ReturnsBadRequest() throws
+            Exception {
+        UUID rubricGradeId = UUID.randomUUID();
+        RubricGradeDTO rubricGradeDTO = new RubricGradeDTO();
+        rubricGradeDTO.setName("");
+
+        mockMvc.perform(patch("/api/rubric-grades/" + rubricGradeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(rubricGradeDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 }

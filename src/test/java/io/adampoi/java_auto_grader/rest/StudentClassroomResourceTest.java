@@ -50,8 +50,7 @@ public class StudentClassroomResourceTest {
         Page<StudentClassroomDTO> studentClassroomDTOPage = new PageImpl<>(studentClassroomDTOList);
 
         when(studentClassroomService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(studentClassroomDTOPage); // Note: StudentClassroomService.findAll now returns
-        // Page<StudentClassroomDTO>
+                .thenReturn(studentClassroomDTOPage);
 
         mockMvc.perform(get("/api/studentClassrooms")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -105,6 +104,8 @@ public class StudentClassroomResourceTest {
         UUID studentClassroomId = UUID.randomUUID();
         StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
         studentClassroomDTO.setIsActive(false);
+        studentClassroomDTO.setStudent(UUID.randomUUID());
+        studentClassroomDTO.setClassroom(UUID.randomUUID());
 
         StudentClassroomDTO updatedStudentClassroomDTO = new StudentClassroomDTO();
         updatedStudentClassroomDTO.setId(studentClassroomId);
@@ -151,6 +152,8 @@ public class StudentClassroomResourceTest {
         UUID studentClassroomId = UUID.randomUUID();
         StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
         studentClassroomDTO.setIsActive(true);
+        studentClassroomDTO.setStudent(UUID.randomUUID());
+        studentClassroomDTO.setClassroom(UUID.randomUUID());
 
         doThrow(new EntityNotFoundException("StudentClassroom not found"))
                 .when(studentClassroomService)
@@ -210,6 +213,8 @@ public class StudentClassroomResourceTest {
         UUID studentClassroomId = UUID.randomUUID();
         StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
         studentClassroomDTO.setIsActive(false);
+        studentClassroomDTO.setStudent(UUID.randomUUID());
+        studentClassroomDTO.setClassroom(UUID.randomUUID());
 
         doThrow(new EntityNotFoundException("StudentClassroom not found"))
                 .when(studentClassroomService)
@@ -230,36 +235,35 @@ public class StudentClassroomResourceTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // Validation tests for StudentClassroomDTO would be needed here, similar to
-    // UserResourceTest
-    // @Test
-    // @WithMockUser(authorities = {"STUDENT_CLASSROOM:CREATE"})
-    // public void createStudentClassroom_WithValidationError_ReturnsBadRequest()
-    // throws Exception {
-    // StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
-    // studentClassroomDTO.setStudent(null); // Example validation error
 
-    // mockMvc.perform(post("/api/studentClassrooms")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(studentClassroomDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"STUDENT_CLASSROOM:CREATE"})
+    public void createStudentClassroom_WithValidationError_ReturnsBadRequest()
+            throws Exception {
+        StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
+        studentClassroomDTO.setStudent(null);
 
-    // @Test
-    // @WithMockUser(authorities = {"STUDENT_CLASSROOM:UPDATE"})
-    // public void updateStudentClassroom_WithValidationError_ReturnsBadRequest()
-    // throws Exception {
-    // UUID studentClassroomId = UUID.randomUUID();
-    // StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
-    // studentClassroomDTO.setStudent(null); // Example validation error
+        mockMvc.perform(post("/api/studentClassrooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(studentClassroomDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 
-    // mockMvc.perform(patch("/api/studentClassrooms/" + studentClassroomId)
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(studentClassroomDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"STUDENT_CLASSROOM:UPDATE"})
+    public void updateStudentClassroom_WithValidationError_ReturnsBadRequest()
+            throws Exception {
+        UUID studentClassroomId = UUID.randomUUID();
+        StudentClassroomDTO studentClassroomDTO = new StudentClassroomDTO();
+        studentClassroomDTO.setStudent(null);
+
+        mockMvc.perform(patch("/api/studentClassrooms/" + studentClassroomId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(studentClassroomDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 }

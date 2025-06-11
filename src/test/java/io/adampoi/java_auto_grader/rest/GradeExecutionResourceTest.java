@@ -1,7 +1,6 @@
 package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.adampoi.java_auto_grader.domain.GradeExecution;
 import io.adampoi.java_auto_grader.model.dto.GradeExecutionDTO;
 import io.adampoi.java_auto_grader.service.GradeExecutionService;
 import jakarta.persistence.EntityNotFoundException;
@@ -32,8 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class GradeExecutionResourceTest {
 
-    @Autowired
-    ObjectMapper mapper;
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -46,14 +44,13 @@ public class GradeExecutionResourceTest {
     public void getAllGradeExecutions_ReturnsOk() throws Exception {
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
         gradeExecutionDTO.setId(UUID.randomUUID());
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.PASSED);
+        gradeExecutionDTO.setStatus("PASSED");
 
         List<GradeExecutionDTO> gradeExecutionDTOList = Collections.singletonList(gradeExecutionDTO);
         Page<GradeExecutionDTO> gradeExecutionDTOPage = new PageImpl<>(gradeExecutionDTOList);
 
         when(gradeExecutionService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(gradeExecutionDTOPage); // Note: GradeExecutionService.findAll now returns
-        // Page<GradeExecutionDTO>
+                .thenReturn(gradeExecutionDTOPage);
 
         mockMvc.perform(get("/api/grade-executions")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -65,14 +62,14 @@ public class GradeExecutionResourceTest {
     public void createGradeExecution_ReturnsCreated() throws Exception {
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
         gradeExecutionDTO.setPointsAwarded(BigDecimal.valueOf(10.0));
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.PASSED);
+        gradeExecutionDTO.setStatus("PASSED");
         gradeExecutionDTO.setRubricGrade(UUID.randomUUID());
         gradeExecutionDTO.setSubmission(UUID.randomUUID());
 
         GradeExecutionDTO createdGradeExecutionDTO = new GradeExecutionDTO();
         createdGradeExecutionDTO.setId(UUID.randomUUID());
         createdGradeExecutionDTO.setPointsAwarded(BigDecimal.valueOf(10.0));
-        createdGradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.PASSED);
+        createdGradeExecutionDTO.setStatus("PASSED");
         createdGradeExecutionDTO.setRubricGrade(UUID.randomUUID());
         createdGradeExecutionDTO.setSubmission(UUID.randomUUID());
 
@@ -94,7 +91,7 @@ public class GradeExecutionResourceTest {
     public void getGradeExecution_ReturnsOk() throws Exception {
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
         gradeExecutionDTO.setId(UUID.randomUUID());
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.FAILED);
+        gradeExecutionDTO.setStatus("FAILED");
 
         when(gradeExecutionService.get(gradeExecutionDTO.getId())).thenReturn(gradeExecutionDTO);
 
@@ -109,13 +106,13 @@ public class GradeExecutionResourceTest {
     public void updateGradeExecution_ReturnsOk() throws Exception {
         UUID gradeExecutionId = UUID.randomUUID();
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.ERROR);
+        gradeExecutionDTO.setStatus("ERROR");
         gradeExecutionDTO.setError("Some error");
 
         GradeExecutionDTO updatedGradeExecutionDTO = new GradeExecutionDTO();
         updatedGradeExecutionDTO.setId(gradeExecutionId);
         updatedGradeExecutionDTO.setPointsAwarded(BigDecimal.valueOf(5.0));
-        updatedGradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.ERROR);
+        updatedGradeExecutionDTO.setStatus("ERROR");
         updatedGradeExecutionDTO.setError("Some error");
         updatedGradeExecutionDTO.setRubricGrade(UUID.randomUUID());
         updatedGradeExecutionDTO.setSubmission(UUID.randomUUID());
@@ -159,7 +156,7 @@ public class GradeExecutionResourceTest {
     public void updateGradeExecution_NotFound_ReturnsNotFound() throws Exception {
         UUID gradeExecutionId = UUID.randomUUID();
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.TIMEOUT);
+        gradeExecutionDTO.setStatus("TIMEOUT");
 
         doThrow(new EntityNotFoundException("GradeExecution not found"))
                 .when(gradeExecutionService)
@@ -203,7 +200,7 @@ public class GradeExecutionResourceTest {
     @WithMockUser(authorities = {})
     public void createGradeExecution_WithNoAuthority_ReturnsUnauthorized() throws Exception {
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.PENDING);
+        gradeExecutionDTO.setStatus("PENDING");
         gradeExecutionDTO.setRubricGrade(UUID.randomUUID());
         gradeExecutionDTO.setSubmission(UUID.randomUUID());
 
@@ -218,7 +215,7 @@ public class GradeExecutionResourceTest {
     public void updateGradeExecution_WithNoAuthority_ReturnsNotFound() throws Exception {
         UUID gradeExecutionId = UUID.randomUUID();
         GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus(GradeExecution.ExecutionStatus.RUNNING);
+        gradeExecutionDTO.setStatus("RUNNING");
 
         doThrow(new EntityNotFoundException("GradeExecution not found"))
                 .when(gradeExecutionService)
@@ -239,36 +236,35 @@ public class GradeExecutionResourceTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // Validation tests for GradeExecutionDTO would be needed here, similar to
-    // UserResourceTest
-    // @Test
-    // @WithMockUser(authorities = {"GRADE_EXECUTION:CREATE"})
-    // public void createGradeExecution_WithValidationError_ReturnsBadRequest()
-    // throws Exception {
-    // GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-    // gradeExecutionDTO.setStatus(null); // Example validation error
 
-    // mockMvc.perform(post("/api/grade-executions")
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"GRADE_EXECUTION:CREATE"})
+    public void createGradeExecution_WithValidationError_ReturnsBadRequest()
+            throws Exception {
+        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
+        gradeExecutionDTO.setStatus(null);
 
-    // @Test
-    // @WithMockUser(authorities = {"GRADE_EXECUTION:UPDATE"})
-    // public void updateGradeExecution_WithValidationError_ReturnsBadRequest()
-    // throws Exception {
-    // UUID gradeExecutionId = UUID.randomUUID();
-    // GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-    // gradeExecutionDTO.setStatus(null); // Example validation error
+        mockMvc.perform(post("/api/grade-executions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 
-    // mockMvc.perform(patch("/api/grade-executions/" + gradeExecutionId)
-    // .contentType(MediaType.APPLICATION_JSON)
-    // .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-    // .andExpect(status().isBadRequest())
-    // .andExpect(jsonPath("$.error.message").value("Validation failed"))
-    // .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    // }
+    @Test
+    @WithMockUser(authorities = {"GRADE_EXECUTION:UPDATE"})
+    public void updateGradeExecution_WithValidationError_ReturnsBadRequest()
+            throws Exception {
+        UUID gradeExecutionId = UUID.randomUUID();
+        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
+        gradeExecutionDTO.setStatus("not valid");
+
+        mockMvc.perform(patch("/api/grade-executions/" + gradeExecutionId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+    }
 }

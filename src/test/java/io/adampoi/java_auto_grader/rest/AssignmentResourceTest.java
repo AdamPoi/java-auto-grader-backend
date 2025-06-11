@@ -250,7 +250,7 @@ public class AssignmentResourceTest {
     public void createAssignment_WithValidationError_ReturnsBadRequest() throws
             Exception {
         AssignmentDTO assignmentDTO = new AssignmentDTO();
-        assignmentDTO.setTitle(""); // Example validation error
+        assignmentDTO.setTitle("");
 
         mockMvc.perform(post("/api/assignments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -266,7 +266,7 @@ public class AssignmentResourceTest {
             Exception {
         UUID assignmentId = UUID.randomUUID();
         AssignmentDTO assignmentDTO = new AssignmentDTO();
-        assignmentDTO.setTitle(""); // Example validation error
+        assignmentDTO.setTitle("");
 
         mockMvc.perform(patch("/api/assignments/" + assignmentId)
                         .contentType(MediaType.APPLICATION_JSON)

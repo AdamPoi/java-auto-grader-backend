@@ -1,8 +1,9 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.adampoi.java_auto_grader.domain.GradeExecution;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +20,10 @@ public class GradeExecutionDTO {
 
     private BigDecimal pointsAwarded;
 
-    private GradeExecution.ExecutionStatus status;
+    @Size(min = 1, max = 255)
+    @Pattern(regexp = "PENDING|RUNNING|PASSED|FAILED|ERROR|TIMEOUT|SKIPPED",
+            message = "Status must be one of: PENDING, RUNNING, PASSED, FAILED, ERROR, TIMEOUT, SKIPPED")
+    private String status;
 
     private String actual;
 

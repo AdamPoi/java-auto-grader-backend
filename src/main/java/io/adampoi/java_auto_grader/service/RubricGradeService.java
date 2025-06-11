@@ -1,13 +1,5 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.GradeExecution;
 import io.adampoi.java_auto_grader.domain.Rubric;
 import io.adampoi.java_auto_grader.domain.RubricGrade;
@@ -20,6 +12,13 @@ import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,8 +30,8 @@ public class RubricGradeService {
     private final GradeExecutionRepository gradeExecutionRepository;
 
     public RubricGradeService(final RubricGradeRepository rubricGradeRepository,
-            final RubricRepository rubricRepository,
-            final GradeExecutionRepository gradeExecutionRepository) {
+                              final RubricRepository rubricRepository,
+                              final GradeExecutionRepository gradeExecutionRepository) {
         this.rubricGradeRepository = rubricGradeRepository;
         this.rubricRepository = rubricRepository;
         this.gradeExecutionRepository = gradeExecutionRepository;
@@ -127,7 +126,7 @@ public class RubricGradeService {
     }
 
     public ReferencedWarning getReferencedWarning(final UUID rubricGradeId) {
-        // Implement logic to check for referenced entities if necessary
+        // TODO: Implement logic to check for referenced entities if necessary
         return null;
     }
 }

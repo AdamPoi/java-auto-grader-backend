@@ -254,7 +254,7 @@ public class PermissionResourceTest {
         permissionDTO.setName("");
         permissionDTO.setDescription("Test Permission");
 
-        mockMvc.perform(patch("/api/permissions/" + permissionId) // Using patch
+        mockMvc.perform(patch("/api/permissions/" + permissionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(permissionDTO)))
                 .andExpect(status().isBadRequest())

@@ -1,13 +1,5 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.GradeExecution;
 import io.adampoi.java_auto_grader.domain.RubricGrade;
 import io.adampoi.java_auto_grader.domain.Submission;
@@ -20,6 +12,13 @@ import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,8 +30,8 @@ public class GradeExecutionService {
     private final SubmissionRepository submissionRepository;
 
     public GradeExecutionService(final GradeExecutionRepository gradeExecutionRepository,
-            final RubricGradeRepository rubricGradeRepository,
-            final SubmissionRepository submissionRepository) {
+                                 final RubricGradeRepository rubricGradeRepository,
+                                 final SubmissionRepository submissionRepository) {
         this.gradeExecutionRepository = gradeExecutionRepository;
         this.rubricGradeRepository = rubricGradeRepository;
         this.submissionRepository = submissionRepository;
@@ -75,7 +74,7 @@ public class GradeExecutionService {
     private GradeExecutionDTO mapToDTO(final GradeExecution gradeExecution, final GradeExecutionDTO gradeExecutionDTO) {
         gradeExecutionDTO.setId(gradeExecution.getId());
         gradeExecutionDTO.setPointsAwarded(gradeExecution.getPointsAwarded());
-        gradeExecutionDTO.setStatus(gradeExecution.getStatus());
+        gradeExecutionDTO.setStatus(gradeExecution.getStatus().name());
         gradeExecutionDTO.setActual(gradeExecution.getActual());
         gradeExecutionDTO.setExpected(gradeExecution.getExpected());
         gradeExecutionDTO.setError(gradeExecution.getError());
@@ -94,7 +93,7 @@ public class GradeExecutionService {
             gradeExecution.setPointsAwarded(gradeExecutionDTO.getPointsAwarded());
         }
         if (gradeExecutionDTO.getStatus() != null) {
-            gradeExecution.setStatus(gradeExecutionDTO.getStatus());
+            gradeExecution.setStatus(GradeExecution.ExecutionStatus.valueOf(gradeExecutionDTO.getStatus()));
         }
         if (gradeExecutionDTO.getActual() != null) {
             gradeExecution.setActual(gradeExecutionDTO.getActual());
@@ -128,7 +127,7 @@ public class GradeExecutionService {
     }
 
     public ReferencedWarning getReferencedWarning(final UUID gradeExecutionId) {
-        // Implement logic to check for referenced entities if necessary
+        // TODO: Implement logic to check for referenced entities if necessary
         return null;
     }
 }

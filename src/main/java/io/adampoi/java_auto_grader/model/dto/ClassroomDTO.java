@@ -1,8 +1,10 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.groups.Default;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,8 +18,9 @@ public class ClassroomDTO {
 
     private UUID id;
 
-    @NotNull
-    @Size(max = 255)
+    @NotNull(groups = AssignmentDTO.CreateGroup.class)
+    @NotEmpty(groups = AssignmentDTO.CreateGroup.class)
+    @Size(min = 3, max = 255)
     private String Name;
 
     @JsonProperty("isActive")
@@ -31,9 +34,15 @@ public class ClassroomDTO {
 
     private OffsetDateTime updatedAt;
 
-    @NotNull
+    @NotNull(groups = CreateGroup.class)
     private UUID course;
 
+    @NotNull(groups = CreateGroup.class)
     private UUID teacher;
 
+    public interface CreateGroup extends Default {
+    }
+
+    public interface UpdateGroup extends Default {
+    }
 }

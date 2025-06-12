@@ -8,9 +8,9 @@ import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.GradeExecutionRepository;
 import io.adampoi.java_auto_grader.repository.RubricGradeRepository;
 import io.adampoi.java_auto_grader.repository.RubricRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -51,7 +51,7 @@ public class RubricGradeService {
     public RubricGradeDTO get(final UUID rubricGradeId) {
         return rubricGradeRepository.findById(rubricGradeId)
                 .map(rubricGrade -> mapToDTO(rubricGrade, new RubricGradeDTO()))
-                .orElseThrow(() -> new NotFoundException("RubricGrade not found"));
+                .orElseThrow(() -> new EntityNotFoundException("RubricGrade not found"));
     }
 
     public RubricGradeDTO create(final RubricGradeDTO rubricGradeDTO) {
@@ -63,7 +63,7 @@ public class RubricGradeService {
 
     public RubricGradeDTO update(final UUID rubricGradeId, final RubricGradeDTO rubricGradeDTO) {
         final RubricGrade rubricGrade = rubricGradeRepository.findById(rubricGradeId)
-                .orElseThrow(() -> new NotFoundException("RubricGrade not found"));
+                .orElseThrow(() -> new EntityNotFoundException("RubricGrade not found"));
         mapToEntity(rubricGradeDTO, rubricGrade);
         RubricGrade savedRubricGrade = rubricGradeRepository.save(rubricGrade);
         return mapToDTO(savedRubricGrade, new RubricGradeDTO());
@@ -115,7 +115,7 @@ public class RubricGradeService {
         }
         if (rubricGradeDTO.getRubric() != null) {
             final Rubric rubric = rubricRepository.findById(rubricGradeDTO.getRubric())
-                    .orElseThrow(() -> new NotFoundException("Rubric not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Rubric not found"));
             rubricGrade.setRubric(rubric);
         }
         if (rubricGradeDTO.getCreatedAt() != null) {

@@ -5,9 +5,9 @@ import io.adampoi.java_auto_grader.model.dto.PermissionDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -56,7 +56,7 @@ public class PermissionService {
     public PermissionDTO get(final UUID permissionId) {
         return permissionRepository.findById(permissionId)
                 .map(permission -> mapToDTO(permission, new PermissionDTO()))
-                .orElseThrow(() -> new NotFoundException("Permission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Permission not found"));
     }
 
     public PermissionDTO create(final PermissionDTO permissionDTO) {
@@ -68,7 +68,7 @@ public class PermissionService {
 
     public PermissionDTO update(final UUID permissionId, final PermissionDTO permissionDTO) {
         final Permission permission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NotFoundException("Permission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Permission not found"));
         mapToEntity(permissionDTO, permission);
         Permission savedPermission = permissionRepository.save(permission);
         return mapToDTO(savedPermission, new PermissionDTO());
@@ -87,7 +87,7 @@ public class PermissionService {
     public ReferencedWarning getReferencedWarning(final UUID permissionId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Permission permission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new NotFoundException("Permission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Permission not found"));
         if (!permission.getPermissionRoles().isEmpty()) {
             referencedWarning.setKey("permission.role.permission.referenced");
             permission.getPermissionRoles().forEach(role -> referencedWarning.addParam(role.getId()));

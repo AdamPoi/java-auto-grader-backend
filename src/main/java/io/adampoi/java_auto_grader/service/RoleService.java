@@ -7,9 +7,9 @@ import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -51,7 +51,7 @@ public class RoleService {
     public RoleDTO get(final UUID roleId) {
         return roleRepository.findById(roleId)
                 .map(role -> mapToDTO(role, new RoleDTO()))
-                .orElseThrow(() -> new NotFoundException("Role not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
     }
 
     public RoleDTO create(final RoleDTO roleDTO) {
@@ -62,7 +62,7 @@ public class RoleService {
 
     public RoleDTO update(final UUID roleId, final RoleDTO roleDTO) {
         final Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NotFoundException("Role not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
         mapToEntity(roleDTO, role);
         return mapToDTO(roleRepository.save(role), new RoleDTO());
     }
@@ -95,7 +95,7 @@ public class RoleService {
     public ReferencedWarning getReferencedWarning(final UUID roleId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new NotFoundException("Role not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Role not found"));
         if (!role.getRolesUser().isEmpty()) {
             referencedWarning.setKey("role.user.role.referenced");
             role.getRolesUser().forEach(user -> referencedWarning.addParam(user.getId()));

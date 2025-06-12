@@ -10,9 +10,9 @@ import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
 import org.springframework.data.domain.Page;
@@ -58,7 +58,7 @@ public class AssignmentService {
     public AssignmentDTO get(final UUID assignmentId) {
         return assignmentRepository.findById(assignmentId)
                 .map(assignment -> mapToDTO(assignment, new AssignmentDTO()))
-                .orElseThrow(() -> new NotFoundException("Assignment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
     }
 
     public AssignmentDTO create(final AssignmentDTO assignmentDTO) {
@@ -71,7 +71,7 @@ public class AssignmentService {
     @SneakyThrows
     public AssignmentDTO update(final UUID assignmentId, final AssignmentDTO assignmentDTO) {
         final Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
         mapToEntity(assignmentDTO, assignment);
         Assignment savedAssignment = assignmentRepository.save(assignment);
         return mapToDTO(savedAssignment, new AssignmentDTO());
@@ -122,12 +122,12 @@ public class AssignmentService {
         }
         if (assignmentDTO.getCourse() != null) {
             final Course course = courseRepository.findById(assignmentDTO.getCourse())
-                    .orElseThrow(() -> new NotFoundException("course not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("course not found"));
             assignment.setCourse(course);
         }
         if (assignmentDTO.getCreatedByTeacher() != null) {
             final User createdByTeacher = userRepository.findById(assignmentDTO.getCreatedByTeacher())
-                    .orElseThrow(() -> new NotFoundException("createdByTeacher not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("createdByTeacher not found"));
             assignment.setCreatedByTeacher(createdByTeacher);
         }
         if (assignmentDTO.getCreatedAt() != null) {
@@ -142,7 +142,7 @@ public class AssignmentService {
     public ReferencedWarning getReferencedWarning(final UUID assignmentId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new NotFoundException("Assignment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
 
         final Submission assignmentSubmission = submissionRepository.findFirstByAssignment(assignment);
         if (assignmentSubmission != null) {

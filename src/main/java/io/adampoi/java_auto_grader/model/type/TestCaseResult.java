@@ -1,4 +1,4 @@
-package io.adampoi.java_auto_grader.model.dto;
+package io.adampoi.java_auto_grader.model.type;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

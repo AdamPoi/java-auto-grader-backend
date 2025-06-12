@@ -1,6 +1,6 @@
 package io.adampoi.java_auto_grader.model.response;
 
-import io.adampoi.java_auto_grader.model.dto.CompilationError;
+import io.adampoi.java_auto_grader.model.type.CompilationError;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

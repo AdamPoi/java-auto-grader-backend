@@ -7,9 +7,9 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.ClassroomDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.*;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -53,7 +53,7 @@ public class ClassroomService {
     public ClassroomDTO get(final UUID classroomId) {
         return classroomRepository.findById(classroomId)
                 .map(classroom -> mapToDTO(classroom, new ClassroomDTO()))
-                .orElseThrow(() -> new NotFoundException("Classroom not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
     }
 
     public ClassroomDTO create(final ClassroomDTO classroomDTO) {
@@ -65,7 +65,7 @@ public class ClassroomService {
 
     public ClassroomDTO update(final UUID classroomId, final ClassroomDTO classroomDTO) {
         final Classroom classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new NotFoundException("Classroom not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
         mapToEntity(classroomDTO, classroom);
         Classroom savedClassroom = classroomRepository.save(classroom);
         return mapToDTO(savedClassroom, new ClassroomDTO());
@@ -103,12 +103,12 @@ public class ClassroomService {
         }
         if (classroomDTO.getCourse() != null) {
             final Course course = courseRepository.findById(classroomDTO.getCourse())
-                    .orElseThrow(() -> new NotFoundException("course not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("course not found"));
             classroom.setCourse(course);
         }
         if (classroomDTO.getTeacher() != null) {
             final User teacher = userRepository.findById(classroomDTO.getTeacher())
-                    .orElseThrow(() -> new NotFoundException("teacher not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("teacher not found"));
             classroom.setTeacher(teacher);
         }
         if (classroomDTO.getCreatedAt() != null) {
@@ -123,7 +123,7 @@ public class ClassroomService {
     public ReferencedWarning getReferencedWarning(final UUID classroomId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Classroom classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new NotFoundException("Classroom not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
         final StudentClassroom classroomStudentClassroom = studentClassroomRepository.findFirstByClassroom(classroom);
         if (classroomStudentClassroom != null) {
             referencedWarning.setKey("classroom.studentClassroom.classroom.referenced");

@@ -1,6 +1,6 @@
 package io.adampoi.java_auto_grader.model.request;
 
-import io.adampoi.java_auto_grader.model.dto.CodeFile;
+import io.adampoi.java_auto_grader.model.type.CodeFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

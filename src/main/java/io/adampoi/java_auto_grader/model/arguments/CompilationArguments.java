@@ -1,7 +1,7 @@
-package io.adampoi.java_auto_grader.model.dto.arguments;
+package io.adampoi.java_auto_grader.model.arguments;
 
 
-import io.adampoi.java_auto_grader.model.dto.GradeArguments;
+import io.adampoi.java_auto_grader.model.type.GradeArguments;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

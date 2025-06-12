@@ -120,12 +120,13 @@ public class SubmissionCodeResource {
                 .build();
     }
 
+
     @PostMapping("/test")
 //    @PreAuthorize("hasAuthority('SUBMISSION_CODE:CREATE')")
     @Operation(summary = "Test Code", description = "Test Code")
-    public ApiSuccessResponse<TestCodeResponse> testCode(
+    public ApiSuccessResponse<TestCodeResponse> testCodNew(
             @RequestBody @Valid final TestCodeRequest submissionCodeDTO) {
-        final TestCodeResponse createdSubmissionCode = testCodeService.runTestCodeInDocker(submissionCodeDTO);
+        final TestCodeResponse createdSubmissionCode = testCodeService.runTestCode(submissionCodeDTO);
         return ApiSuccessResponse.<TestCodeResponse>builder()
                 .data(createdSubmissionCode)
                 .statusCode(HttpStatus.OK)

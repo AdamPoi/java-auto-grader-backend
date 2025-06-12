@@ -3,8 +3,8 @@ package io.adampoi.java_auto_grader.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.adampoi.java_auto_grader.model.dto.GradeArguments;
-import io.adampoi.java_auto_grader.model.dto.arguments.*;
+import io.adampoi.java_auto_grader.model.arguments.*;
+import io.adampoi.java_auto_grader.model.type.GradeArguments;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -2,16 +2,16 @@ package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.domain.SubmissionCode;
-import io.adampoi.java_auto_grader.model.dto.CodeFile;
-import io.adampoi.java_auto_grader.model.dto.CompilationError;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCodeDTO;
 import io.adampoi.java_auto_grader.model.request.RunCodeRequest;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.model.response.RunCodeResponse;
+import io.adampoi.java_auto_grader.model.type.CodeFile;
+import io.adampoi.java_auto_grader.model.type.CompilationError;
 import io.adampoi.java_auto_grader.repository.SubmissionCodeRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class SubmissionCodeService {
     public SubmissionCodeDTO get(final UUID submissionCodeId) {
         return submissionCodeRepository.findById(submissionCodeId)
                 .map(submissionCode -> mapToDTO(submissionCode, new SubmissionCodeDTO()))
-                .orElseThrow(() -> new NotFoundException("SubmissionCode not found"));
+                .orElseThrow(() -> new EntityNotFoundException("SubmissionCode not found"));
     }
 
     public SubmissionCodeDTO create(final SubmissionCodeDTO submissionCodeDTO) {
@@ -74,7 +74,7 @@ public class SubmissionCodeService {
 
     public SubmissionCodeDTO update(final UUID submissionCodeId, final SubmissionCodeDTO submissionCodeDTO) {
         final SubmissionCode submissionCode = submissionCodeRepository.findById(submissionCodeId)
-                .orElseThrow(() -> new NotFoundException("SubmissionCode not found"));
+                .orElseThrow(() -> new EntityNotFoundException("SubmissionCode not found"));
         mapToEntity(submissionCodeDTO, submissionCode);
         SubmissionCode savedSubmissionCode = submissionCodeRepository.save(submissionCode);
         return mapToDTO(savedSubmissionCode, new SubmissionCodeDTO());
@@ -112,7 +112,7 @@ public class SubmissionCodeService {
         }
         if (submissionCodeDTO.getSubmission() != null) {
             final Submission submission = submissionRepository.findById(submissionCodeDTO.getSubmission())
-                    .orElseThrow(() -> new NotFoundException("Submission not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
             submissionCode.setSubmission(submission);
         }
         if (submissionCodeDTO.getCreatedAt() != null) {

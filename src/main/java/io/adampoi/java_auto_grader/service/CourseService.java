@@ -10,9 +10,9 @@ import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -53,7 +53,7 @@ public class CourseService {
     public CourseDTO get(final UUID courseId) {
         return courseRepository.findById(courseId)
                 .map(course -> mapToDTO(course, new CourseDTO()))
-                .orElseThrow(() -> new NotFoundException("Course not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
     }
 
     public CourseDTO create(final CourseDTO courseDTO) {
@@ -65,7 +65,7 @@ public class CourseService {
 
     public CourseDTO update(final UUID courseId, final CourseDTO courseDTO) {
         final Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new NotFoundException("Course not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
         mapToEntity(courseDTO, course);
         Course savedCourse = courseRepository.save(course);
         return mapToDTO(savedCourse, new CourseDTO());
@@ -111,7 +111,7 @@ public class CourseService {
         }
         if (courseDTO.getCreatedByTeacher() != null) {
             final User createdByTeacher = userRepository.findById(courseDTO.getCreatedByTeacher())
-                    .orElseThrow(() -> new NotFoundException("createdByTeacher not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("createdByTeacher not found"));
             course.setCreatedByTeacher(createdByTeacher);
         }
         if (courseDTO.getCreatedAt() != null) {
@@ -126,7 +126,7 @@ public class CourseService {
     public ReferencedWarning getReferencedWarning(final UUID courseId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new NotFoundException("Course not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
         final Classroom courseClassroom = classroomRepository.findFirstByCourse(course);
         if (courseClassroom != null) {
             referencedWarning.setKey("course.classroom.course.referenced");

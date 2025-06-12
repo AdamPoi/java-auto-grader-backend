@@ -8,9 +8,9 @@ import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.GradeExecutionRepository;
 import io.adampoi.java_auto_grader.repository.RubricGradeRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -51,7 +51,7 @@ public class GradeExecutionService {
     public GradeExecutionDTO get(final UUID gradeExecutionId) {
         return gradeExecutionRepository.findById(gradeExecutionId)
                 .map(gradeExecution -> mapToDTO(gradeExecution, new GradeExecutionDTO()))
-                .orElseThrow(() -> new NotFoundException("GradeExecution not found"));
+                .orElseThrow(() -> new EntityNotFoundException("GradeExecution not found"));
     }
 
     public GradeExecutionDTO create(final GradeExecutionDTO gradeExecutionDTO) {
@@ -63,7 +63,7 @@ public class GradeExecutionService {
 
     public GradeExecutionDTO update(final UUID gradeExecutionId, final GradeExecutionDTO gradeExecutionDTO) {
         final GradeExecution gradeExecution = gradeExecutionRepository.findById(gradeExecutionId)
-                .orElseThrow(() -> new NotFoundException("GradeExecution not found"));
+                .orElseThrow(() -> new EntityNotFoundException("GradeExecution not found"));
         mapToEntity(gradeExecutionDTO, gradeExecution);
         GradeExecution savedGradeExecution = gradeExecutionRepository.save(gradeExecution);
         return mapToDTO(savedGradeExecution, new GradeExecutionDTO());
@@ -111,12 +111,12 @@ public class GradeExecutionService {
         }
         if (gradeExecutionDTO.getRubricGrade() != null) {
             final RubricGrade rubricGrade = rubricGradeRepository.findById(gradeExecutionDTO.getRubricGrade())
-                    .orElseThrow(() -> new NotFoundException("RubricGrade not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("RubricGrade not found"));
             gradeExecution.setRubricGrade(rubricGrade);
         }
         if (gradeExecutionDTO.getSubmission() != null) {
             final Submission submission = submissionRepository.findById(gradeExecutionDTO.getSubmission())
-                    .orElseThrow(() -> new NotFoundException("Submission not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
             gradeExecution.setSubmission(submission);
         }
         if (gradeExecutionDTO.getCreatedAt() != null) {

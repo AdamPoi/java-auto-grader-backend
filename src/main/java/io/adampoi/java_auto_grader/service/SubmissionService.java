@@ -13,10 +13,10 @@ import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
-import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -52,7 +52,6 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
-    private final ClassroomRepository classroomRepository;
 
     public SubmissionService(final SubmissionRepository submissionRepository,
                              final AssignmentRepository assignmentRepository, final UserRepository userRepository,
@@ -60,7 +59,6 @@ public class SubmissionService {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
-        this.classroomRepository = classroomRepository;
     }
 
     public PageResponse<SubmissionDTO> findAll(QueryFilter<Submission> filter, Pageable pageable) {
@@ -76,7 +74,7 @@ public class SubmissionService {
     public SubmissionDTO get(final UUID submissionId) {
         return submissionRepository.findById(submissionId)
                 .map(submission -> mapToDTO(submission, new SubmissionDTO()))
-                .orElseThrow(() -> new NotFoundException("Submission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
     }
 
     public SubmissionDTO create(final SubmissionDTO submissionDTO) {
@@ -88,7 +86,7 @@ public class SubmissionService {
 
     public SubmissionDTO update(final UUID submissionId, final SubmissionDTO submissionDTO) {
         final Submission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new NotFoundException("Submission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
         mapToEntity(submissionDTO, submission);
         Submission savedSubmission = submissionRepository.save(submission);
         return mapToDTO(savedSubmission, new SubmissionDTO());
@@ -171,12 +169,12 @@ public class SubmissionService {
         }
         if (submissionDTO.getAssignment() != null) {
             final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignment())
-                    .orElseThrow(() -> new NotFoundException("assignment not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
             submission.setAssignment(assignment);
         }
         if (submissionDTO.getStudent() != null) {
             final User student = userRepository.findById(submissionDTO.getStudent())
-                    .orElseThrow(() -> new NotFoundException("student not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("student not found"));
             submission.setStudent(student);
         }
         return submission;
@@ -185,7 +183,7 @@ public class SubmissionService {
     public ReferencedWarning getReferencedWarning(final UUID submissionId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Submission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new NotFoundException("Submission not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
 
         return null;
     }

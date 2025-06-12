@@ -1,8 +1,8 @@
-package io.adampoi.java_auto_grader.model.dto;
+package io.adampoi.java_auto_grader.model.type;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.adampoi.java_auto_grader.model.dto.arguments.*;
+import io.adampoi.java_auto_grader.model.arguments.*;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

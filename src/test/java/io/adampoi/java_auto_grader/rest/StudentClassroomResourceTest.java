@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.StudentClassroomDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.StudentClassroomService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -50,7 +51,7 @@ public class StudentClassroomResourceTest {
         Page<StudentClassroomDTO> studentClassroomDTOPage = new PageImpl<>(studentClassroomDTOList);
 
         when(studentClassroomService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(studentClassroomDTOPage);
+                .thenReturn(PageResponse.from(studentClassroomDTOPage));
 
         mockMvc.perform(get("/api/studentClassrooms")
                         .contentType(MediaType.APPLICATION_JSON))

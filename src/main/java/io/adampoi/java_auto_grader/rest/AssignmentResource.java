@@ -6,6 +6,7 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.filter.AssignmentFilterDef;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.service.AssignmentService;
@@ -17,7 +18,6 @@ import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -49,10 +49,10 @@ public class AssignmentResource {
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('ASSIGNMENT:LIST')")
     @Operation(summary = "Get Assignments", description = "Get all assignments with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<AssignmentDTO>> getAllAssignments(
+    public ApiSuccessResponse<PageResponse<AssignmentDTO>> getAllAssignments(
             @RequestParam(required = false, defaultValue = "") @QFParam(AssignmentFilterDef.class) QueryFilter<Assignment> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<AssignmentDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<AssignmentDTO>>builder()
                 .data(assignmentService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();

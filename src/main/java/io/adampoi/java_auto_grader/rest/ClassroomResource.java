@@ -6,6 +6,7 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.filter.ClassroomFilterDef;
 import io.adampoi.java_auto_grader.model.dto.ClassroomDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.service.ClassroomService;
@@ -17,7 +18,6 @@ import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -48,10 +48,10 @@ public class ClassroomResource {
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('CLASSROOM:LIST')")
     @Operation(summary = "Get Classrooms", description = "Get all classrooms with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<ClassroomDTO>> getAllClassrooms(
+    public ApiSuccessResponse<PageResponse<ClassroomDTO>> getAllClassrooms(
             @RequestParam(required = false, defaultValue = "") @QFParam(ClassroomFilterDef.class) QueryFilter<Classroom> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<ClassroomDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<ClassroomDTO>>builder()
                 .data(classroomService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();

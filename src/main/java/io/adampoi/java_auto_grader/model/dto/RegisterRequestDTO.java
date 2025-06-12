@@ -29,7 +29,8 @@ public class RegisterRequestDTO {
 
     @NotBlank(message = "Last name is required")
     private String lastName;
-    
+
+    @Builder.Default
     private boolean isActive = true;
 
     @NotBlank(message = "Role is required")

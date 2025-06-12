@@ -2,8 +2,12 @@ package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.GradeExecutionDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.GradeExecutionService;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static io.adampoi.java_auto_grader.model.dto.GradeExecutionDTO.builder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -29,8 +34,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class GradeExecutionResourceTest {
+class GradeExecutionResourceTest {
 
+    private static final String BASE_API_PATH = "/api/grade-executions";
+    private static final String AUTHORITY_LIST = "GRADE_EXECUTION:LIST";
+    private static final String AUTHORITY_CREATE = "GRADE_EXECUTION:CREATE";
+    private static final String AUTHORITY_READ = "GRADE_EXECUTION:READ";
+    private static final String AUTHORITY_UPDATE = "GRADE_EXECUTION:UPDATE";
+    private static final String AUTHORITY_DELETE = "GRADE_EXECUTION:DELETE";
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,233 +49,278 @@ public class GradeExecutionResourceTest {
     private ObjectMapper objectMapper;
     @MockitoBean
     private GradeExecutionService gradeExecutionService;
+    private UUID testGradeExecutionId;
+    private GradeExecutionDTO testGradeExecutionDTO;
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:LIST"})
-    public void getAllGradeExecutions_ReturnsOk() throws Exception {
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setId(UUID.randomUUID());
-        gradeExecutionDTO.setStatus("PASSED");
-
-        List<GradeExecutionDTO> gradeExecutionDTOList = Collections.singletonList(gradeExecutionDTO);
-        Page<GradeExecutionDTO> gradeExecutionDTOPage = new PageImpl<>(gradeExecutionDTOList);
-
-        when(gradeExecutionService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(gradeExecutionDTOPage);
-
-        mockMvc.perform(get("/api/grade-executions")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    @BeforeEach
+    void setUp() {
+        testGradeExecutionId = UUID.randomUUID();
+        testGradeExecutionDTO = createGradeExecutionDTO("PASSED", BigDecimal.TEN);
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:CREATE"})
-    public void createGradeExecution_ReturnsCreated() throws Exception {
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setPointsAwarded(BigDecimal.valueOf(10.0));
-        gradeExecutionDTO.setStatus("PASSED");
-        gradeExecutionDTO.setRubricGrade(UUID.randomUUID());
-        gradeExecutionDTO.setSubmission(UUID.randomUUID());
-
-        GradeExecutionDTO createdGradeExecutionDTO = new GradeExecutionDTO();
-        createdGradeExecutionDTO.setId(UUID.randomUUID());
-        createdGradeExecutionDTO.setPointsAwarded(BigDecimal.valueOf(10.0));
-        createdGradeExecutionDTO.setStatus("PASSED");
-        createdGradeExecutionDTO.setRubricGrade(UUID.randomUUID());
-        createdGradeExecutionDTO.setSubmission(UUID.randomUUID());
-
-        when(gradeExecutionService.create(org.mockito.ArgumentMatchers.any())).thenReturn(createdGradeExecutionDTO);
-
-        mockMvc.perform(post("/api/grade-executions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.id").exists())
-                .andExpect(jsonPath("$.data.pointsAwarded").value(10.0))
-                .andExpect(jsonPath("$.data.status").value("PASSED"))
-                .andExpect(jsonPath("$.data.rubricGrade").exists())
-                .andExpect(jsonPath("$.data.submission").exists());
+    private GradeExecutionDTO createGradeExecutionDTO(String status, BigDecimal points) {
+        return builder()
+                .status(status)
+                .pointsAwarded(points)
+                .rubricGrade(UUID.randomUUID())
+                .submission(UUID.randomUUID())
+                .build();
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:READ"})
-    public void getGradeExecution_ReturnsOk() throws Exception {
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setId(UUID.randomUUID());
-        gradeExecutionDTO.setStatus("FAILED");
-
-        when(gradeExecutionService.get(gradeExecutionDTO.getId())).thenReturn(gradeExecutionDTO);
-
-        mockMvc.perform(get("/api/grade-executions/" + gradeExecutionDTO.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value(gradeExecutionDTO.getStatus().toString()));
+    private GradeExecutionDTO createGradeExecutionDTOWithId(UUID id, String status, BigDecimal points) {
+        return builder()
+                .id(id)
+                .status(status)
+                .pointsAwarded(points)
+                .rubricGrade(UUID.randomUUID())
+                .submission(UUID.randomUUID())
+                .build();
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:UPDATE"})
-    public void updateGradeExecution_ReturnsOk() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus("ERROR");
-        gradeExecutionDTO.setError("Some error");
+    @Nested
+    @DisplayName("GET /api/grade-executions")
+    class GetAllGradeExecutions {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 OK with grade executions")
+        void shouldReturnGradeExecutionsWhenAuthorized() throws Exception {
+            List<GradeExecutionDTO> gradeExecutionDTOList = Collections.singletonList(
+                    createGradeExecutionDTOWithId(testGradeExecutionId, "PASSED", BigDecimal.TEN));
+            Page<GradeExecutionDTO> gradeExecutionDTOPage = new PageImpl<>(gradeExecutionDTOList);
 
-        GradeExecutionDTO updatedGradeExecutionDTO = new GradeExecutionDTO();
-        updatedGradeExecutionDTO.setId(gradeExecutionId);
-        updatedGradeExecutionDTO.setPointsAwarded(BigDecimal.valueOf(5.0));
-        updatedGradeExecutionDTO.setStatus("ERROR");
-        updatedGradeExecutionDTO.setError("Some error");
-        updatedGradeExecutionDTO.setRubricGrade(UUID.randomUUID());
-        updatedGradeExecutionDTO.setSubmission(UUID.randomUUID());
+            when(gradeExecutionService.findAll(any(), any()))
+                    .thenReturn(PageResponse.from(gradeExecutionDTOPage));
 
-        when(gradeExecutionService.update(eq(gradeExecutionId), any(GradeExecutionDTO.class)))
-                .thenReturn(updatedGradeExecutionDTO);
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").exists());
+        }
 
-        mockMvc.perform(patch("/api/grade-executions/" + gradeExecutionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(gradeExecutionId.toString()))
-                .andExpect(jsonPath("$.data.status").value("ERROR"))
-                .andExpect(jsonPath("$.data.error").value("Some error"));
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 and support pagination")
+        void shouldReturnPaginatedGradeExecutionsWhenRequested() throws Exception {
+            List<GradeExecutionDTO> gradeExecutionDTOList = Collections.singletonList(
+                    createGradeExecutionDTOWithId(testGradeExecutionId, "PAGINATED",
+                            BigDecimal.valueOf(5)));
+            Page<GradeExecutionDTO> gradeExecutionDTOPage = new PageImpl<>(gradeExecutionDTOList);
+
+            when(gradeExecutionService.findAll(any(), any()))
+                    .thenReturn(PageResponse.from(gradeExecutionDTOPage));
+
+            mockMvc.perform(get(BASE_API_PATH + "?page=0&size=10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content[0].status").value("PAGINATED"))
+                    .andExpect(jsonPath("$.data.page").value(0))
+                    .andExpect(jsonPath("$.data.size").value(1))
+                    .andExpect(jsonPath("$.data.totalElements").value(1))
+                    .andExpect(jsonPath("$.data.totalPages").value(1))
+                    .andExpect(jsonPath("$.data.hasNext").value(false))
+                    .andExpect(jsonPath("$.data.hasPrevious").value(false));
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenNotAuthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:DELETE"})
-    public void deleteGradeExecution_ReturnsOk() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        doNothing().when(gradeExecutionService).delete(gradeExecutionId);
+    @Nested
+    @DisplayName("POST /api/grade-executions")
+    class CreateGradeExecution {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @DisplayName("should return 201 Created with grade execution data")
+        void createGradeExecution_ReturnsCreated() throws Exception {
+            GradeExecutionDTO createdDTO = createGradeExecutionDTOWithId(testGradeExecutionId,
+                    "PASSED", BigDecimal.TEN);
 
-        mockMvc.perform(delete("/api/grade-executions/" + gradeExecutionId))
-                .andExpect(status().isNoContent());
+            when(gradeExecutionService.create(any(GradeExecutionDTO.class))).thenReturn(createdDTO);
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testGradeExecutionDTO)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.id").value(testGradeExecutionId.toString()))
+                    .andExpect(jsonPath("$.data.status").value("PASSED"))
+                    .andExpect(jsonPath("$.data.pointsAwarded").value(10.0))
+                    .andExpect(jsonPath("$.data.rubricGrade").exists())
+                    .andExpect(jsonPath("$.data.submission").exists());
+            verify(gradeExecutionService, times(1)).create(any(GradeExecutionDTO.class));
+
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void createGradeExecution_WithValidationError_ReturnsBadRequest() throws Exception {
+            GradeExecutionDTO invalidDTO = builder()
+                    .status(null)
+                    .build();
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void createGradeExecution_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testGradeExecutionDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:READ"})
-    public void getGradeExecution_NotFound_ReturnsNotFound() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        when(gradeExecutionService.get(gradeExecutionId))
-                .thenThrow(new EntityNotFoundException("GradeExecution not found"));
+    @Nested
+    @DisplayName("GET /api/grade-executions/{id}")
+    class GetGradeExecutionById {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_READ})
+        @DisplayName("should return 200 OK with grade execution data")
+        void getGradeExecution_ReturnsOk() throws Exception {
+            when(gradeExecutionService.get(testGradeExecutionId)).thenReturn(
+                    createGradeExecutionDTOWithId(testGradeExecutionId, "FAILED", BigDecimal.ZERO));
 
-        mockMvc.perform(get("/api/grade-executions/" + gradeExecutionId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+
+            mockMvc.perform(get(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.status").value("FAILED"));
+            verify(gradeExecutionService, times(1)).get(testGradeExecutionId);
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_READ})
+        @DisplayName("should return 404 Not Found when grade execution doesn't exist")
+        void getGradeExecution_NotFound_ReturnsNotFound() throws Exception {
+            when(gradeExecutionService.get(testGradeExecutionId))
+                    .thenThrow(new EntityNotFoundException("GradeExecution not found"));
+
+            mockMvc.perform(get(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void getGradeExecutionById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:UPDATE"})
-    public void updateGradeExecution_NotFound_ReturnsNotFound() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus("TIMEOUT");
+    @Nested
+    @DisplayName("PATCH /api/grade-executions/{id}")
+    class UpdateGradeExecution {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 200 OK with updated grade execution data")
+        void updateGradeExecution_ReturnsOk() throws Exception {
+            GradeExecutionDTO updatedDTO = createGradeExecutionDTOWithId(testGradeExecutionId,
+                    "ERROR", BigDecimal.ZERO);
+            updatedDTO.setError("Test error");
 
-        doThrow(new EntityNotFoundException("GradeExecution not found"))
-                .when(gradeExecutionService)
-                .update(org.mockito.ArgumentMatchers.eq(gradeExecutionId), org.mockito.ArgumentMatchers.any());
+            when(gradeExecutionService.update(eq(testGradeExecutionId), any(GradeExecutionDTO.class)))
+                    .thenReturn(updatedDTO);
 
-        mockMvc.perform(patch("/api/grade-executions/" + gradeExecutionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isNotFound());
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testGradeExecutionDTO)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.id").value(testGradeExecutionId.toString()))
+                    .andExpect(jsonPath("$.data.status").value("ERROR"))
+                    .andExpect(jsonPath("$.data.error").value("Test error"));
+            verify(gradeExecutionService, times(1)).update(eq(testGradeExecutionId),
+                    any(GradeExecutionDTO.class));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 404 Not Found when grade execution doesn't exist")
+        void updateGradeExecution_NotFound_ReturnsNotFound() throws Exception {
+            doThrow(new EntityNotFoundException("GradeExecution not found"))
+                    .when(gradeExecutionService)
+                    .update(eq(testGradeExecutionId), any());
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testGradeExecutionDTO)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void updateGradeExecution_WithValidationError_ReturnsBadRequest() throws Exception {
+            GradeExecutionDTO invalidDTO = builder()
+                    .status("INVALID_STATUS")
+                    .build();
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void updateGradeExecution_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testGradeExecutionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testGradeExecutionDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:DELETE"})
-    public void deleteGradeExecution_NotFound_ReturnsNotFound() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        doThrow(new EntityNotFoundException("GradeExecution not found")).when(gradeExecutionService)
-                .delete(gradeExecutionId);
+    @Nested
+    @DisplayName("DELETE /api/grade-executions/{id}")
+    class DeleteGradeExecution {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 204 No Content on successful deletion")
+        void deleteGradeExecution_ReturnsOk() throws Exception {
+            doNothing().when(gradeExecutionService).delete(testGradeExecutionId);
+            verify(gradeExecutionService, times(0)).delete(testGradeExecutionId);
 
-        mockMvc.perform(delete("/api/grade-executions/" + gradeExecutionId))
-                .andExpect(status().isNotFound());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testGradeExecutionId))
+                    .andExpect(status().isNoContent());
+        }
 
-    @Test
-    @WithMockUser(authorities = {})
-    public void getAllGradeExecutions_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/grade-executions")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 404 Not Found when grade execution doesn't exist")
+        void deleteGradeExecution_NotFound_ReturnsNotFound() throws Exception {
+            doThrow(new EntityNotFoundException("GradeExecution not found"))
+                    .when(gradeExecutionService).delete(testGradeExecutionId);
 
-    @Test
-    @WithMockUser(authorities = {})
-    public void getGradeExecutionById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        mockMvc.perform(get("/api/grade-executions/" + gradeExecutionId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testGradeExecutionId))
+                    .andExpect(status().isNotFound());
+        }
 
-    @Test
-    @WithMockUser(authorities = {})
-    public void createGradeExecution_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus("PENDING");
-        gradeExecutionDTO.setRubricGrade(UUID.randomUUID());
-        gradeExecutionDTO.setSubmission(UUID.randomUUID());
-
-        mockMvc.perform(post("/api/grade-executions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void updateGradeExecution_WithNoAuthority_ReturnsNotFound() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus("RUNNING");
-
-        doThrow(new EntityNotFoundException("GradeExecution not found"))
-                .when(gradeExecutionService)
-                .update(org.mockito.ArgumentMatchers.eq(gradeExecutionId), org.mockito.ArgumentMatchers.any());
-
-        mockMvc.perform(patch("/api/grade-executions/" + gradeExecutionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void deleteGradeExecution_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-
-        mockMvc.perform(delete("/api/grade-executions/" + gradeExecutionId))
-                .andExpect(status().isUnauthorized());
-    }
-
-
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:CREATE"})
-    public void createGradeExecution_WithValidationError_ReturnsBadRequest()
-            throws Exception {
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus(null);
-
-        mockMvc.perform(post("/api/grade-executions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    }
-
-    @Test
-    @WithMockUser(authorities = {"GRADE_EXECUTION:UPDATE"})
-    public void updateGradeExecution_WithValidationError_ReturnsBadRequest()
-            throws Exception {
-        UUID gradeExecutionId = UUID.randomUUID();
-        GradeExecutionDTO gradeExecutionDTO = new GradeExecutionDTO();
-        gradeExecutionDTO.setStatus("not valid");
-
-        mockMvc.perform(patch("/api/grade-executions/" + gradeExecutionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(gradeExecutionDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void deleteGradeExecution_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testGradeExecutionId))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 }

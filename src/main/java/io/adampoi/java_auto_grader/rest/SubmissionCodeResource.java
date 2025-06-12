@@ -3,16 +3,20 @@ package io.adampoi.java_auto_grader.rest;
 import io.adampoi.java_auto_grader.domain.SubmissionCode;
 import io.adampoi.java_auto_grader.filter.SubmissionCodeFilterDef;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCodeDTO;
+import io.adampoi.java_auto_grader.model.request.RunCodeRequest;
+import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
+import io.adampoi.java_auto_grader.model.response.RunCodeResponse;
+import io.adampoi.java_auto_grader.model.response.TestCodeResponse;
 import io.adampoi.java_auto_grader.service.SubmissionCodeService;
-import io.adampoi.java_auto_grader.util.ReferencedException;
-import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import io.adampoi.java_auto_grader.service.TestCodeService;
 import io.github.acoboh.query.filter.jpa.annotations.QFParam;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,19 +32,21 @@ import java.util.UUID;
 public class SubmissionCodeResource {
 
     private final SubmissionCodeService submissionCodeService;
+    private final TestCodeService testCodeService;
 
-    public SubmissionCodeResource(final SubmissionCodeService submissionCodeService) {
+    public SubmissionCodeResource(final SubmissionCodeService submissionCodeService, TestCodeService testCodeService) {
         this.submissionCodeService = submissionCodeService;
+        this.testCodeService = testCodeService;
     }
 
     @GetMapping
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('SUBMISSION_CODE:LIST')")
     @Operation(summary = "Get Submission Codes", description = "Get all submission codes with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<SubmissionCodeDTO>> getAllSubmissionCodes(
+    public ApiSuccessResponse<PageResponse<SubmissionCodeDTO>> getAllSubmissionCodes(
             @RequestParam(required = false, defaultValue = "") @QFParam(SubmissionCodeFilterDef.class) QueryFilter<SubmissionCode> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<SubmissionCodeDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<SubmissionCodeDTO>>builder()
                 .data(submissionCodeService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();
@@ -86,19 +92,43 @@ public class SubmissionCodeResource {
                 .build();
     }
 
-    @DeleteMapping("/{submissionCodeId}")
-    @ApiResponse(responseCode = "204")
-    @PreAuthorize("hasAuthority('SUBMISSION_CODE:DELETE')")
-    @Operation(summary = "Delete Submission Code", description = "Delete an existing submission code")
-    public ApiSuccessResponse<Void> deleteSubmissionCode(
-            @PathVariable(name = "submissionCodeId") final UUID submissionCodeId) {
-        final ReferencedWarning referencedWarning = submissionCodeService.getReferencedWarning(submissionCodeId);
-        if (referencedWarning != null) {
-            throw new ReferencedException(referencedWarning);
-        }
-        submissionCodeService.delete(submissionCodeId);
-        return ApiSuccessResponse.<Void>builder()
-                .statusCode(HttpStatus.NO_CONTENT)
+//    @DeleteMapping("/{submissionCodeId}")
+//    @ApiResponse(responseCode = "204")
+//    @PreAuthorize("hasAuthority('SUBMISSION_CODE:DELETE')")
+//    @Operation(summary = "Delete Submission Code", description = "Delete an existing submission code")
+//    public ApiSuccessResponse<Void> deleteSubmissionCode(
+//            @PathVariable(name = "submissionCodeId") final UUID submissionCodeId) {
+//        final ReferencedWarning referencedWarning = submissionCodeService.getReferencedWarning(submissionCodeId);
+//        if (referencedWarning != null) {
+//            throw new ReferencedException(referencedWarning);
+//        }
+//        submissionCodeService.delete(submissionCodeId);
+//        return ApiSuccessResponse.<Void>builder()
+//                .statusCode(HttpStatus.NO_CONTENT)
+//                .build();
+//    }
+
+    @PostMapping("/run")
+//    @PreAuthorize("hasAuthority('SUBMISSION_CODE:CREATE')")
+    @Operation(summary = "Run Code", description = "Run Code")
+    public ApiSuccessResponse<RunCodeResponse> runCode(
+            @RequestBody @Valid final RunCodeRequest submissionCodeDTO) {
+        final RunCodeResponse createdSubmissionCode = submissionCodeService.runCode(submissionCodeDTO);
+        return ApiSuccessResponse.<RunCodeResponse>builder()
+                .data(createdSubmissionCode)
+                .statusCode(HttpStatus.OK)
+                .build();
+    }
+
+    @PostMapping("/test")
+//    @PreAuthorize("hasAuthority('SUBMISSION_CODE:CREATE')")
+    @Operation(summary = "Test Code", description = "Test Code")
+    public ApiSuccessResponse<TestCodeResponse> testCode(
+            @RequestBody @Valid final TestCodeRequest submissionCodeDTO) {
+        final TestCodeResponse createdSubmissionCode = testCodeService.runTestCodeInDocker(submissionCodeDTO);
+        return ApiSuccessResponse.<TestCodeResponse>builder()
+                .data(createdSubmissionCode)
+                .statusCode(HttpStatus.OK)
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.filter.CourseFilterDef;
 import io.adampoi.java_auto_grader.model.dto.CourseDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.service.CourseService;
 import io.adampoi.java_auto_grader.util.CustomCollectors;
@@ -15,7 +16,6 @@ import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -44,10 +44,10 @@ public class CourseResource {
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('COURSE:LIST')")
     @Operation(summary = "Get Courses", description = "Get all courses with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<CourseDTO>> getAllCourses(
+    public ApiSuccessResponse<PageResponse<CourseDTO>> getAllCourses(
             @RequestParam(required = false, defaultValue = "") @QFParam(CourseFilterDef.class) QueryFilter<Course> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<CourseDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<CourseDTO>>builder()
                 .data(courseService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();

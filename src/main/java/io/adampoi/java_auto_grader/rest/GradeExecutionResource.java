@@ -4,6 +4,7 @@ import io.adampoi.java_auto_grader.domain.GradeExecution;
 import io.adampoi.java_auto_grader.filter.GradeExecutionFilterDef;
 import io.adampoi.java_auto_grader.model.dto.GradeExecutionDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.GradeExecutionService;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
@@ -12,7 +13,6 @@ import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,10 +37,10 @@ public class GradeExecutionResource {
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('GRADE_EXECUTION:LIST')")
     @Operation(summary = "Get Grade Executions", description = "Get all grade executions with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<GradeExecutionDTO>> getAllGradeExecutions(
+    public ApiSuccessResponse<PageResponse<GradeExecutionDTO>> getAllGradeExecutions(
             @RequestParam(required = false, defaultValue = "") @QFParam(GradeExecutionFilterDef.class) QueryFilter<GradeExecution> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<GradeExecutionDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<GradeExecutionDTO>>builder()
                 .data(gradeExecutionService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();

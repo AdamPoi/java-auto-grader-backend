@@ -7,6 +7,7 @@ import io.adampoi.java_auto_grader.model.dto.RunResultDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
 import io.adampoi.java_auto_grader.model.dto.TestResultDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.model.response.SubmissionCompileResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
@@ -62,13 +63,14 @@ public class SubmissionService {
         this.classroomRepository = classroomRepository;
     }
 
-    public Page<SubmissionDTO> findAll(QueryFilter<Submission> filter, Pageable pageable) {
+    public PageResponse<SubmissionDTO> findAll(QueryFilter<Submission> filter, Pageable pageable) {
         final Page<Submission> page = submissionRepository.findAll(filter, pageable);
-        return new PageImpl<>(page.getContent()
+        Page<SubmissionDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
                 .map(submission -> mapToDTO(submission, new SubmissionDTO()))
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
+        return PageResponse.from(dtoPage);
     }
 
     public SubmissionDTO get(final UUID submissionId) {

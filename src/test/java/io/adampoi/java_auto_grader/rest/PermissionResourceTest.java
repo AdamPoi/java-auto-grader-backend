@@ -5,6 +5,9 @@ import io.adampoi.java_auto_grader.model.dto.PermissionDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.PermissionService;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -29,236 +34,242 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class PermissionResourceTest {
 
+    private static final String BASE_API_PATH = "/api/permissions";
+    private static final String AUTHORITY_LIST = "PERMISSION:LIST";
+    private static final String AUTHORITY_CREATE = "PERMISSION:CREATE";
+    private static final String AUTHORITY_READ = "PERMISSION:READ";
+    private static final String AUTHORITY_UPDATE = "PERMISSION:UPDATE";
+    private static final String AUTHORITY_DELETE = "PERMISSION:DELETE";
+
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockitoBean
     private PermissionService permissionService;
+    private UUID testPermissionId;
+    private PermissionDTO testPermissionDTO;
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:LIST"})
-    public void getAllPermissions_ReturnsOk() throws Exception {
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setId(UUID.randomUUID());
-        permissionDTO.setName("PERMISSION:TEST_READ");
-        permissionDTO.setDescription("Test Permission");
-
-        List<PermissionDTO> permissionDTOList = Collections.singletonList(permissionDTO);
-        Page<PermissionDTO> permissionDTOPage = new PageImpl<>(permissionDTOList);
-
-        when(permissionService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(PageResponse.from(permissionDTOPage));
-
-        mockMvc.perform(get("/api/permissions")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    @BeforeEach
+    void setUp() {
+        testPermissionId = UUID.randomUUID();
+        testPermissionDTO = createPermissionDTO("PERMISSION:TEST");
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:CREATE"})
-    public void createPermission_ReturnsCreated() throws Exception {
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:NEW_CREATE");
-        permissionDTO.setDescription("Test Permission");
-
-        PermissionDTO createdPermissionDTO = new PermissionDTO();
-        createdPermissionDTO.setId(UUID.randomUUID());
-        createdPermissionDTO.setName("PERMISSION:NEW_CREATE");
-        createdPermissionDTO.setDescription("Test Permission");
-
-        when(permissionService.create(org.mockito.ArgumentMatchers.any(PermissionDTO.class)))
-                .thenReturn(createdPermissionDTO);
-
-        mockMvc.perform(post("/api/permissions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.id").exists())
-                .andExpect(jsonPath("$.data.name").value("PERMISSION:NEW_CREATE"))
-                .andExpect(jsonPath("$.data.description").value("Test Permission"));
+    private PermissionDTO createPermissionDTO(String name) {
+        PermissionDTO dto = new PermissionDTO();
+        dto.setName(name);
+        dto.setDescription("Test description");
+        return dto;
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:READ"})
-    public void getPermission_ReturnsOk() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setId(permissionId);
-        permissionDTO.setName("PERMISSION:TEST_GET");
-        permissionDTO.setDescription("Test Permission");
-
-        when(permissionService.get(permissionId)).thenReturn(permissionDTO);
-
-        mockMvc.perform(get("/api/permissions/" + permissionId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value(permissionDTO.getName()))
-                .andExpect(jsonPath("$.data.description").value(permissionDTO.getDescription()));
+    private PermissionDTO createPermissionDTOWithId(UUID id, String name) {
+        PermissionDTO dto = createPermissionDTO(name);
+        dto.setId(id);
+        return dto;
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:UPDATE"})
-    public void updatePermission_ReturnsOk() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setId(permissionId);
-        permissionDTO.setName("PERMISSION:UPDATED");
-        permissionDTO.setDescription("Test Permission");
+    @Nested
+    @DisplayName("GET /api/permissions")
+    class GetAllPermissions {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 OK with permissions")
+        void shouldReturnPermissionsWhenAuthorized() throws Exception {
+            List<PermissionDTO> permissionList = Collections.singletonList(
+                    createPermissionDTOWithId(testPermissionId, "PERMISSION:TEST"));
+            Page<PermissionDTO> permissionPage = new PageImpl<>(permissionList);
 
-        PermissionDTO updatedPermissionDTO = new PermissionDTO();
-        updatedPermissionDTO.setId(permissionId);
-        updatedPermissionDTO.setName("PERMISSION:UPDATED");
-        updatedPermissionDTO.setDescription("Test Permission");
+            when(permissionService.findAll(any(), any())).thenReturn(PageResponse.from(permissionPage));
 
-        when(permissionService.update(org.mockito.ArgumentMatchers.eq(permissionId),
-                org.mockito.ArgumentMatchers.any(PermissionDTO.class)))
-                .thenReturn(updatedPermissionDTO);
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").exists());
+        }
 
-        mockMvc.perform(patch("/api/permissions/" + permissionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(permissionId.toString()))
-                .andExpect(jsonPath("$.data.name").value("PERMISSION:UPDATED"))
-                .andExpect(jsonPath("$.data.description").value("Test Permission"));
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenNotAuthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:DELETE"})
-    public void deletePermission_ReturnsNoContent() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        doNothing().when(permissionService).delete(permissionId);
+    @Nested
+    @DisplayName("POST /api/permissions")
+    class CreatePermission {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @DisplayName("should return 201 Created with permission data")
+        void createPermission_ReturnsCreated() throws Exception {
+            PermissionDTO createdDTO = createPermissionDTOWithId(testPermissionId, "PERMISSION:NEW");
 
-        mockMvc.perform(delete("/api/permissions/" + permissionId))
-                .andExpect(status().isNoContent());
+            when(permissionService.create(any(PermissionDTO.class))).thenReturn(createdDTO);
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testPermissionDTO)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.id").value(testPermissionId.toString()))
+                    .andExpect(jsonPath("$.data.name").value("PERMISSION:NEW"));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void createPermission_WithValidationError_ReturnsBadRequest() throws Exception {
+            PermissionDTO invalidDTO = new PermissionDTO();
+            invalidDTO.setName("");
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void createPermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testPermissionDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:READ"})
-    public void getPermission_NotFound_ReturnsNotFound() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        when(permissionService.get(permissionId))
-                .thenThrow(new EntityNotFoundException("Permission not found"));
+    @Nested
+    @DisplayName("GET /api/permissions/{id}")
+    class GetPermissionById {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_READ})
+        @DisplayName("should return 200 OK with permission data")
+        void getPermission_ReturnsOk() throws Exception {
+            when(permissionService.get(testPermissionId)).thenReturn(
+                    createPermissionDTOWithId(testPermissionId, "PERMISSION:TEST"));
 
-        mockMvc.perform(get("/api/permissions/" + permissionId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+            mockMvc.perform(get(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.name").value("PERMISSION:TEST"));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_READ})
+        @DisplayName("should return 404 Not Found when permission doesn't exist")
+        void getPermission_NotFound_ReturnsNotFound() throws Exception {
+            when(permissionService.get(testPermissionId))
+                    .thenThrow(new EntityNotFoundException("Permission not found"));
+
+            mockMvc.perform(get(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void getPermissionById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:UPDATE"})
-    public void updatePermission_NotFound_ReturnsNotFound() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:NON_EXISTENT");
-        permissionDTO.setDescription("Test Permission");
-        permissionDTO.setDescription("Test Permission");
+    @Nested
+    @DisplayName("PATCH /api/permissions/{id}")
+    class UpdatePermission {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 200 OK with updated permission data")
+        void updatePermission_ReturnsOk() throws Exception {
+            PermissionDTO updatedDTO = createPermissionDTOWithId(testPermissionId, "PERMISSION:UPDATED");
 
-        doThrow(new EntityNotFoundException("Permission not found"))
-                .when(permissionService).update(org.mockito.ArgumentMatchers.eq(permissionId),
-                        org.mockito.ArgumentMatchers.any(PermissionDTO.class));
+            when(permissionService.update(eq(testPermissionId), any(PermissionDTO.class)))
+                    .thenReturn(updatedDTO);
 
-        mockMvc.perform(patch("/api/permissions/" + permissionId) // Using patch
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isNotFound());
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testPermissionDTO)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.name").value("PERMISSION:UPDATED"));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 404 Not Found when permission doesn't exist")
+        void updatePermission_NotFound_ReturnsNotFound() throws Exception {
+            doThrow(new EntityNotFoundException("Permission not found"))
+                    .when(permissionService)
+                    .update(eq(testPermissionId), any());
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testPermissionDTO)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void updatePermission_WithValidationError_ReturnsBadRequest() throws Exception {
+            PermissionDTO invalidDTO = new PermissionDTO();
+            invalidDTO.setName("");
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void updatePermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testPermissionId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testPermissionDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:DELETE"})
-    public void deletePermission_NotFound_ReturnsNotFound() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        doThrow(new EntityNotFoundException("Permission not found")).when(permissionService)
-                .delete(permissionId);
+    @Nested
+    @DisplayName("DELETE /api/permissions/{id}")
+    class DeletePermission {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 204 No Content on successful deletion")
+        void deletePermission_ReturnsNoContent() throws Exception {
+            doNothing().when(permissionService).delete(testPermissionId);
 
-        mockMvc.perform(delete("/api/permissions/" + permissionId))
-                .andExpect(status().isNotFound());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testPermissionId))
+                    .andExpect(status().isNoContent());
+        }
 
-    @Test
-    @WithMockUser(authorities = {}) // No authority
-    public void getAllPermissions_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/permissions")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 404 Not Found when permission doesn't exist")
+        void deletePermission_NotFound_ReturnsNotFound() throws Exception {
+            doThrow(new EntityNotFoundException("Permission not found"))
+                    .when(permissionService).delete(testPermissionId);
 
-    @Test
-    @WithMockUser(authorities = {}) // No authority
-    public void getPermissionById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        mockMvc.perform(get("/api/permissions/" + permissionId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testPermissionId))
+                    .andExpect(status().isNotFound());
+        }
 
-    @Test
-    @WithMockUser(authorities = {}) // No authority
-    public void createPermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:Unauthorized_CREATE");
-        permissionDTO.setDescription("Test Permission");
-
-        mockMvc.perform(post("/api/permissions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {}) // No authority
-    public void updatePermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("PERMISSION:Unauthorized_UPDATE");
-        permissionDTO.setDescription("Test Permission");
-
-        mockMvc.perform(patch("/api/permissions/" + permissionId) // Using patch
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {}) // No authority
-    public void deletePermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-
-        mockMvc.perform(delete("/api/permissions/" + permissionId))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:CREATE"})
-    public void createPermission_WithValidationError_ReturnsBadRequest() throws Exception {
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("");
-        permissionDTO.setDescription("Test Permission");
-
-        mockMvc.perform(post("/api/permissions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    }
-
-    @Test
-    @WithMockUser(authorities = {"PERMISSION:UPDATE"})
-    public void updatePermission_WithValidationError_ReturnsBadRequest() throws Exception {
-        UUID permissionId = UUID.randomUUID();
-        PermissionDTO permissionDTO = new PermissionDTO();
-        permissionDTO.setName("");
-        permissionDTO.setDescription("Test Permission");
-
-        mockMvc.perform(patch("/api/permissions/" + permissionId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(permissionDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void deletePermission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testPermissionId))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 }

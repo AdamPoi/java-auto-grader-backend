@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCodeDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.SubmissionCodeService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ public class SubmissionCodeResourceTest {
         Page<SubmissionCodeDTO> submissionCodeDTOPage = new PageImpl<>(submissionCodeDTOList);
 
         when(submissionCodeService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(submissionCodeDTOPage);
+                .thenReturn(PageResponse.from(submissionCodeDTOPage));
 
         mockMvc.perform(get("/api/submission-codes")
                         .contentType(MediaType.APPLICATION_JSON))

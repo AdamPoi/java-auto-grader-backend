@@ -1,27 +1,23 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.Classroom;
 import io.adampoi.java_auto_grader.domain.Course;
 import io.adampoi.java_auto_grader.domain.StudentClassroom;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.ClassroomDTO;
-import io.adampoi.java_auto_grader.repository.ClassroomRepository;
-import io.adampoi.java_auto_grader.repository.CourseRepository;
-import io.adampoi.java_auto_grader.repository.StudentClassroomRepository;
-import io.adampoi.java_auto_grader.repository.SubmissionRepository;
-import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
+import io.adampoi.java_auto_grader.repository.*;
 import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -34,9 +30,9 @@ public class ClassroomService {
     private final SubmissionRepository submissionRepository;
 
     public ClassroomService(final ClassroomRepository classroomRepository,
-            final CourseRepository courseRepository, final UserRepository userRepository,
-            final StudentClassroomRepository studentClassroomRepository,
-            final SubmissionRepository submissionRepository) {
+                            final CourseRepository courseRepository, final UserRepository userRepository,
+                            final StudentClassroomRepository studentClassroomRepository,
+                            final SubmissionRepository submissionRepository) {
         this.classroomRepository = classroomRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -44,13 +40,14 @@ public class ClassroomService {
         this.submissionRepository = submissionRepository;
     }
 
-    public Page<ClassroomDTO> findAll(QueryFilter<Classroom> filter, Pageable pageable) {
+    public PageResponse<ClassroomDTO> findAll(QueryFilter<Classroom> filter, Pageable pageable) {
         final Page<Classroom> page = classroomRepository.findAll(filter, pageable);
-        return new PageImpl<>(page.getContent()
+        Page<ClassroomDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
                 .map(classroom -> mapToDTO(classroom, new ClassroomDTO()))
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
+        return PageResponse.from(dtoPage);
     }
 
     public ClassroomDTO get(final UUID classroomId) {

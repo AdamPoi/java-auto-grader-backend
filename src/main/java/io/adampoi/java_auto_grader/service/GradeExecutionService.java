@@ -4,6 +4,7 @@ import io.adampoi.java_auto_grader.domain.GradeExecution;
 import io.adampoi.java_auto_grader.domain.RubricGrade;
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.model.dto.GradeExecutionDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.GradeExecutionRepository;
 import io.adampoi.java_auto_grader.repository.RubricGradeRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
@@ -37,13 +38,14 @@ public class GradeExecutionService {
         this.submissionRepository = submissionRepository;
     }
 
-    public Page<GradeExecutionDTO> findAll(QueryFilter<GradeExecution> filter, Pageable pageable) {
+    public PageResponse<GradeExecutionDTO> findAll(QueryFilter<GradeExecution> filter, Pageable pageable) {
         final Page<GradeExecution> page = gradeExecutionRepository.findAll(filter, pageable);
-        return new PageImpl<>(page.getContent()
+        Page<GradeExecutionDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
                 .map(gradeExecution -> mapToDTO(gradeExecution, new GradeExecutionDTO()))
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
+        return PageResponse.from(dtoPage);
     }
 
     public GradeExecutionDTO get(final UUID gradeExecutionId) {

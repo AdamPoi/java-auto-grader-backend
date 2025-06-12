@@ -5,15 +5,19 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CourseDTO {
 
     private UUID id;
@@ -21,12 +25,12 @@ public class CourseDTO {
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
     @Size(min = 3, max = 20)
-    private String Code;
+    private String code;
 
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
     @Size(min = 3, max = 255)
-    private String Name;
+    private String name;
 
     private String description;
 

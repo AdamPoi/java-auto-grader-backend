@@ -4,6 +4,7 @@ import io.adampoi.java_auto_grader.domain.RubricGrade;
 import io.adampoi.java_auto_grader.filter.RubricGradeFilterDef;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.RubricGradeService;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
@@ -12,7 +13,6 @@ import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,10 +37,10 @@ public class RubricGradeResource {
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('RUBRIC_GRADE:LIST')")
     @Operation(summary = "Get Rubric Grades", description = "Get all rubric grades with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<RubricGradeDTO>> getAllRubricGrades(
+    public ApiSuccessResponse<PageResponse<RubricGradeDTO>> getAllRubricGrades(
             @RequestParam(required = false, defaultValue = "") @QFParam(RubricGradeFilterDef.class) QueryFilter<RubricGrade> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<RubricGradeDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<RubricGradeDTO>>builder()
                 .data(rubricGradeService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();

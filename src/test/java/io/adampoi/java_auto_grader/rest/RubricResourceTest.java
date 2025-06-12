@@ -5,6 +5,9 @@ import io.adampoi.java_auto_grader.model.dto.RubricDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.RubricService;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,7 +33,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class RubricResourceTest {
+class RubricResourceTest {
+
+    private static final String BASE_API_PATH = "/api/rubrics";
+    private static final String AUTHORITY_LIST = "RUBRIC:LIST";
+    private static final String AUTHORITY_CREATE = "RUBRIC:CREATE";
+    private static final String AUTHORITY_READ = "RUBRIC:READ";
+    private static final String AUTHORITY_UPDATE = "RUBRIC:UPDATE";
+    private static final String AUTHORITY_DELETE = "RUBRIC:DELETE";
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,23 +48,30 @@ public class RubricResourceTest {
     private ObjectMapper objectMapper;
     @MockitoBean
     private RubricService rubricService;
+    private UUID testRubricId;
+    private RubricDTO testRubricDTO;
 
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:LIST"})
-    public void getAllRubrics_ReturnsOk() throws Exception {
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setId(UUID.randomUUID());
-        rubricDTO.setName("Test Rubric");
+    @BeforeEach
+    void setUp() {
+        testRubricId = UUID.randomUUID();
+        testRubricDTO = createRubricDTO("Test Rubric");
+    }
 
-        List<RubricDTO> rubricDTOList = Collections.singletonList(rubricDTO);
-        Page<RubricDTO> rubricDTOPage = new PageImpl<>(rubricDTOList);
+    private RubricDTO createRubricDTO(String name) {
+        RubricDTO dto = new RubricDTO();
+        dto.setName(name);
+        dto.setDescription("Description for " + name);
+        dto.setMaxPoints(BigDecimal.TEN);
+        dto.setDisplayOrder(1);
+        dto.setIsActive(true);
+        dto.setAssignment(UUID.randomUUID());
+        return dto;
+    }
 
-        when(rubricService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(PageResponse.from(rubricDTOPage));
-
-        mockMvc.perform(get("/api/rubrics")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    private RubricDTO createRubricDTOWithId(UUID id, String name) {
+        RubricDTO dto = createRubricDTO(name);
+        dto.setId(id);
+        return dto;
     }
 
     @Test
@@ -107,166 +124,155 @@ public class RubricResourceTest {
                 .andExpect(jsonPath("$.data.name").value(rubricDTO.getName()));
     }
 
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:UPDATE"})
-    public void updateRubric_ReturnsOk() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setName("Updated Rubric");
-        rubricDTO.setDescription("Updated Description");
+    @Nested
+    @DisplayName("GET /api/rubrics")
+    class GetAllRubrics {
 
-        RubricDTO updatedRubricDTO = new RubricDTO();
-        updatedRubricDTO.setId(rubricId);
-        updatedRubricDTO.setName("Updated Rubric");
-        updatedRubricDTO.setDescription("Updated Description");
-        updatedRubricDTO.setMaxPoints(BigDecimal.TEN);
-        updatedRubricDTO.setDisplayOrder(1);
-        updatedRubricDTO.setIsActive(true);
-        updatedRubricDTO.setAssignment(UUID.randomUUID());
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 OK with rubrics")
+        void getAllRubrics_ReturnsOk() throws Exception {
+            List<RubricDTO> rubricDTOList = Collections.singletonList(
+                    createRubricDTOWithId(testRubricId, "Test Rubric"));
+            Page<RubricDTO> rubricDTOPage = new PageImpl<>(rubricDTOList);
 
-        when(rubricService.update(eq(rubricId), any(RubricDTO.class))).thenReturn(updatedRubricDTO);
+            when(rubricService.findAll(any(), any())).thenReturn(PageResponse.from(rubricDTOPage));
 
-        mockMvc.perform(patch("/api/rubrics/" + rubricId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rubricDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(rubricId.toString()))
-                .andExpect(jsonPath("$.data.name").value("Updated Rubric"))
-                .andExpect(jsonPath("$.data.description").value("Updated Description"));
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").exists());
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 and support pagination")
+        void getAllRubrics_WithPagination_ReturnsOk() throws Exception {
+            List<RubricDTO> rubricDTOList = Collections.singletonList(
+                    createRubricDTOWithId(testRubricId, "Paged Rubric"));
+            Page<RubricDTO> rubricDTOPage = new PageImpl<>(rubricDTOList);
+
+            when(rubricService.findAll(any(), any())).thenReturn(PageResponse.from(rubricDTOPage));
+
+            mockMvc.perform(get(BASE_API_PATH + "?page=0&size=10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content[0].name").value("Paged Rubric"))
+                    .andExpect(jsonPath("$.data.page").value(0))
+                    .andExpect(jsonPath("$.data.size").value(1))
+                    .andExpect(jsonPath("$.data.totalElements").value(1))
+                    .andExpect(jsonPath("$.data.totalPages").value(1))
+                    .andExpect(jsonPath("$.data.hasNext").value(false))
+                    .andExpect(jsonPath("$.data.hasPrevious").value(false));
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void getAllRubrics_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:DELETE"})
-    public void deleteRubric_ReturnsOk() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        doNothing().when(rubricService).delete(rubricId);
+    @Nested
+    @DisplayName("PATCH /api/rubrics/{id}")
+    class UpdateRubric {
 
-        mockMvc.perform(delete("/api/rubrics/" + rubricId))
-                .andExpect(status().isNoContent());
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 200 OK with updated rubric data")
+        void updateRubric_ReturnsOk() throws Exception {
+            RubricDTO updatedDTO = createRubricDTOWithId(testRubricId, "Updated Rubric");
+            updatedDTO.setDescription("Updated Description");
+            updatedDTO.setMaxPoints(BigDecimal.valueOf(15.0));
+            updatedDTO.setDisplayOrder(2);
+            updatedDTO.setIsActive(false);
+
+            when(rubricService.update(eq(testRubricId), any(RubricDTO.class)))
+                    .thenReturn(updatedDTO);
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testRubricId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testRubricDTO)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.id").value(testRubricId.toString()))
+                    .andExpect(jsonPath("$.data.name").value("Updated Rubric"))
+                    .andExpect(jsonPath("$.data.description").value("Updated Description"));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 404 Not Found when rubric doesn't exist")
+        void updateRubric_NotFound_ReturnsNotFound() throws Exception {
+            doThrow(new EntityNotFoundException("Rubric not found"))
+                    .when(rubricService)
+                    .update(eq(testRubricId), any());
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testRubricId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testRubricDTO)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void updateRubric_WithValidationError_ReturnsBadRequest() throws Exception {
+            RubricDTO invalidDTO = new RubricDTO();
+            invalidDTO.setName("");
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testRubricId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void updateRubric_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testRubricId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testRubricDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:READ"})
-    public void getRubric_NotFound_ReturnsNotFound() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        when(rubricService.get(rubricId)).thenThrow(new EntityNotFoundException("Rubric not found"));
+    @Nested
+    @DisplayName("DELETE /api/rubrics/{id}")
+    class DeleteRubric {
 
-        mockMvc.perform(get("/api/rubrics/" + rubricId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 204 No Content on successful deletion")
+        void deleteRubric_ReturnsOk() throws Exception {
+            doNothing().when(rubricService).delete(testRubricId);
 
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:UPDATE"})
-    public void updateRubric_NotFound_ReturnsNotFound() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setName("Updated Rubric");
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testRubricId))
+                    .andExpect(status().isNoContent());
+        }
 
-        doThrow(new EntityNotFoundException("Rubric not found"))
-                .when(rubricService)
-                .update(org.mockito.ArgumentMatchers.eq(rubricId), org.mockito.ArgumentMatchers.any());
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 404 Not Found when rubric doesn't exist")
+        void deleteRubric_NotFound_ReturnsNotFound() throws Exception {
+            doThrow(new EntityNotFoundException("Rubric not found"))
+                    .when(rubricService).delete(testRubricId);
 
-        mockMvc.perform(patch("/api/rubrics/" + rubricId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rubricDTO)))
-                .andExpect(status().isNotFound());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testRubricId))
+                    .andExpect(status().isNotFound());
+        }
 
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:DELETE"})
-    public void deleteRubric_NotFound_ReturnsNotFound() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        doThrow(new EntityNotFoundException("Rubric not found")).when(rubricService).delete(rubricId);
-
-        mockMvc.perform(delete("/api/rubrics/" + rubricId))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void getAllRubrics_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/rubrics")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void getRubricById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        mockMvc.perform(get("/api/rubrics/" + rubricId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void createRubric_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setName("New Rubric");
-
-        mockMvc.perform(post("/api/rubrics")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rubricDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void updateRubric_WithNoAuthority_ReturnsNotFound() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setName("Updated Rubric");
-
-        doThrow(new EntityNotFoundException("Rubric not found"))
-                .when(rubricService)
-                .update(org.mockito.ArgumentMatchers.eq(rubricId), org.mockito.ArgumentMatchers.any());
-
-        mockMvc.perform(patch("/api/rubrics/" + rubricId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rubricDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void deleteRubric_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID rubricId = UUID.randomUUID();
-
-        mockMvc.perform(delete("/api/rubrics/" + rubricId))
-                .andExpect(status().isUnauthorized());
-    }
-
-
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:CREATE"})
-    public void createRubric_WithValidationError_ReturnsBadRequest() throws
-            Exception {
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setName("");
-
-        mockMvc.perform(post("/api/rubrics")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rubricDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    }
-
-    @Test
-    @WithMockUser(authorities = {"RUBRIC:UPDATE"})
-    public void updateRubric_WithValidationError_ReturnsBadRequest() throws
-            Exception {
-        UUID rubricId = UUID.randomUUID();
-        RubricDTO rubricDTO = new RubricDTO();
-        rubricDTO.setName("");
-
-        mockMvc.perform(patch("/api/rubrics/" + rubricId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rubricDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void deleteRubric_WithNoAuthority_ReturnsUnauthorized() throws Exception {
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testRubricId))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 }

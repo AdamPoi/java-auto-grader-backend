@@ -1,17 +1,10 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.Classroom;
 import io.adampoi.java_auto_grader.domain.StudentClassroom;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.StudentClassroomDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.StudentClassroomRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
@@ -19,6 +12,13 @@ import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -29,19 +29,20 @@ public class StudentClassroomService {
     private final ClassroomRepository classroomRepository;
 
     public StudentClassroomService(final StudentClassroomRepository studentClassroomRepository,
-            final UserRepository userRepository, final ClassroomRepository classroomRepository) {
+                                   final UserRepository userRepository, final ClassroomRepository classroomRepository) {
         this.studentClassroomRepository = studentClassroomRepository;
         this.userRepository = userRepository;
         this.classroomRepository = classroomRepository;
     }
 
-    public Page<StudentClassroomDTO> findAll(QueryFilter<StudentClassroom> filter, Pageable pageable) {
+    public PageResponse<StudentClassroomDTO> findAll(QueryFilter<StudentClassroom> filter, Pageable pageable) {
         final Page<StudentClassroom> page = studentClassroomRepository.findAll(filter, pageable);
-        return new PageImpl<>(page.getContent()
+        Page<StudentClassroomDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
                 .map(studentClassroom -> mapToDTO(studentClassroom, new StudentClassroomDTO()))
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
+        return PageResponse.from(dtoPage);
     }
 
     public StudentClassroomDTO get(final UUID id) {
@@ -70,7 +71,7 @@ public class StudentClassroomService {
     }
 
     private StudentClassroomDTO mapToDTO(final StudentClassroom studentClassroom,
-            final StudentClassroomDTO studentClassroomDTO) {
+                                         final StudentClassroomDTO studentClassroomDTO) {
         studentClassroomDTO.setId(studentClassroom.getId());
         studentClassroomDTO.setEnrollmentDate(studentClassroom.getCreatedAt());
         studentClassroomDTO.setIsActive(studentClassroom.getIsActive());
@@ -82,7 +83,7 @@ public class StudentClassroomService {
     }
 
     private StudentClassroom mapToEntity(final StudentClassroomDTO studentClassroomDTO,
-            final StudentClassroom studentClassroom) {
+                                         final StudentClassroom studentClassroom) {
         if (studentClassroomDTO.getIsActive() != null) {
             studentClassroom.setIsActive(studentClassroomDTO.getIsActive());
         }

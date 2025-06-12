@@ -1,18 +1,11 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Classroom;
 import io.adampoi.java_auto_grader.domain.Course;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.CourseDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
@@ -21,6 +14,13 @@ import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,21 +32,22 @@ public class CourseService {
     private final AssignmentRepository assignmentRepository;
 
     public CourseService(final CourseRepository courseRepository, final UserRepository userRepository,
-            final ClassroomRepository classroomRepository,
-            final AssignmentRepository assignmentRepository) {
+                         final ClassroomRepository classroomRepository,
+                         final AssignmentRepository assignmentRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.classroomRepository = classroomRepository;
         this.assignmentRepository = assignmentRepository;
     }
 
-    public Page<CourseDTO> findAll(QueryFilter<Course> filter, Pageable pageable) {
+    public PageResponse<CourseDTO> findAll(QueryFilter<Course> filter, Pageable pageable) {
         final Page<Course> page = courseRepository.findAll(filter, pageable);
-        return new PageImpl<>(page.getContent()
+        Page<CourseDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
                 .map(course -> mapToDTO(course, new CourseDTO()))
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
+        return PageResponse.from(dtoPage);
     }
 
     public CourseDTO get(final UUID courseId) {

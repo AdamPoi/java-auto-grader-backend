@@ -2,8 +2,12 @@ package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.ClassroomDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.service.ClassroomService;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static io.adampoi.java_auto_grader.model.dto.ClassroomDTO.builder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -29,245 +34,291 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class ClassroomResourceTest {
+class ClassroomResourceTest {
 
-    @Autowired
-    ObjectMapper mapper;
+    private static final String BASE_API_PATH = "/api/classrooms";
+    private static final String AUTHORITY_LIST = "CLASSROOM:LIST";
+    private static final String AUTHORITY_CREATE = "CLASSROOM:CREATE";
+    private static final String AUTHORITY_READ = "CLASSROOM:READ";
+    private static final String AUTHORITY_UPDATE = "CLASSROOM:UPDATE";
+    private static final String AUTHORITY_DELETE = "CLASSROOM:DELETE";
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
     @MockitoBean
     private ClassroomService classroomService;
+    private UUID testClassroomId;
+    private ClassroomDTO testClassroomDTO;
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:LIST"})
-    public void getAllClassrooms_ReturnsOk() throws Exception {
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setId(UUID.randomUUID());
-        classroomDTO.setName("Test Classroom");
-
-        List<ClassroomDTO> classroomDTOList = Collections.singletonList(classroomDTO);
-        Page<ClassroomDTO> classroomDTOPage = new PageImpl<>(classroomDTOList);
-
-        when(classroomService.findAll(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(classroomDTOPage);
-
-        mockMvc.perform(get("/api/classrooms")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    @BeforeEach
+    void setUp() {
+        testClassroomId = UUID.randomUUID();
+        testClassroomDTO = createClassroomDTO("Test Classroom");
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:CREATE"})
-    public void createClassroom_ReturnsCreated() throws Exception {
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("New Classroom");
-        classroomDTO.setIsActive(true);
-        classroomDTO.setEnrollmentStartDate(OffsetDateTime.now());
-        classroomDTO.setEnrollmentEndDate(OffsetDateTime.now().plusMonths(3));
-        classroomDTO.setCourse(UUID.randomUUID());
-        classroomDTO.setTeacher(UUID.randomUUID());
-
-        ClassroomDTO createdClassroomDTO = new ClassroomDTO();
-        createdClassroomDTO.setId(UUID.randomUUID());
-        createdClassroomDTO.setName("New Classroom");
-        createdClassroomDTO.setIsActive(true);
-        createdClassroomDTO.setEnrollmentStartDate(OffsetDateTime.now());
-        createdClassroomDTO.setEnrollmentEndDate(OffsetDateTime.now().plusMonths(3));
-        createdClassroomDTO.setCourse(UUID.randomUUID());
-        createdClassroomDTO.setTeacher(UUID.randomUUID());
-
-        when(classroomService.create(org.mockito.ArgumentMatchers.any())).thenReturn(createdClassroomDTO);
-
-        mockMvc.perform(post("/api/classrooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.id").exists())
-                .andExpect(jsonPath("$.data.name").value("New Classroom"))
-                .andExpect(jsonPath("$.data.isActive").value(true))
-                .andExpect(jsonPath("$.data.course").exists())
-                .andExpect(jsonPath("$.data.teacher").exists());
+    private ClassroomDTO createClassroomDTO(String name) {
+        return builder()
+                .name(name)
+                .isActive(true)
+                .enrollmentStartDate(OffsetDateTime.now())
+                .enrollmentEndDate(OffsetDateTime.now().plusMonths(3))
+                .course(UUID.randomUUID())
+                .teacher(UUID.randomUUID())
+                .build();
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:READ"})
-    public void getClassroom_ReturnsOk() throws Exception {
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setId(UUID.randomUUID());
-        classroomDTO.setName("Test Classroom");
-
-        when(classroomService.get(classroomDTO.getId())).thenReturn(classroomDTO);
-
-        mockMvc.perform(get("/api/classrooms/" + classroomDTO.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value(classroomDTO.getName()));
+    private ClassroomDTO createClassroomDTOWithId(UUID id, String name) {
+        return builder()
+                .id(id)
+                .name(name)
+                .isActive(true)
+                .enrollmentStartDate(OffsetDateTime.now())
+                .enrollmentEndDate(OffsetDateTime.now().plusMonths(3))
+                .course(UUID.randomUUID())
+                .teacher(UUID.randomUUID())
+                .build();
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:UPDATE"})
-    public void updateClassroom_ReturnsOk() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("Updated Classroom");
-        classroomDTO.setIsActive(false);
+    @Nested
+    @DisplayName("GET /api/classrooms")
+    class GetAllClassrooms {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 OK with classrooms")
+        void shouldReturnClassroomsWhenAuthorized() throws Exception {
+            List<ClassroomDTO> classroomDTOList = Collections.singletonList(
+                    createClassroomDTOWithId(testClassroomId, "Test Classroom"));
+            Page<ClassroomDTO> classroomDTOPage = new PageImpl<>(classroomDTOList);
 
-        ClassroomDTO updatedClassroomDTO = new ClassroomDTO();
-        updatedClassroomDTO.setId(classroomId);
-        updatedClassroomDTO.setName("Updated Classroom");
-        updatedClassroomDTO.setIsActive(false);
-        updatedClassroomDTO.setEnrollmentStartDate(OffsetDateTime.now());
-        updatedClassroomDTO.setEnrollmentEndDate(OffsetDateTime.now().plusMonths(6));
-        updatedClassroomDTO.setCourse(UUID.randomUUID());
-        updatedClassroomDTO.setTeacher(UUID.randomUUID());
+            when(classroomService.findAll(any(), any())).thenReturn(PageResponse.from(classroomDTOPage));
 
-        when(classroomService.update(eq(classroomId), any(ClassroomDTO.class))).thenReturn(updatedClassroomDTO);
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").exists());
+        }
 
-        mockMvc.perform(patch("/api/classrooms/" + classroomId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(classroomId.toString()))
-                .andExpect(jsonPath("$.data.name").value("Updated Classroom"))
-                .andExpect(jsonPath("$.data.isActive").value(false));
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_LIST})
+        @DisplayName("should return 200 and support pagination")
+        void shouldReturnPaginatedClassroomsWhenRequested() throws Exception {
+            List<ClassroomDTO> classroomDTOList = Collections.singletonList(
+                    createClassroomDTOWithId(testClassroomId, "Paged Classroom"));
+            Page<ClassroomDTO> classroomDTOPage = new PageImpl<>(classroomDTOList);
+
+            when(classroomService.findAll(any(), any())).thenReturn(PageResponse.from(classroomDTOPage));
+
+            mockMvc.perform(get(BASE_API_PATH + "?page=0&size=10")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content[0].name").value("Paged Classroom"))
+                    .andExpect(jsonPath("$.data.page").value(0))
+                    .andExpect(jsonPath("$.data.size").value(1))
+                    .andExpect(jsonPath("$.data.totalElements").value(1))
+                    .andExpect(jsonPath("$.data.totalPages").value(1))
+                    .andExpect(jsonPath("$.data.hasNext").value(false))
+                    .andExpect(jsonPath("$.data.hasPrevious").value(false));
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenNotAuthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:DELETE"})
-    public void deleteClassroom_ReturnsOk() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        doNothing().when(classroomService).delete(classroomId);
+    @Nested
+    @DisplayName("POST /api/classrooms")
+    class CreateClassroom {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @DisplayName("should return 201 Created with classroom data")
+        void shouldReturnCreatedClassroomWhenValidInput() throws Exception {
+            ClassroomDTO createdClassroomDTO = createClassroomDTOWithId(testClassroomId,
+                    "New Classroom");
 
-        mockMvc.perform(delete("/api/classrooms/" + classroomId))
-                .andExpect(status().isNoContent());
+            when(classroomService.create(any(ClassroomDTO.class))).thenReturn(createdClassroomDTO);
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testClassroomDTO)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.id").value(testClassroomId.toString()))
+                    .andExpect(jsonPath("$.data.name").value("New Classroom"))
+                    .andExpect(jsonPath("$.data.isActive").value(true))
+                    .andExpect(jsonPath("$.data.course").exists())
+                    .andExpect(jsonPath("$.data.teacher").exists());
+
+            verify(classroomService, times(1)).create(any(ClassroomDTO.class));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void shouldReturnBadRequestWhenInvalidInput() throws Exception {
+            ClassroomDTO invalidDTO = new ClassroomDTO();
+            invalidDTO.setName("");
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenCreateNotAuthorized() throws Exception {
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testClassroomDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:READ"})
-    public void getClassroom_NotFound_ReturnsNotFound() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        when(classroomService.get(classroomId)).thenThrow(new EntityNotFoundException("Classroom not found"));
+    @Nested
+    @DisplayName("GET /api/classrooms/{id}")
+    class GetClassroomById {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_READ})
+        @DisplayName("should return 200 OK with classroom data")
+        void shouldReturnClassroomWhenFoundAndAuthorized() throws Exception {
+            when(classroomService.get(testClassroomId)).thenReturn(
+                    createClassroomDTOWithId(testClassroomId, "Test Classroom"));
 
-        mockMvc.perform(get("/api/classrooms/" + classroomId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+            mockMvc.perform(get(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.name").value("Test Classroom"));
+
+            verify(classroomService, times(1)).get(testClassroomId);
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_READ})
+        @DisplayName("should return 404 Not Found when classroom doesn't exist")
+        void shouldReturnNotFoundWhenClassroomNotFound() throws Exception {
+            when(classroomService.get(testClassroomId))
+                    .thenThrow(new EntityNotFoundException("Classroom not found"));
+
+            mockMvc.perform(get(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenGetByIdNotAuthorized() throws Exception {
+            mockMvc.perform(get(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:UPDATE"})
-    public void updateClassroom_NotFound_ReturnsNotFound() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("Updated Classroom");
+    @Nested
+    @DisplayName("PATCH /api/classrooms/{id}")
+    class UpdateClassroom {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 200 OK with updated classroom data")
+        void shouldReturnUpdatedClassroomWhenValidInput() throws Exception {
+            ClassroomDTO updatedDTO = createClassroomDTOWithId(testClassroomId, "Updated Classroom");
+            updatedDTO.setIsActive(false);
+            updatedDTO.setEnrollmentEndDate(OffsetDateTime.now().plusMonths(6));
 
-        doThrow(new EntityNotFoundException("Classroom not found"))
-                .when(classroomService)
-                .update(org.mockito.ArgumentMatchers.eq(classroomId), org.mockito.ArgumentMatchers.any());
+            when(classroomService.update(eq(testClassroomId), any(ClassroomDTO.class)))
+                    .thenReturn(updatedDTO);
 
-        mockMvc.perform(patch("/api/classrooms/" + classroomId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isNotFound());
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updatedDTO)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.id").value(testClassroomId.toString()))
+                    .andExpect(jsonPath("$.data.name").value("Updated Classroom"))
+                    .andExpect(jsonPath("$.data.isActive").value(false));
+
+            verify(classroomService, times(1)).update(eq(testClassroomId), any(ClassroomDTO.class));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 404 Not Found when classroom doesn't exist")
+        void shouldReturnNotFoundWhenUpdatingNonExistentClassroom() throws Exception {
+            doThrow(new EntityNotFoundException("Classroom not found"))
+                    .when(classroomService)
+                    .update(eq(testClassroomId), any());
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testClassroomDTO)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @DisplayName("should return 400 Bad Request for invalid input")
+        void shouldReturnBadRequestWhenUpdatingWithInvalidInput() throws Exception {
+            ClassroomDTO invalidDTO = new ClassroomDTO();
+            invalidDTO.setName("");
+
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidDTO)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        }
+
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenUpdateNotAuthorized() throws Exception {
+            mockMvc.perform(patch(BASE_API_PATH + "/" + testClassroomId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(testClassroomDTO)))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:DELETE"})
-    public void deleteClassroom_NotFound_ReturnsNotFound() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        doThrow(new EntityNotFoundException("Classroom not found")).when(classroomService).delete(classroomId);
+    @Nested
+    @DisplayName("DELETE /api/classrooms/{id}")
+    class DeleteClassroom {
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 204 No Content on successful deletion")
+        void shouldReturnNoContentWhenDeletedSuccessfully() throws Exception {
+            doNothing().when(classroomService).delete(testClassroomId);
+            verify(classroomService, times(0)).delete(testClassroomId);
 
-        mockMvc.perform(delete("/api/classrooms/" + classroomId))
-                .andExpect(status().isNotFound());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testClassroomId))
+                    .andExpect(status().isNoContent());
+        }
 
-    @Test
-    @WithMockUser(authorities = {})
-    public void getAllClassrooms_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/classrooms")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_DELETE})
+        @DisplayName("should return 404 Not Found when classroom doesn't exist")
+        void shouldReturnNotFoundWhenDeletingNonExistentClassroom() throws Exception {
+            doThrow(new EntityNotFoundException("Classroom not found"))
+                    .when(classroomService).delete(testClassroomId);
 
-    @Test
-    @WithMockUser(authorities = {})
-    public void getClassroomById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        mockMvc.perform(get("/api/classrooms/" + classroomId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
-    }
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testClassroomId))
+                    .andExpect(status().isNotFound());
+        }
 
-    @Test
-    @WithMockUser(authorities = {})
-    public void createClassroom_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("New Classroom");
-        classroomDTO.setTeacher(UUID.randomUUID());
-        classroomDTO.setCourse(UUID.randomUUID());
-
-        mockMvc.perform(post("/api/classrooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void updateClassroom_WithNoAuthority_ReturnsNotFound() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("Updated Classroom");
-
-        doThrow(new EntityNotFoundException("Classroom not found"))
-                .when(classroomService)
-                .update(org.mockito.ArgumentMatchers.eq(classroomId), org.mockito.ArgumentMatchers.any());
-
-        mockMvc.perform(patch("/api/classrooms/" + classroomId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(authorities = {})
-    public void deleteClassroom_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-        UUID classroomId = UUID.randomUUID();
-
-        mockMvc.perform(delete("/api/classrooms/" + classroomId))
-                .andExpect(status().isUnauthorized());
-    }
-
-
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:CREATE"})
-    public void createClassroom_WithValidationError_ReturnsBadRequest() throws
-            Exception {
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("");
-
-        mockMvc.perform(post("/api/classrooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
-    }
-
-    @Test
-    @WithMockUser(authorities = {"CLASSROOM:UPDATE"})
-    public void updateClassroom_WithValidationError_ReturnsBadRequest() throws
-            Exception {
-        UUID classroomId = UUID.randomUUID();
-        ClassroomDTO classroomDTO = new ClassroomDTO();
-        classroomDTO.setName("");
-
-        mockMvc.perform(patch("/api/classrooms/" + classroomId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(classroomDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                .andExpect(jsonPath("$.error.fieldErrors").isArray());
+        @Test
+        @WithMockUser(authorities = {})
+        @DisplayName("should return 401 Unauthorized when no authority")
+        void shouldReturnUnauthorizedWhenDeleteNotAuthorized() throws Exception {
+            mockMvc.perform(delete(BASE_API_PATH + "/" + testClassroomId))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 }

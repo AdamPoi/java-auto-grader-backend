@@ -9,9 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RunResultDTO {
-    private String output;
-    private String error;
-    private Integer executionTime;
-    private String status;
+public class CodeFile {
+    private String fileName;
+    private String content;
 }

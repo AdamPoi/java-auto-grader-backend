@@ -1,18 +1,11 @@
 package io.adampoi.java_auto_grader.service;
 
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Course;
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
@@ -21,6 +14,14 @@ import io.adampoi.java_auto_grader.util.NotFoundException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.transaction.Transactional;
+import lombok.SneakyThrows;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,15 +33,15 @@ public class AssignmentService {
     private final SubmissionRepository submissionRepository;
 
     public AssignmentService(final AssignmentRepository assignmentRepository,
-            final CourseRepository courseRepository, final UserRepository userRepository,
-            final SubmissionRepository submissionRepository) {
+                             final CourseRepository courseRepository, final UserRepository userRepository,
+                             final SubmissionRepository submissionRepository) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
     }
 
-    public Page<AssignmentDTO> findAll(QueryFilter<Assignment> filter, Pageable pageable) {
+    public PageResponse<AssignmentDTO> findAll(QueryFilter<Assignment> filter, Pageable pageable) {
         final Page<Assignment> page = assignmentRepository.findAll(filter, pageable);
 
         Page<AssignmentDTO> dtoPage = new PageImpl<>(
@@ -50,9 +51,10 @@ public class AssignmentService {
                         .collect(Collectors.toList()),
                 pageable,
                 page.getTotalElements());
-        return dtoPage;
+        return PageResponse.from(dtoPage);
     }
 
+    @SneakyThrows
     public AssignmentDTO get(final UUID assignmentId) {
         return assignmentRepository.findById(assignmentId)
                 .map(assignment -> mapToDTO(assignment, new AssignmentDTO()))
@@ -66,6 +68,7 @@ public class AssignmentService {
         return mapToDTO(savedAssignment, new AssignmentDTO());
     }
 
+    @SneakyThrows
     public AssignmentDTO update(final UUID assignmentId, final AssignmentDTO assignmentDTO) {
         final Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new NotFoundException("Assignment not found"));

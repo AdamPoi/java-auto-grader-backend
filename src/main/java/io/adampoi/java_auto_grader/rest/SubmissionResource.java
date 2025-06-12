@@ -8,6 +8,7 @@ import io.adampoi.java_auto_grader.filter.SubmissionFilterDef;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
+import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.model.response.SubmissionCompileResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
@@ -22,7 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -59,10 +59,10 @@ public class SubmissionResource {
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('SUBMISSION:LIST')")
     @Operation(summary = "Get Submissions", description = "Get all submissions with pagination and filtering capabilities")
-    public ApiSuccessResponse<Page<SubmissionDTO>> getAllSubmissions(
+    public ApiSuccessResponse<PageResponse<SubmissionDTO>> getAllSubmissions(
             @RequestParam(required = false, defaultValue = "") @QFParam(SubmissionFilterDef.class) QueryFilter<Submission> filter,
             @ParameterObject Pageable pageable) {
-        return ApiSuccessResponse.<Page<SubmissionDTO>>builder()
+        return ApiSuccessResponse.<PageResponse<SubmissionDTO>>builder()
                 .data(submissionService.findAll(filter, pageable))
                 .statusCode(HttpStatus.OK)
                 .build();
@@ -197,5 +197,6 @@ public class SubmissionResource {
                 .statusCode(HttpStatus.OK)
                 .build();
     }
+
 
 }

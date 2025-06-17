@@ -1,12 +1,14 @@
 package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.Classroom;
-import io.adampoi.java_auto_grader.domain.Course;
-import io.adampoi.java_auto_grader.domain.StudentClassroom;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.ClassroomDTO;
+import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
-import io.adampoi.java_auto_grader.repository.*;
+import io.adampoi.java_auto_grader.repository.ClassroomRepository;
+import io.adampoi.java_auto_grader.repository.CourseRepository;
+import io.adampoi.java_auto_grader.repository.SubmissionRepository;
+import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,17 +29,14 @@ public class ClassroomService {
     private final ClassroomRepository classroomRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-    private final StudentClassroomRepository studentClassroomRepository;
     private final SubmissionRepository submissionRepository;
 
     public ClassroomService(final ClassroomRepository classroomRepository,
                             final CourseRepository courseRepository, final UserRepository userRepository,
-                            final StudentClassroomRepository studentClassroomRepository,
                             final SubmissionRepository submissionRepository) {
         this.classroomRepository = classroomRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.studentClassroomRepository = studentClassroomRepository;
         this.submissionRepository = submissionRepository;
     }
 
@@ -44,7 +44,10 @@ public class ClassroomService {
         final Page<Classroom> page = classroomRepository.findAll(filter, pageable);
         Page<ClassroomDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
-                .map(classroom -> mapToDTO(classroom, new ClassroomDTO()))
+                .map(classroom -> {
+
+                    return mapToDTO(classroom, new ClassroomDTO());
+                })
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
         return PageResponse.from(dtoPage);
@@ -56,9 +59,9 @@ public class ClassroomService {
                 .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
     }
 
-    public ClassroomDTO create(final ClassroomDTO classroomDTO) {
+    public ClassroomDTO create(final ClassroomDTO request) {
         final Classroom classroom = new Classroom();
-        mapToEntity(classroomDTO, classroom);
+        mapToEntity(request, classroom);
         Classroom savedClassroom = classroomRepository.save(classroom);
         return mapToDTO(savedClassroom, new ClassroomDTO());
     }
@@ -79,14 +82,18 @@ public class ClassroomService {
         classroomDTO.setId(classroom.getId());
         classroomDTO.setName(classroom.getName());
         classroomDTO.setIsActive(classroom.getIsActive());
-        classroomDTO.setEnrollmentStartDate(classroom.getEnrollmentStartDate());
-        classroomDTO.setEnrollmentEndDate(classroom.getEnrollmentEndDate());
         classroomDTO.setCreatedAt(classroom.getCreatedAt());
         classroomDTO.setUpdatedAt(classroom.getUpdatedAt());
-        classroomDTO.setCourse(classroom.getCourse() == null ? null : classroom.getCourse().getId());
-        classroomDTO.setTeacher(classroom.getTeacher() == null ? null : classroom.getTeacher().getId());
+        classroomDTO.setEnrolledStudents(classroom.getEnrolledStudents().stream()
+                .map(student -> UserService.mapToDTO(student, new UserDTO()))
+                .collect(Collectors.toList()));
+
+        classroomDTO.setTeacher(classroom.getTeacher() == null ? null :
+                UserService.mapToDTO(classroom.getTeacher(), new UserDTO()));
+
         return classroomDTO;
     }
+
 
     private Classroom mapToEntity(final ClassroomDTO classroomDTO, final Classroom classroom) {
         if (classroomDTO.getName() != null) {
@@ -95,21 +102,20 @@ public class ClassroomService {
         if (classroomDTO.getIsActive() != null) {
             classroom.setIsActive(classroomDTO.getIsActive());
         }
-        if (classroomDTO.getEnrollmentStartDate() != null) {
-            classroom.setEnrollmentStartDate(classroomDTO.getEnrollmentStartDate());
+        if (classroomDTO.getId() != null) {
+            classroom.setId(classroomDTO.getId());
         }
-        if (classroomDTO.getEnrollmentEndDate() != null) {
-            classroom.setEnrollmentEndDate(classroomDTO.getEnrollmentEndDate());
-        }
-        if (classroomDTO.getCourse() != null) {
-            final Course course = courseRepository.findById(classroomDTO.getCourse())
-                    .orElseThrow(() -> new EntityNotFoundException("course not found"));
-            classroom.setCourse(course);
-        }
-        if (classroomDTO.getTeacher() != null) {
-            final User teacher = userRepository.findById(classroomDTO.getTeacher())
-                    .orElseThrow(() -> new EntityNotFoundException("teacher not found"));
+        if (classroomDTO.getTeacherId() != null) {
+            final User teacher = userRepository.findById(classroomDTO.getTeacherId())
+                    .orElseThrow(() -> new EntityNotFoundException("Teacher not found"));
             classroom.setTeacher(teacher);
+        }
+        if (!classroomDTO.getStudentIds().isEmpty()) {
+            Set<User> students = classroomDTO.getStudentIds().stream()
+                    .map(studentId -> userRepository.findById(studentId)
+                            .orElseThrow(() -> new EntityNotFoundException("Student not found: " + studentId)))
+                    .collect(Collectors.toSet());
+            classroom.setEnrolledStudents(students);
         }
         if (classroomDTO.getCreatedAt() != null) {
             classroom.setCreatedAt(classroomDTO.getCreatedAt());
@@ -124,12 +130,7 @@ public class ClassroomService {
         final ReferencedWarning referencedWarning = new ReferencedWarning();
         final Classroom classroom = classroomRepository.findById(classroomId)
                 .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
-        final StudentClassroom classroomStudentClassroom = studentClassroomRepository.findFirstByClassroom(classroom);
-        if (classroomStudentClassroom != null) {
-            referencedWarning.setKey("classroom.studentClassroom.classroom.referenced");
-            referencedWarning.addParam(classroomStudentClassroom.getId());
-            return referencedWarning;
-        }
+
 
         return null;
     }

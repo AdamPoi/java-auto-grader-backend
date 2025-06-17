@@ -1,8 +1,11 @@
 package io.adampoi.java_auto_grader.service;
 
+import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Rubric;
+import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
 import io.adampoi.java_auto_grader.model.dto.RubricDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
+import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.RubricRepository;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
@@ -23,9 +26,11 @@ import java.util.stream.Collectors;
 public class RubricService {
 
     private final RubricRepository rubricRepository;
+    private final AssignmentRepository assignmentRepository;
 
-    public RubricService(final RubricRepository rubricRepository) {
+    public RubricService(final RubricRepository rubricRepository, AssignmentRepository assignmentRepository) {
         this.rubricRepository = rubricRepository;
+        this.assignmentRepository = assignmentRepository;
     }
 
     public PageResponse<RubricDTO> findAll(QueryFilter<Rubric> filter, Pageable pageable) {
@@ -75,10 +80,11 @@ public class RubricService {
         rubricDTO.setMaxPoints(rubric.getMaxPoints());
         rubricDTO.setDisplayOrder(rubric.getDisplayOrder());
         rubricDTO.setIsActive(rubric.getIsActive());
-        rubricDTO.setAssignment(rubric.getAssignment().getId());
-        rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
-                .map(rubricGrade -> rubricGrade.getId())
-                .collect(Collectors.toSet()));
+        rubricDTO.setAssignment(rubric.getAssignment() == null ? null :
+                AssignmentService.mapToDTO(rubric.getAssignment(), new AssignmentDTO()));
+//        rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
+//                .map(rubricGrade -> rubricGrade.getId())
+//                .collect(Collectors.toSet()));
         rubricDTO.setCreatedAt(rubric.getCreatedAt());
         rubricDTO.setUpdatedAt(rubric.getUpdatedAt());
         return rubricDTO;
@@ -99,6 +105,12 @@ public class RubricService {
         }
         if (rubricDTO.getIsActive() != null) {
             rubric.setIsActive(rubricDTO.getIsActive());
+        }
+
+        if (rubricDTO.getAssignmentId() != null) {
+            final Assignment assignment = assignmentRepository.findById(rubricDTO.getAssignmentId())
+                    .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
+            rubric.setAssignment(assignment);
         }
         // rubric.setAssignment(assignmentRepository.findById(rubricDTO.getAssignment()).orElse(null));
         // rubric.setRubricGrades(rubricDTO.getRubricGrades().stream()

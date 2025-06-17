@@ -30,14 +30,12 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final CourseRepository courseRepository;
     private final ClassroomRepository classroomRepository;
-    private final StudentClassroomRepository studentClassroomRepository;
     private final AssignmentRepository assignmentRepository;
     private final SubmissionRepository submissionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UserService(final UserRepository userRepository, final RoleRepository roleRepository,
                        final CourseRepository courseRepository, final ClassroomRepository classroomRepository,
-                       final StudentClassroomRepository studentClassroomRepository,
                        final AssignmentRepository assignmentRepository,
                        final SubmissionRepository submissionRepository,
                        BCryptPasswordEncoder passwordEncoder) {
@@ -45,11 +43,25 @@ public class UserService {
         this.roleRepository = roleRepository;
         this.courseRepository = courseRepository;
         this.classroomRepository = classroomRepository;
-        this.studentClassroomRepository = studentClassroomRepository;
         this.assignmentRepository = assignmentRepository;
         this.submissionRepository = submissionRepository;
         this.passwordEncoder = passwordEncoder;
     }
+
+    public static UserDTO mapToDTO(final User user, final UserDTO userDTO) {
+        userDTO.setId(user.getId());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setIsActive(user.getIsActive());
+        userDTO.setCreatedAt(user.getCreatedAt());
+        userDTO.setUpdatedAt(user.getUpdatedAt());
+        userDTO.setRoles(user.getUserRoles().stream()
+                .map(Role::getName)
+                .toList());
+        return userDTO;
+    }
+
 
     public PageResponse<UserDTO> findAll(QueryFilter<User> filter, Pageable pageable) {
         final Page<User> page = userRepository.findAll(filter, pageable);
@@ -70,7 +82,6 @@ public class UserService {
                 .map(user -> mapToDTO(user, new UserDTO()))
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
-
 
     public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
@@ -94,20 +105,6 @@ public class UserService {
 
     public void delete(final UUID userId) {
         userRepository.deleteById(userId);
-    }
-
-    private UserDTO mapToDTO(final User user, final UserDTO userDTO) {
-        userDTO.setId(user.getId());
-        userDTO.setEmail(user.getEmail());
-        userDTO.setFirstName(user.getFirstName());
-        userDTO.setLastName(user.getLastName());
-        userDTO.setIsActive(user.getIsActive());
-        userDTO.setCreatedAt(user.getCreatedAt());
-        userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setRoles(user.getUserRoles().stream()
-                .map(Role::getName)
-                .toList());
-        return userDTO;
     }
 
     private User mapToEntity(final UserDTO userDTO, final User user) {
@@ -159,12 +156,7 @@ public class UserService {
             return referencedWarning;
         }
 
-        final StudentClassroom studentStudentClassroom = studentClassroomRepository.findFirstByStudent(user);
-        if (studentStudentClassroom != null) {
-            referencedWarning.setKey("user.studentClassroom.student.referenced");
-            referencedWarning.addParam(studentStudentClassroom.getId());
-            return referencedWarning;
-        }
+
         final Assignment createdByTeacherAssignment = assignmentRepository.findFirstByCreatedByTeacher(user);
         if (createdByTeacherAssignment != null) {
             referencedWarning.setKey("user.assignment.createdByTeacher.referenced");

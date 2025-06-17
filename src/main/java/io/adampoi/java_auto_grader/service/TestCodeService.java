@@ -128,9 +128,9 @@ public class TestCodeService {
         String baseCommand = String.format("cd %s && ", workspace);
         switch (buildTool) {
             case GRADLE:
-                return baseCommand + "gradle clean test --daemon --parallel --build-cache --configuration-cache --console=plain --quiet";
+                return baseCommand + "gradle test --daemon --parallel --build-cache --configuration-cache --console=plain --quiet";
             case MAVEN:
-                return baseCommand + "mvn clean test -Dmaven.repo.local=/workspace/.m2/repository";
+                return baseCommand + "mvn test -Dmaven.repo.local=/workspace/.m2/repository";
             default:
                 throw new IllegalArgumentException("Unsupported build tool: " + buildTool);
         }

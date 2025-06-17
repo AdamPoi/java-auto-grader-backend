@@ -32,22 +32,17 @@ public class Classroom {
     @Column
     private Boolean isActive;
 
-    @Column
-    private OffsetDateTime enrollmentStartDate;
-
-    @Column
-    private OffsetDateTime enrollmentEndDate;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", referencedColumnName = "id", nullable = false)
-    private Course course;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "teacher_id", referencedColumnName = "id", nullable = true)
     private User teacher;
 
-    @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<StudentClassroom> classroomStudents;
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_classrooms",
+            joinColumns = @JoinColumn(name = "classroom_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> enrolledStudents;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -56,5 +51,4 @@ public class Classroom {
     @UpdateTimestamp
     @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
-
 }

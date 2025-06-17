@@ -58,14 +58,17 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Classroom> teacherClassrooms;
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<StudentClassroom> studentClassrooms;
-
     @OneToMany(mappedBy = "createdByTeacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> teacherAssignments;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Submission> studentSubmissions;
+
+    @ManyToMany(mappedBy = "enrolledUsers", fetch = FetchType.EAGER)
+    private Set<Course> enrolledCourses;
+
+    @ManyToMany(mappedBy = "enrolledStudents", cascade = CascadeType.ALL)
+    private Set<Classroom> enrolledClassrooms;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -127,5 +130,6 @@ public class User implements UserDetails {
                 .collect(Collectors.toSet());
     }
 
-
 }
+
+

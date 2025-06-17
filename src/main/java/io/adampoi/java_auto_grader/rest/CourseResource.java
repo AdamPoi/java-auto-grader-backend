@@ -1,8 +1,11 @@
 package io.adampoi.java_auto_grader.rest;
 
+import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Course;
 import io.adampoi.java_auto_grader.domain.User;
+import io.adampoi.java_auto_grader.filter.AssignmentFilterDef;
 import io.adampoi.java_auto_grader.filter.CourseFilterDef;
+import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
 import io.adampoi.java_auto_grader.model.dto.CourseDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
@@ -101,6 +104,20 @@ public class CourseResource {
         courseService.delete(courseId);
         return ApiSuccessResponse.<Void>builder()
                 .statusCode(HttpStatus.NO_CONTENT)
+                .build();
+    }
+
+    @GetMapping("/{courseId}/assignments")
+    @ApiResponse(responseCode = "200")
+    @PreAuthorize("hasAuthority('ASSIGNMENT:LIST')")
+    @Operation(summary = "Get Course Assignments", description = "Get all courses with pagination and filtering capabilities")
+    public ApiSuccessResponse<PageResponse<AssignmentDTO>> getAllAssignments(
+            @PathVariable(name = "courseId") final UUID courseId,
+            @RequestParam(required = false, defaultValue = "") @QFParam(AssignmentFilterDef.class) QueryFilter<Assignment> filter,
+            @ParameterObject Pageable pageable) {
+        return ApiSuccessResponse.<PageResponse<AssignmentDTO>>builder()
+                .data(courseService.getCourseAssignments(courseId, filter, pageable))
+                .statusCode(HttpStatus.OK)
                 .build();
     }
 

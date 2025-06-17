@@ -1,6 +1,5 @@
 package io.adampoi.java_auto_grader.service;
 
-import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.domain.SubmissionCode;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCodeDTO;
 import io.adampoi.java_auto_grader.model.request.RunCodeRequest;
@@ -88,11 +87,10 @@ public class SubmissionCodeService {
         submissionCodeDTO.setId(submissionCode.getId());
         submissionCodeDTO.setFileName(submissionCode.getFileName());
         submissionCodeDTO.setSourceCode(submissionCode.getSourceCode());
-        submissionCodeDTO.setPackagePath(submissionCode.getPackagePath());
         submissionCodeDTO.setClassName(submissionCode.getClassName());
-        submissionCodeDTO
-                .setSubmission(submissionCode.getSubmission() == null ? null : submissionCode.getSubmission().getId());
-        submissionCodeDTO.setCreatedAt(submissionCode.getCreatedAt());
+//        submissionCodeDTO
+//                .setSubmission(submissionCode.getSubmission() == null ? null : submissionCode.getSubmission().getId());
+//        submissionCodeDTO.setCreatedAt(submissionCode.getCreatedAt());
         submissionCodeDTO.setUpdatedAt(submissionCode.getUpdatedAt());
         return submissionCodeDTO;
     }
@@ -104,17 +102,15 @@ public class SubmissionCodeService {
         if (submissionCodeDTO.getSourceCode() != null) {
             submissionCode.setSourceCode(submissionCodeDTO.getSourceCode());
         }
-        if (submissionCodeDTO.getPackagePath() != null) {
-            submissionCode.setPackagePath(submissionCodeDTO.getPackagePath());
-        }
+
         if (submissionCodeDTO.getClassName() != null) {
             submissionCode.setClassName(submissionCodeDTO.getClassName());
         }
-        if (submissionCodeDTO.getSubmission() != null) {
-            final Submission submission = submissionRepository.findById(submissionCodeDTO.getSubmission())
-                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
-            submissionCode.setSubmission(submission);
-        }
+//        if (submissionCodeDTO.getSubmission() != null) {
+//            final Submission submission = submissionRepository.findById(submissionCodeDTO.getSubmission())
+//                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
+//            submissionCode.setSubmission(submission);
+//        }
         if (submissionCodeDTO.getCreatedAt() != null) {
             submissionCode.setCreatedAt(submissionCodeDTO.getCreatedAt());
         }

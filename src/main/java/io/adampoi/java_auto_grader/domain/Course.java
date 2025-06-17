@@ -9,6 +9,7 @@ import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,18 +39,17 @@ public class Course {
     @Column
     private Boolean isActive;
 
-    @Column
-    private OffsetDateTime enrollmentStartDate;
-
-    @Column
-    private OffsetDateTime enrollmentEndDate;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<Classroom> courseClassrooms;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "course_enrollments",
+            joinColumns = @JoinColumn(name = "course_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> enrolledUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> courseAssignments;
@@ -61,5 +61,21 @@ public class Course {
     @UpdateTimestamp
     @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
+
+    public void enrollUser(User user) {
+        enrolledUsers.add(user);
+        user.getEnrolledCourses().add(this);
+    }
+
+    public void enrollClassroom(Classroom classroom) {
+        for (User student : classroom.getEnrolledStudents()) {
+            enrollUser(student);
+        }
+    }
+
+    public void unenrollUser(User user) {
+        enrolledUsers.remove(user);
+        user.getEnrolledCourses().remove(this);
+    }
 
 }

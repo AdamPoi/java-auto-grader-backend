@@ -1,8 +1,6 @@
 package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.GradeExecution;
-import io.adampoi.java_auto_grader.domain.RubricGrade;
-import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.model.dto.GradeExecutionDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.GradeExecutionRepository;
@@ -81,10 +79,11 @@ public class GradeExecutionService {
         gradeExecutionDTO.setExpected(gradeExecution.getExpected());
         gradeExecutionDTO.setError(gradeExecution.getError());
         gradeExecutionDTO.setExecutionTime(gradeExecution.getExecutionTime());
-        gradeExecutionDTO.setRubricGrade(
-                gradeExecution.getRubricGrade() == null ? null : gradeExecution.getRubricGrade().getId());
-        gradeExecutionDTO
-                .setSubmission(gradeExecution.getSubmission() == null ? null : gradeExecution.getSubmission().getId());
+
+//        gradeExecutionDTO.setRubricGrade(
+//                gradeExecution.getRubricGrade() == null ? null : gradeExecution.getRubricGrade().getId());
+//        gradeExecutionDTO
+//                .setSubmission(gradeExecution.getSubmission() == null ? null : gradeExecution.getSubmission().getId());
         gradeExecutionDTO.setCreatedAt(gradeExecution.getCreatedAt());
         gradeExecutionDTO.setUpdatedAt(gradeExecution.getUpdatedAt());
         return gradeExecutionDTO;
@@ -109,16 +108,16 @@ public class GradeExecutionService {
         if (gradeExecutionDTO.getExecutionTime() != null) {
             gradeExecution.setExecutionTime(gradeExecutionDTO.getExecutionTime());
         }
-        if (gradeExecutionDTO.getRubricGrade() != null) {
-            final RubricGrade rubricGrade = rubricGradeRepository.findById(gradeExecutionDTO.getRubricGrade())
-                    .orElseThrow(() -> new EntityNotFoundException("RubricGrade not found"));
-            gradeExecution.setRubricGrade(rubricGrade);
-        }
-        if (gradeExecutionDTO.getSubmission() != null) {
-            final Submission submission = submissionRepository.findById(gradeExecutionDTO.getSubmission())
-                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
-            gradeExecution.setSubmission(submission);
-        }
+//        if (gradeExecutionDTO.getRubricGrade() != null) {
+//            final RubricGrade rubricGrade = rubricGradeRepository.findById(gradeExecutionDTO.getRubricGrade())
+//                    .orElseThrow(() -> new EntityNotFoundException("RubricGrade not found"));
+//            gradeExecution.setRubricGrade(rubricGrade);
+//        }
+//        if (gradeExecutionDTO.getSubmission() != null) {
+//            final Submission submission = submissionRepository.findById(gradeExecutionDTO.getSubmission())
+//                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
+//            gradeExecution.setSubmission(submission);
+//        }
         if (gradeExecutionDTO.getCreatedAt() != null) {
             gradeExecution.setCreatedAt(gradeExecutionDTO.getCreatedAt());
         }

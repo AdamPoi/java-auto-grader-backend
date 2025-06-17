@@ -2,9 +2,12 @@ package io.adampoi.java_auto_grader.rest;
 
 import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Course;
+import io.adampoi.java_auto_grader.domain.RubricGrade;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.filter.AssignmentFilterDef;
+import io.adampoi.java_auto_grader.filter.RubricGradeFilterDef;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
+import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
@@ -110,6 +113,20 @@ public class AssignmentResource {
         assignmentService.delete(assignmentId);
         return ApiSuccessResponse.<Void>builder()
                 .statusCode(HttpStatus.NO_CONTENT)
+                .build();
+    }
+
+    @GetMapping("/{assignmentId}/rubric-grades")
+    @ApiResponse(responseCode = "200")
+    @PreAuthorize("hasAuthority('RUBRIC_GRADE:LIST')")
+    @Operation(summary = "Get Course RubricGrades", description = "Get all assignments with pagination and filtering capabilities")
+    public ApiSuccessResponse<PageResponse<RubricGradeDTO>> getAllRubricGrades(
+            @PathVariable(name = "assignmentId") final UUID assignmentId,
+            @RequestParam(required = false, defaultValue = "") @QFParam(RubricGradeFilterDef.class) QueryFilter<RubricGrade> filter,
+            @ParameterObject Pageable pageable) {
+        return ApiSuccessResponse.<PageResponse<RubricGradeDTO>>builder()
+                .data(assignmentService.getAssignmentRubricGrades(assignmentId, filter, pageable))
+                .statusCode(HttpStatus.OK)
                 .build();
     }
 

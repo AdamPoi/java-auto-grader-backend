@@ -1,16 +1,12 @@
 package io.adampoi.java_auto_grader.service;
 
-import io.adampoi.java_auto_grader.domain.Assignment;
-import io.adampoi.java_auto_grader.domain.Course;
-import io.adampoi.java_auto_grader.domain.Submission;
-import io.adampoi.java_auto_grader.domain.User;
+import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
+import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
-import io.adampoi.java_auto_grader.repository.AssignmentRepository;
-import io.adampoi.java_auto_grader.repository.CourseRepository;
-import io.adampoi.java_auto_grader.repository.SubmissionRepository;
-import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.adampoi.java_auto_grader.repository.*;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
+import io.github.acoboh.query.filter.jpa.operations.QFOperationEnum;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -31,14 +27,36 @@ public class AssignmentService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final SubmissionRepository submissionRepository;
+    private final RubricGradeRepository rubricGradeRepository;
 
     public AssignmentService(final AssignmentRepository assignmentRepository,
                              final CourseRepository courseRepository, final UserRepository userRepository,
-                             final SubmissionRepository submissionRepository) {
+                             final SubmissionRepository submissionRepository, RubricGradeRepository rubricGradeRepository) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
+        this.rubricGradeRepository = rubricGradeRepository;
+    }
+
+    public static AssignmentDTO mapToDTO(final Assignment assignment, final AssignmentDTO assignmentDTO) {
+        assignmentDTO.setId(assignment.getId());
+        assignmentDTO.setTitle(assignment.getTitle());
+        assignmentDTO.setDescription(assignment.getDescription());
+        assignmentDTO.setDueDate(assignment.getDueDate());
+        assignmentDTO.setCreatedAt(assignment.getCreatedAt());
+        assignmentDTO.setUpdatedAt(assignment.getUpdatedAt());
+        assignmentDTO.setIsPublished(assignment.getIsPublished());
+        assignmentDTO.setStarterCode(assignment.getStarterCode());
+        assignmentDTO.setSolutionCode(assignment.getSolutionCode());
+        assignmentDTO.setTestCode(assignment.getTestCode());
+        assignmentDTO.setTotalPoints(assignment.getTotalPoints());
+        assignmentDTO.setMaxAttempts(assignment.getMaxAttempts());
+        assignmentDTO.setTimeLimit(assignment.getTimeLimit());
+        assignmentDTO.setCourseId(assignment.getCourse() == null ? null : assignment.getCourse().getId());
+        assignmentDTO.setCreatedByTeacher(
+                assignment.getCreatedByTeacher() == null ? null : assignment.getCreatedByTeacher().getId());
+        return assignmentDTO;
     }
 
     public PageResponse<AssignmentDTO> findAll(QueryFilter<Assignment> filter, Pageable pageable) {
@@ -81,21 +99,17 @@ public class AssignmentService {
         assignmentRepository.deleteById(assignmentId);
     }
 
-    private AssignmentDTO mapToDTO(final Assignment assignment, final AssignmentDTO assignmentDTO) {
-        assignmentDTO.setId(assignment.getId());
-        assignmentDTO.setTitle(assignment.getTitle());
-        assignmentDTO.setDescription(assignment.getDescription());
-        assignmentDTO.setDueDate(assignment.getDueDate());
-        assignmentDTO.setCreatedAt(assignment.getCreatedAt());
-        assignmentDTO.setUpdatedAt(assignment.getUpdatedAt());
-        assignmentDTO.setIsPublished(assignment.getIsPublished());
-        assignmentDTO.setStarterCodeBasePath(assignment.getStarterCodeBasePath());
-        assignmentDTO.setSolutionCodeBasePath(assignment.getSolutionCodeBasePath());
-        assignmentDTO.setMaxAttempts(assignment.getMaxAttempts());
-        assignmentDTO.setCourse(assignment.getCourse() == null ? null : assignment.getCourse().getId());
-        assignmentDTO.setCreatedByTeacher(
-                assignment.getCreatedByTeacher() == null ? null : assignment.getCreatedByTeacher().getId());
-        return assignmentDTO;
+    public PageResponse<RubricGradeDTO> getAssignmentRubricGrades(final UUID assignmentId, QueryFilter<RubricGrade> filter, Pageable pageable) {
+        filter.addNewField("assignment", QFOperationEnum.EQUAL, assignmentId.toString());
+        Page<RubricGrade> assignmentPage = rubricGradeRepository.findAll(filter, pageable);
+
+        Page<RubricGradeDTO> dtoPage = new PageImpl<>(assignmentPage.getContent()
+                .stream()
+                .map(assignment -> RubricGradeService.mapToDTO(assignment, new RubricGradeDTO()))
+                .collect(Collectors.toList()),
+                pageable, assignmentPage.getTotalElements());
+
+        return PageResponse.from(dtoPage);
     }
 
     private Assignment mapToEntity(final AssignmentDTO assignmentDTO, final Assignment assignment) {
@@ -111,17 +125,26 @@ public class AssignmentService {
         if (assignmentDTO.getIsPublished() != null) {
             assignment.setIsPublished(assignmentDTO.getIsPublished());
         }
-        if (assignmentDTO.getStarterCodeBasePath() != null) {
-            assignment.setStarterCodeBasePath(assignmentDTO.getStarterCodeBasePath());
+        if (assignmentDTO.getStarterCode() != null) {
+            assignment.setStarterCode(assignmentDTO.getStarterCode());
         }
-        if (assignmentDTO.getSolutionCodeBasePath() != null) {
-            assignment.setSolutionCodeBasePath(assignmentDTO.getSolutionCodeBasePath());
+        if (assignmentDTO.getSolutionCode() != null) {
+            assignment.setSolutionCode(assignmentDTO.getSolutionCode());
+        }
+        if (assignmentDTO.getTestCode() != null) {
+            assignment.setTestCode(assignmentDTO.getTestCode());
         }
         if (assignmentDTO.getMaxAttempts() != null) {
             assignment.setMaxAttempts(assignmentDTO.getMaxAttempts());
         }
-        if (assignmentDTO.getCourse() != null) {
-            final Course course = courseRepository.findById(assignmentDTO.getCourse())
+        if (assignmentDTO.getTimeLimit() != null) {
+            assignment.setTimeLimit(assignmentDTO.getTimeLimit());
+        }
+        if (assignmentDTO.getTotalPoints() != null) {
+            assignment.setTotalPoints(assignmentDTO.getTotalPoints());
+        }
+        if (assignmentDTO.getCourseId() != null) {
+            final Course course = courseRepository.findById(assignmentDTO.getCourseId())
                     .orElseThrow(() -> new EntityNotFoundException("course not found"));
             assignment.setCourse(course);
         }

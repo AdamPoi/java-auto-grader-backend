@@ -31,9 +31,6 @@ public class SubmissionCode {
     private String sourceCode;
 
     @Column
-    private String packagePath;
-
-    @Column
     private String className;
 
     @ManyToOne(fetch = FetchType.LAZY)

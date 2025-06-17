@@ -2,7 +2,7 @@ version: '3.8'
 services:
   gradle-sandbox:
     image: gradle:jdk21-alpine  # Use official Gradle image or your custom one
-    container_name: gradle-sandbox
+    container_name: gradle-sandboxd
     volumes:
       - gradle-cache:/home/gradle/.gradle
       - gradle-wrapper-cache:/home/gradle/.gradle/wrapper
@@ -33,6 +33,16 @@ services:
         hard: 65536
     restart: unless-stopped
 
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    ports:
+      - "6333:6333" # REST API
+      - "6334:6334" # gRPC
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+
 volumes:
   gradle-cache:
     driver: local
@@ -40,3 +50,5 @@ volumes:
     driver: local
   gradle-build-cache:
     driver: local
+  qdrant_storage:
+  ollama_data:

@@ -1,10 +1,12 @@
 package io.adampoi.java_auto_grader.service;
 
+import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.GradeExecution;
 import io.adampoi.java_auto_grader.domain.Rubric;
 import io.adampoi.java_auto_grader.domain.RubricGrade;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
+import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.GradeExecutionRepository;
 import io.adampoi.java_auto_grader.repository.RubricGradeRepository;
 import io.adampoi.java_auto_grader.repository.RubricRepository;
@@ -18,6 +20,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,13 +33,40 @@ public class RubricGradeService {
     private final RubricGradeRepository rubricGradeRepository;
     private final RubricRepository rubricRepository;
     private final GradeExecutionRepository gradeExecutionRepository;
+    private final AssignmentRepository assignmentRepository;
 
     public RubricGradeService(final RubricGradeRepository rubricGradeRepository,
                               final RubricRepository rubricRepository,
-                              final GradeExecutionRepository gradeExecutionRepository) {
+                              final GradeExecutionRepository gradeExecutionRepository, AssignmentRepository assignmentRepository) {
         this.rubricGradeRepository = rubricGradeRepository;
         this.rubricRepository = rubricRepository;
         this.gradeExecutionRepository = gradeExecutionRepository;
+        this.assignmentRepository = assignmentRepository;
+    }
+
+    public static RubricGradeDTO mapToDTO(final RubricGrade rubricGrade, final RubricGradeDTO rubricGradeDTO) {
+        rubricGradeDTO.setId(rubricGrade.getId());
+        rubricGradeDTO.setName(rubricGrade.getName());
+        rubricGradeDTO.setFunctionName(rubricGrade.getFunctionName());
+        rubricGradeDTO.setDescription(rubricGrade.getDescription());
+        rubricGradeDTO.setPoints(rubricGrade.getPoints());
+        rubricGradeDTO.setDisplayOrder(rubricGrade.getDisplayOrder());
+        rubricGradeDTO.setArguments(rubricGrade.getArguments());
+        rubricGradeDTO.setGradeType(rubricGrade.getGradeType());
+        rubricGradeDTO.setRubricId(Optional.ofNullable(rubricGrade.getRubric())
+                .map(Rubric::getId)
+                .orElse(null));
+        rubricGradeDTO.setAssignmentId(Optional.ofNullable(rubricGrade.getRubric())
+                .map(Rubric::getId)
+                .orElse(null));
+        rubricGradeDTO.setGradeExecutionIds(Optional.ofNullable(rubricGrade.getGradeExecutions())
+                .map(executions -> executions.stream()
+                        .map(GradeExecution::getId)
+                        .collect(Collectors.toSet()))
+                .orElse(Collections.emptySet()));
+        rubricGradeDTO.setCreatedAt(rubricGrade.getCreatedAt());
+        rubricGradeDTO.setUpdatedAt(rubricGrade.getUpdatedAt());
+        return rubricGradeDTO;
     }
 
     public PageResponse<RubricGradeDTO> findAll(QueryFilter<RubricGrade> filter, Pageable pageable) {
@@ -56,7 +87,25 @@ public class RubricGradeService {
 
     public RubricGradeDTO create(final RubricGradeDTO rubricGradeDTO) {
         final RubricGrade rubricGrade = new RubricGrade();
+        // Set ID if provided in DTO
+        if (rubricGradeDTO.getId() != null) {
+            rubricGrade.setId(rubricGradeDTO.getId());
+
+            // Check if a RubricGrade with this UUID already exists
+            Optional<RubricGrade> existingRubricGrade = rubricGradeRepository.findById(rubricGradeDTO.getId());
+
+            if (existingRubricGrade.isPresent()) {
+                // Update the existing RubricGrade
+                RubricGrade existing = existingRubricGrade.get();
+                mapToEntity(rubricGradeDTO, existing);
+                RubricGrade updatedRubricGrade = rubricGradeRepository.save(existing);
+                return mapToDTO(updatedRubricGrade, new RubricGradeDTO());
+            }
+        }
+
         mapToEntity(rubricGradeDTO, rubricGrade);
+
+        // Save the new RubricGrade (UUID will be auto-generated if not provided)
         RubricGrade savedRubricGrade = rubricGradeRepository.save(rubricGrade);
         return mapToDTO(savedRubricGrade, new RubricGradeDTO());
     }
@@ -73,27 +122,15 @@ public class RubricGradeService {
         rubricGradeRepository.deleteById(rubricGradeId);
     }
 
-    private RubricGradeDTO mapToDTO(final RubricGrade rubricGrade, final RubricGradeDTO rubricGradeDTO) {
-        rubricGradeDTO.setId(rubricGrade.getId());
-        rubricGradeDTO.setName(rubricGrade.getName());
-        rubricGradeDTO.setDescription(rubricGrade.getDescription());
-        rubricGradeDTO.setPoints(rubricGrade.getPoints());
-        rubricGradeDTO.setDisplayOrder(rubricGrade.getDisplayOrder());
-        rubricGradeDTO.setCode(rubricGrade.getCode());
-        rubricGradeDTO.setArguments(rubricGrade.getArguments());
-        rubricGradeDTO.setGradeType(rubricGrade.getGradeType());
-        rubricGradeDTO.setRubric(rubricGrade.getRubric() == null ? null : rubricGrade.getRubric().getId());
-        rubricGradeDTO.setGradeExecutions(rubricGrade.getGradeExecutions().stream()
-                .map(GradeExecution::getId)
-                .collect(Collectors.toSet()));
-        rubricGradeDTO.setCreatedAt(rubricGrade.getCreatedAt());
-        rubricGradeDTO.setUpdatedAt(rubricGrade.getUpdatedAt());
-        return rubricGradeDTO;
-    }
-
     private RubricGrade mapToEntity(final RubricGradeDTO rubricGradeDTO, final RubricGrade rubricGrade) {
+        if (rubricGradeDTO.getId() != null) {
+            rubricGrade.setId(rubricGradeDTO.getId());
+        }
         if (rubricGradeDTO.getName() != null) {
             rubricGrade.setName(rubricGradeDTO.getName());
+        }
+        if (rubricGradeDTO.getFunctionName() != null) {
+            rubricGrade.setFunctionName(rubricGradeDTO.getFunctionName());
         }
         if (rubricGradeDTO.getDescription() != null) {
             rubricGrade.setDescription(rubricGradeDTO.getDescription());
@@ -104,20 +141,24 @@ public class RubricGradeService {
         if (rubricGradeDTO.getDisplayOrder() != null) {
             rubricGrade.setDisplayOrder(rubricGradeDTO.getDisplayOrder());
         }
-        if (rubricGradeDTO.getCode() != null) {
-            rubricGrade.setCode(rubricGradeDTO.getCode());
-        }
+
         if (rubricGradeDTO.getArguments() != null) {
             rubricGrade.setArguments(rubricGradeDTO.getArguments());
         }
         if (rubricGradeDTO.getGradeType() != null) {
             rubricGrade.setGradeType(rubricGradeDTO.getGradeType());
         }
-        if (rubricGradeDTO.getRubric() != null) {
-            final Rubric rubric = rubricRepository.findById(rubricGradeDTO.getRubric())
+        if (rubricGradeDTO.getRubricId() != null) {
+            final Rubric rubric = rubricRepository.findById(rubricGradeDTO.getRubricId())
                     .orElseThrow(() -> new EntityNotFoundException("Rubric not found"));
             rubricGrade.setRubric(rubric);
         }
+        if (rubricGradeDTO.getAssignmentId() != null) {
+            final Assignment rubric = assignmentRepository.findById(rubricGradeDTO.getAssignmentId())
+                    .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
+            rubricGrade.setAssignment(rubric);
+        }
+      
         if (rubricGradeDTO.getCreatedAt() != null) {
             rubricGrade.setCreatedAt(rubricGradeDTO.getCreatedAt());
         }

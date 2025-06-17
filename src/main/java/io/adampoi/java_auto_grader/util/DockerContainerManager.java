@@ -129,13 +129,13 @@ public class DockerContainerManager {
 
     private String[] createDockerRunCommand(String containerName, BuildTool buildTool) {
         String userHome = buildTool == BuildTool.GRADLE ? GRADLE_USER_HOME : MAVEN_USER_HOME;
-        String imageName = buildTool == BuildTool.GRADLE ? "gradle-sandbox" : "maven-sandbox";
+        String imageName = buildTool == BuildTool.GRADLE ? "gradle" : "maven-sandbox";
 
         return new String[]{
                 "docker", "run", "-d", "--name", containerName,
                 "-v", "/tmp:/workspace",
                 "--memory=3g", "--cpus=4", "--shm-size=1g",
-                "-e", "GRADLE_OPTS=-Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler",
+                "-e", "GRADLE_OPTS=-Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200",
                 "-e", "GRADLE_USER_HOME=" + userHome,
                 "-e", "JAVA_OPTS=-Xmx2g",
                 imageName, "tail", "-f", "/dev/null"

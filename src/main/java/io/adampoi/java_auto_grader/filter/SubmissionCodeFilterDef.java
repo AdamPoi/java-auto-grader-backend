@@ -15,8 +15,6 @@ public class SubmissionCodeFilterDef {
     @QFElement("sourceCode")
     private String sourceCode;
 
-    @QFElement("packagePath")
-    private String packagePath;
 
     @QFElement("className")
     private String className;

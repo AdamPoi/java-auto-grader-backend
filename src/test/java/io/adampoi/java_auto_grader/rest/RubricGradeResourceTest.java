@@ -65,7 +65,6 @@ class RubricGradeResourceTest {
                 .description("Description for " + name)
                 .points(BigDecimal.valueOf(10.0))
                 .displayOrder(1)
-                .code("CODE123")
                 .gradeType(RubricGrade.GradeType.FUNCTIONALITY)
                 .rubric(UUID.randomUUID())
                 .build();
@@ -78,7 +77,6 @@ class RubricGradeResourceTest {
                 .description("Description for " + name)
                 .points(BigDecimal.valueOf(10.0))
                 .displayOrder(1)
-                .code("CODE123")
                 .gradeType(RubricGrade.GradeType.FUNCTIONALITY)
                 .rubric(UUID.randomUUID())
                 .build();
@@ -149,7 +147,6 @@ class RubricGradeResourceTest {
                     .description("Description")
                     .points(BigDecimal.valueOf(10.0))
                     .displayOrder(1)
-                    .code("CODE123")
                     .gradeType(RubricGrade.GradeType.FUNCTIONALITY)
                     .rubric(UUID.randomUUID())
                     .build();
@@ -160,7 +157,6 @@ class RubricGradeResourceTest {
                     .description("Description")
                     .points(BigDecimal.valueOf(10.0))
                     .displayOrder(1)
-                    .code("CODE123")
                     .gradeType(RubricGrade.GradeType.FUNCTIONALITY)
                     .rubric(UUID.randomUUID())
                     .build();
@@ -277,7 +273,6 @@ class RubricGradeResourceTest {
                     .description("Updated Description")
                     .points(BigDecimal.valueOf(15.0))
                     .displayOrder(2)
-                    .code("UPDATED_CODE")
                     .gradeType(RubricGrade.GradeType.COMPILATION)
                     .rubric(UUID.randomUUID())
                     .build();

@@ -1,8 +1,6 @@
 package io.adampoi.java_auto_grader.service;
 
-import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Submission;
-import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.model.dto.RunResultDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
@@ -143,8 +141,8 @@ public class SubmissionService {
         submissionDTO.setGraderFeedback(submission.getGraderFeedback());
         submissionDTO.setGradingStartedAt(submission.getGradingStartedAt());
         submissionDTO.setGradingCompletedAt(submission.getGradingCompletedAt());
-        submissionDTO.setAssignment(submission.getAssignment() == null ? null : submission.getAssignment().getId());
-        submissionDTO.setStudent(submission.getStudent() == null ? null : submission.getStudent().getId());
+//        submissionDTO.setAssignment(submission.getAssignment() == null ? null : submission.getAssignment().getId());
+//        submissionDTO.setStudent(submission.getStudent() == null ? null : submission.getStudent().getId());
         return submissionDTO;
     }
 
@@ -167,16 +165,16 @@ public class SubmissionService {
         if (submissionDTO.getGradingCompletedAt() != null) {
             submission.setGradingCompletedAt(submissionDTO.getGradingCompletedAt());
         }
-        if (submissionDTO.getAssignment() != null) {
-            final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignment())
-                    .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
-            submission.setAssignment(assignment);
-        }
-        if (submissionDTO.getStudent() != null) {
-            final User student = userRepository.findById(submissionDTO.getStudent())
-                    .orElseThrow(() -> new EntityNotFoundException("student not found"));
-            submission.setStudent(student);
-        }
+//        if (submissionDTO.getAssignment() != null) {
+//            final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignment())
+//                    .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
+//            submission.setAssignment(assignment);
+//        }
+//        if (submissionDTO.getStudent() != null) {
+//            final User student = userRepository.findById(submissionDTO.getStudent())
+//                    .orElseThrow(() -> new EntityNotFoundException("student not found"));
+//            submission.setStudent(student);
+//        }
         return submission;
     }
 

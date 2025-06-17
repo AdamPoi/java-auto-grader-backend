@@ -24,8 +24,8 @@ public class AssignmentFilterDef {
 //    @QFElement("maxAttempts")
 //    private String maxAttempts;
 
-//    @QFElement("course.id")
-//    private String course;
+    @QFElement("course.id")
+    private String course;
 //
 //    @QFElement("createdByTeacher.id")
 //    private String createdByTeacher;

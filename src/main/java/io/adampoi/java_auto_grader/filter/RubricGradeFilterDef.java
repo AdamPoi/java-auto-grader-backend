@@ -12,6 +12,9 @@ public class RubricGradeFilterDef {
     @QFElement("name")
     private String name;
 
+    @QFElement("functionName")
+    private String functionName;
+
     @QFElement("description")
     private String description;
 
@@ -21,19 +24,19 @@ public class RubricGradeFilterDef {
     @QFElement("displayOrder")
     private String displayOrder;
 
-    @QFElement("code")
-    private String code;
-
     @QFElement("gradeType")
     private String gradeType;
 
     @QFElement("rubric.id")
     private String rubric;
 
+    @QFElement("assignment.id")
+    private String assignment;
+
     @QFElements(value = {
             @QFElement("name"),
             @QFElement("description"),
-            @QFElement("code")
+            @QFElement("functionName")
     }, operation = PredicateOperation.OR)
     private String search;
 }

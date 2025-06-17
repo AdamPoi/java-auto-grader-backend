@@ -11,7 +11,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -31,12 +30,13 @@ public class RubricGrade {
 
     @Id
     @Column(nullable = false, updatable = false)
-    @GeneratedValue
-    @UuidGenerator
     private UUID id;
 
     @Column(nullable = false, length = 200)
     private String name;
+
+    @Column(nullable = false, length = 200)
+    private String functionName;
 
     @Column(length = 1000)
     private String description;
@@ -47,9 +47,6 @@ public class RubricGrade {
     @Column(nullable = false)
     private Integer displayOrder;
 
-    @Column(columnDefinition = "TEXT")
-    private String code;
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "arguments", columnDefinition = "jsonb")
     private Map<String, Object> arguments = new HashMap<>();
@@ -59,11 +56,15 @@ public class RubricGrade {
     @Column(nullable = false, length = 50)
     private GradeType gradeType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rubric_id", referencedColumnName = "id", nullable = false)
     private Rubric rubric;
 
-    @OneToMany(mappedBy = "rubricGrade", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)
+    private Assignment assignment;
+
+    @OneToMany(mappedBy = "rubricGrade", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<GradeExecution> gradeExecutions;
 
     @CreationTimestamp
@@ -73,6 +74,13 @@ public class RubricGrade {
     @UpdateTimestamp
     @Column(nullable = false, updatable = true)
     private OffsetDateTime updatedAt;
+
+    @PrePersist
+    private void ensureId() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+    }
 
     public String getStringArgument(String key) {
         return arguments != null ? (String) arguments.get(key) : null;
@@ -204,6 +212,7 @@ public class RubricGrade {
 
 
     public enum GradeType {
+        AUTOMATIC,
         COMPILATION,
         ERROR_HANDLING,
         FUNCTIONALITY,

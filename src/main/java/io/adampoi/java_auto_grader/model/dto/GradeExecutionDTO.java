@@ -1,5 +1,6 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -38,16 +39,22 @@ public class GradeExecutionDTO {
     private Long executionTime;
 
     @NotNull(groups = CreateGroup.class)
-    private UUID rubricGrade;
+    private UUID rubricGradeId;
 
     @NotNull(groups = CreateGroup.class)
-    private UUID submission;
+    private UUID submissionId;
 
     @JsonIgnore
     private OffsetDateTime createdAt;
 
     @JsonIgnore
     private OffsetDateTime updatedAt;
+
+    @JsonBackReference("rubric-grade-executions")
+    private RubricGradeDTO rubricGrade;
+
+    @JsonBackReference("submission-grade-executions")
+    private SubmissionDTO submission;
 
     public interface CreateGroup extends Default {
     }

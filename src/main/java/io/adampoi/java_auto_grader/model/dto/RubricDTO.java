@@ -1,6 +1,8 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +15,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,12 +39,13 @@ public class RubricDTO {
     private Integer displayOrder;
 
     @JsonProperty("isActive")
+    @Builder.Default
     private Boolean isActive = true;
 
     @NotNull(groups = CreateGroup.class)
-    private UUID assignment;
+    private UUID assignmentId;
 
-    private Set<UUID> rubricGrades;
+    private Set<UUID> rubricGradeIds;
 
     @JsonIgnore
     private OffsetDateTime createdAt;
@@ -49,6 +53,14 @@ public class RubricDTO {
     @JsonIgnore
     private OffsetDateTime updatedAt;
 
+
+    @JsonBackReference("assignment-rubrics")
+    private AssignmentDTO assignment;
+
+    @JsonProperty("rubricGrades")
+    @JsonManagedReference("rubric-rubric-grades")
+//    @JsonIgnoreProperties({"})
+    private List<RubricGradeDTO> rubricGrades;
 
     public interface CreateGroup extends Default {
     }

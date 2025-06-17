@@ -1,5 +1,6 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -36,13 +37,16 @@ public class SubmissionCodeDTO {
     private String className;
 
     @NotNull(groups = CreateGroup.class)
-    private UUID submission;
+    private UUID submissionId;
 
     @JsonIgnore
     private OffsetDateTime createdAt;
 
     @JsonIgnore
     private OffsetDateTime updatedAt;
+
+    @JsonBackReference("submission-codes")
+    private SubmissionDTO submission;
 
     public interface CreateGroup extends Default {
     }

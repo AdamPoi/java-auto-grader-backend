@@ -1,5 +1,7 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -35,18 +38,35 @@ public class CourseDTO {
     private String description;
 
     @JsonProperty("isActive")
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
-    private OffsetDateTime enrollmentStartDate;
-
-    private OffsetDateTime enrollmentEndDate;
 
     private OffsetDateTime createdAt;
 
     private OffsetDateTime updatedAt;
 
-    @NotNull(groups = CreateGroup.class)
-    private UUID createdByTeacher;
+
+    @JsonProperty("teacher")
+    @JsonManagedReference("course-teacher")
+    @JsonIgnoreProperties({"password", "roles", "permissions", "submissions", "createdAt", "updatedAt"})
+    private UserDTO createdByTeacher;
+
+    @JsonProperty("students")
+    @JsonManagedReference("course-students")
+    @JsonIgnoreProperties({"password", "roles", "permissions", "submissions", "createdAt", "updatedAt"})
+    private List<UserDTO> enrolledStudents;
+
+    @JsonProperty("assignments")
+    @JsonManagedReference("course-assignments")
+    @JsonIgnoreProperties({"password", "description", "starterCode", "solutionCode", "maxAttempts", "timeLimit", "totalPoints", "courseId", "teacherId", "submissions", "rubrics"})
+    private List<AssignmentDTO> courseAssignments;
+
+    private UUID teacherId;
+
+    private List<UUID> studentIds;
+
+    private List<UUID> assignmentIds;
 
     public interface CreateGroup extends Default {
     }

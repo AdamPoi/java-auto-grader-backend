@@ -1,7 +1,6 @@
 package io.adampoi.java_auto_grader.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -23,41 +22,65 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserDTO {
 
+    @JsonView(Views.External.class)
     private UUID id;
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 3, max = 100)
     @Email()
+    @JsonView(Views.External.class)
     private String email;
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 6, max = 255)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonView(Views.External.class)
     private String password;
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 3, max = 255)
+    @JsonView(Views.External.class)
     private String firstName;
 
     @Size(min = 0, max = 255)
+    @JsonView(Views.External.class)
     private String lastName;
 
     @JsonProperty("isActive")
+    @JsonView(Views.External.class)
+    @Builder.Default
     private Boolean isActive = true;
 
-    @JsonIgnore
+    @JsonView(Views.Internal.class)
     private OffsetDateTime createdAt;
 
-    @JsonIgnore
+    @JsonView(Views.Internal.class)
     private OffsetDateTime updatedAt;
 
     @JsonIgnore
     private List<UUID> userRoles;
 
+    @JsonBackReference("classroom-teacher")
+    private ClassroomDTO teacherClassroom;
+
+    @JsonBackReference("classroom-students")
+    private ClassroomDTO studentClassroom;
+
+    @JsonBackReference("course-teacher")
+    private CourseDTO teacherCourse;
+
+    @JsonBackReference("course-students")
+    private CourseDTO studentCourse;
+
+    @JsonManagedReference("student-submissions")
+    private List<SubmissionDTO> submissions;
+
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
+    @JsonView(Views.Internal.class)
     private List<String> roles;
 
+    @JsonView(Views.Internal.class)
     private List<String> permissions;
 
     public interface CreateGroup extends Default {

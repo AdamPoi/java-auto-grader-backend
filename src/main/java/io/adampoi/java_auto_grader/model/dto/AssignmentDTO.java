@@ -1,6 +1,8 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +13,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -41,19 +45,44 @@ public class AssignmentDTO {
     @JsonProperty("isPublished")
     private Boolean isPublished;
 
-    @Size(max = 512)
-    private String starterCodeBasePath;
+    private String starterCode;
 
-    @Size(max = 512)
-    private String solutionCodeBasePath;
+    private String solutionCode;
+
+    private String testCode;
 
     private Integer maxAttempts;
 
-    @NotNull(groups = CreateGroup.class)
-    private UUID course;
+    private Integer timeLimit;
 
+    @Builder.Default
+    private BigDecimal totalPoints = BigDecimal.ZERO;
+
+    @JsonProperty("courseId")
+    @NotNull(groups = CreateGroup.class)
+    private UUID courseId;
+
+    @JsonProperty("teacherId")
     @NotNull(groups = CreateGroup.class)
     private UUID createdByTeacher;
+
+    @JsonBackReference("course-assignments")
+    private CourseDTO course;
+
+    @JsonProperty("submissions")
+    @JsonManagedReference("assignment-submissions")
+//    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
+    private List<SubmissionDTO> assignmentSubmissions;
+
+    @JsonProperty("rubrics")
+    @JsonManagedReference("assignment-rubrics")
+//    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
+    private List<RubricDTO> rubrics;
+
+    @JsonProperty("rubricGrades")
+    @JsonManagedReference("assignment-rubric-grades")
+//    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
+    private List<RubricGradeDTO> rubricGrades;
 
     public interface CreateGroup extends Default {
     }

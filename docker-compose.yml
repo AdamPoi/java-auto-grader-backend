@@ -6,7 +6,5 @@ services:
     restart: unless-stopped
     env_file:
       - env.properties
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./logs:/app/logs

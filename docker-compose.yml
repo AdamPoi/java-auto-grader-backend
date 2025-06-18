@@ -4,19 +4,9 @@ services:
   backend:
     image: java-auto-grader-backend:latest
     restart: unless-stopped
-    environment:
-      - APP_PORT=${APP_PORT}
-      - APP_ENV=production
-      - DB_URL=${DB_URL}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - JWT_EXPIRATION_TIME=${JWT_EXPIRATION_TIME}
+    env_file:
+      - env.properties
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./logs:/app/logs
-
-
-volumes:
-  qdrant_storage:

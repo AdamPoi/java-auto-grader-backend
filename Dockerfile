@@ -1,19 +1,17 @@
-FROM alpine:latest
-LABEL authors="adampoi"
+FROM gradle:jdk21-alpine AS builder
+WORKDIR /home/gradle/project
 
-FROM gradle:jdk21-alpine
-
-WORKDIR /workspace
-
-# Copy gradle files first for better caching
-COPY build.gradle settings.gradle gradle.properties* ./
+COPY build.gradle settings.gradle gradle.properties ./
 COPY gradle/ gradle/
-
-# Download dependencies
 RUN gradle dependencies --no-daemon || true
 
-# Copy source code
 COPY src/ src/
+RUN gradle clean bootJar --no-daemon
 
-# Run tests
-CMD ["gradle", "test", "--no-daemon", "--info"]
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+
+COPY --from=builder /home/gradle/project/build/libs/*.jar app.jar
+EXPOSE 8080
+
+ENTRYPOINT ["java","-jar","app.jar"]

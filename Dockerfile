@@ -8,7 +8,11 @@ RUN gradle dependencies --no-daemon || true
 COPY src/ src/
 RUN gradle clean bootJar --no-daemon
 
+
 FROM eclipse-temurin:21-jdk-alpine
+
+RUN apk add --no-cache docker-cli
+
 WORKDIR /app
 
 COPY --from=builder /home/gradle/project/build/libs/*.jar app.jar

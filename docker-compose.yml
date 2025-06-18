@@ -2,9 +2,13 @@ version: "3.8"
 
 services:
   backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: java-auto-grader-backend:latest
+    network_mode: host
     restart: unless-stopped
     env_file:
-      - env.properties
+      - ./env.properties
     volumes:
       - ./logs:/app/logs

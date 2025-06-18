@@ -1,7 +1,7 @@
 FROM gradle:jdk21-alpine AS builder
 WORKDIR /home/gradle/project
 
-COPY build.gradle settings.gradle gradle.properties ./
+COPY build.gradle settings.gradle ./
 COPY gradle/ gradle/
 RUN gradle dependencies --no-daemon || true
 

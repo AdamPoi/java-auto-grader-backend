@@ -1,29 +1,29 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GradeExecutionDTO {
+public class GradeExecutionDTO extends AuditableDTO {
 
     private UUID id;
 
-    private BigDecimal pointsAwarded;
+    private BigDecimal points;
 
     @Size(min = 1, max = 255)
     @Pattern(regexp = "PENDING|RUNNING|PASSED|FAILED|ERROR|TIMEOUT|SKIPPED",
@@ -44,11 +44,6 @@ public class GradeExecutionDTO {
     @NotNull(groups = CreateGroup.class)
     private UUID submissionId;
 
-    @JsonIgnore
-    private OffsetDateTime createdAt;
-
-    @JsonIgnore
-    private OffsetDateTime updatedAt;
 
     @JsonBackReference("rubric-grade-executions")
     private RubricGradeDTO rubricGrade;

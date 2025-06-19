@@ -15,15 +15,9 @@ public class RubricFilterDef {
     @QFElement("description")
     private String description;
 
-    @QFElement("maxPoints")
-    private String maxPoints;
-
-    @QFElement("displayOrder")
-    private String displayOrder;
-
-    @QFElement("isActive")
-    private String isActive;
-
+    @QFElement("points")
+    private String points;
+    
     @QFElement("assignment.id")
     private String assignment;
 

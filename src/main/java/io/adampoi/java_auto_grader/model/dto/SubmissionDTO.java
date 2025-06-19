@@ -7,37 +7,41 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SubmissionDTO {
+public class SubmissionDTO extends AuditableDTO {
 
     private UUID id;
-
-    private OffsetDateTime submissionTime;
-
-    @NotNull
-    private Integer attemptNumber;
 
     @Size(min = 3, max = 255)
     private String status;
 
-    private String graderFeedback;
+    private Long executionTime;
 
-    private OffsetDateTime gradingStartedAt;
+    private String feedback;
 
-    private OffsetDateTime gradingCompletedAt;
+    private OffsetDateTime startedAt;
+
+    private OffsetDateTime completedAt;
+
+    @Builder.Default
+    private String mainClassName = "Main";
+
+    @Builder.Default
+    private BigDecimal totalPoints = BigDecimal.ZERO;
+
 
     @NotNull(groups = CreateGroup.class)
     private UUID assignmentId;
@@ -49,8 +53,14 @@ public class SubmissionDTO {
 
     private List<GradeExecutionDTO> gradeExecutionIds;
 
+
     @JsonBackReference("assignment-submissions")
     private AssignmentDTO assignment;
+
+    @JsonProperty("student")
+    @JsonBackReference("student-submissions")
+    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
+    private UserDTO student;
 
     @JsonProperty("gradeExecutions")
     @JsonManagedReference("submission-grade-executions")
@@ -59,11 +69,6 @@ public class SubmissionDTO {
     @JsonProperty("submissionCodes")
     @JsonManagedReference("submission-codes")
     private List<SubmissionCodeDTO> submissionCodes;
-
-    @JsonProperty("student")
-    @JsonBackReference("student-submissions")
-    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
-    private UserDTO student;
 
 
     public interface CreateGroup extends Default {

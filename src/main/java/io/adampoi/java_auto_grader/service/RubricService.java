@@ -77,9 +77,7 @@ public class RubricService {
         rubricDTO.setId(rubric.getId());
         rubricDTO.setName(rubric.getName());
         rubricDTO.setDescription(rubric.getDescription());
-        rubricDTO.setMaxPoints(rubric.getMaxPoints());
-        rubricDTO.setDisplayOrder(rubric.getDisplayOrder());
-        rubricDTO.setIsActive(rubric.getIsActive());
+        rubricDTO.setPoints(rubric.getPoints());
         rubricDTO.setAssignment(rubric.getAssignment() == null ? null :
                 AssignmentService.mapToDTO(rubric.getAssignment(), new AssignmentDTO()));
 //        rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
@@ -97,15 +95,10 @@ public class RubricService {
         if (rubricDTO.getDescription() != null) {
             rubric.setDescription(rubricDTO.getDescription());
         }
-        if (rubricDTO.getMaxPoints() != null) {
-            rubric.setMaxPoints(rubricDTO.getMaxPoints());
+        if (rubricDTO.getPoints() != null) {
+            rubric.setPoints(rubricDTO.getPoints());
         }
-        if (rubricDTO.getDisplayOrder() != null) {
-            rubric.setDisplayOrder(rubricDTO.getDisplayOrder());
-        }
-        if (rubricDTO.getIsActive() != null) {
-            rubric.setIsActive(rubricDTO.getIsActive());
-        }
+
 
         if (rubricDTO.getAssignmentId() != null) {
             final Assignment assignment = assignmentRepository.findById(rubricDTO.getAssignmentId())
@@ -118,12 +111,7 @@ public class RubricService {
         // rubricGradeRepository.findById(rubricGradeId).orElse(null))
         // .filter(java.util.Objects::nonNull)
         // .collect(Collectors.toSet()));
-        if (rubricDTO.getCreatedAt() != null) {
-            rubric.setCreatedAt(rubricDTO.getCreatedAt());
-        }
-        if (rubricDTO.getUpdatedAt() != null) {
-            rubric.setUpdatedAt(rubricDTO.getUpdatedAt());
-        }
+
         return rubric;
     }
 

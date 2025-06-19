@@ -3,15 +3,12 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,7 +18,7 @@ import java.util.stream.Collectors;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class User implements UserDetails {
+public class User extends Auditable implements UserDetails {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -70,13 +67,6 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "enrolledStudents", cascade = CascadeType.ALL)
     private Set<Classroom> enrolledClassrooms;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false, updatable = true)
-    private OffsetDateTime updatedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

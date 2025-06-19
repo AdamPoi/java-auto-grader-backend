@@ -3,12 +3,9 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -19,7 +16,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class Course {
+public class Course extends Auditable {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -54,28 +51,5 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> courseAssignments;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false, updatable = true)
-    private OffsetDateTime updatedAt;
-
-    public void enrollUser(User user) {
-        enrolledUsers.add(user);
-        user.getEnrolledCourses().add(this);
-    }
-
-    public void enrollClassroom(Classroom classroom) {
-        for (User student : classroom.getEnrolledStudents()) {
-            enrollUser(student);
-        }
-    }
-
-    public void unenrollUser(User user) {
-        enrolledUsers.remove(user);
-        user.getEnrolledCourses().remove(this);
-    }
 
 }

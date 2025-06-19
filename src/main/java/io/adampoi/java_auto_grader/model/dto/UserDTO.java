@@ -6,21 +6,19 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
+public class UserDTO extends AuditableDTO {
 
     @JsonView(Views.External.class)
     private UUID id;
@@ -50,12 +48,6 @@ public class UserDTO {
     @JsonView(Views.External.class)
     @Builder.Default
     private Boolean isActive = true;
-
-    @JsonView(Views.Internal.class)
-    private OffsetDateTime createdAt;
-
-    @JsonView(Views.Internal.class)
-    private OffsetDateTime updatedAt;
 
     @JsonIgnore
     private List<UUID> userRoles;

@@ -47,9 +47,7 @@ public class RubricGradeService {
     public static RubricGradeDTO mapToDTO(final RubricGrade rubricGrade, final RubricGradeDTO rubricGradeDTO) {
         rubricGradeDTO.setId(rubricGrade.getId());
         rubricGradeDTO.setName(rubricGrade.getName());
-        rubricGradeDTO.setFunctionName(rubricGrade.getFunctionName());
         rubricGradeDTO.setDescription(rubricGrade.getDescription());
-        rubricGradeDTO.setPoints(rubricGrade.getPoints());
         rubricGradeDTO.setDisplayOrder(rubricGrade.getDisplayOrder());
         rubricGradeDTO.setArguments(rubricGrade.getArguments());
         rubricGradeDTO.setGradeType(rubricGrade.getGradeType());
@@ -129,15 +127,11 @@ public class RubricGradeService {
         if (rubricGradeDTO.getName() != null) {
             rubricGrade.setName(rubricGradeDTO.getName());
         }
-        if (rubricGradeDTO.getFunctionName() != null) {
-            rubricGrade.setFunctionName(rubricGradeDTO.getFunctionName());
-        }
+
         if (rubricGradeDTO.getDescription() != null) {
             rubricGrade.setDescription(rubricGradeDTO.getDescription());
         }
-        if (rubricGradeDTO.getPoints() != null) {
-            rubricGrade.setPoints(rubricGradeDTO.getPoints());
-        }
+
         if (rubricGradeDTO.getDisplayOrder() != null) {
             rubricGrade.setDisplayOrder(rubricGradeDTO.getDisplayOrder());
         }
@@ -158,13 +152,8 @@ public class RubricGradeService {
                     .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
             rubricGrade.setAssignment(rubric);
         }
-      
-        if (rubricGradeDTO.getCreatedAt() != null) {
-            rubricGrade.setCreatedAt(rubricGradeDTO.getCreatedAt());
-        }
-        if (rubricGradeDTO.getUpdatedAt() != null) {
-            rubricGrade.setUpdatedAt(rubricGradeDTO.getUpdatedAt());
-        }
+
+
         return rubricGrade;
     }
 

@@ -8,7 +8,6 @@ import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -116,9 +115,6 @@ public class CourseSeeder {
             course.setName(data.getName());
             course.setDescription(data.getDescription());
             course.setIsActive(true);
-            course.setCreatedByTeacher(teacher);
-            course.setCreatedAt(OffsetDateTime.now());
-            course.setUpdatedAt(OffsetDateTime.now());
 
             // Assign students to course (same distribution as classrooms for consistency)
             int startIndex = i * studentsPerCourse;

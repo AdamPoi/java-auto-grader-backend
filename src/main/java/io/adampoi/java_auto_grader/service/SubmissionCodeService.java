@@ -91,7 +91,6 @@ public class SubmissionCodeService {
 //        submissionCodeDTO
 //                .setSubmission(submissionCode.getSubmission() == null ? null : submissionCode.getSubmission().getId());
 //        submissionCodeDTO.setCreatedAt(submissionCode.getCreatedAt());
-        submissionCodeDTO.setUpdatedAt(submissionCode.getUpdatedAt());
         return submissionCodeDTO;
     }
 
@@ -111,12 +110,7 @@ public class SubmissionCodeService {
 //                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
 //            submissionCode.setSubmission(submission);
 //        }
-        if (submissionCodeDTO.getCreatedAt() != null) {
-            submissionCode.setCreatedAt(submissionCodeDTO.getCreatedAt());
-        }
-        if (submissionCodeDTO.getUpdatedAt() != null) {
-            submissionCode.setUpdatedAt(submissionCodeDTO.getUpdatedAt());
-        }
+
         return submissionCode;
     }
 

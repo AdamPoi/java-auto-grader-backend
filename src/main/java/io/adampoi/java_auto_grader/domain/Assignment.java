@@ -3,8 +3,6 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -20,7 +18,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class Assignment {
+public class Assignment extends Auditable {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -31,11 +29,11 @@ public class Assignment {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(columnDefinition = "TEXT")
-    private String instructions;
+    private String resource;
 
     @Column
     private OffsetDateTime dueDate;
@@ -53,10 +51,7 @@ public class Assignment {
     private String testCode;
 
     @Column
-    private Integer maxAttempts;
-
-    @Column
-    private Integer timeLimit; // in seconds
+    private Long timeLimit; // in ms
 
     @Column(precision = 5, scale = 2)
     private BigDecimal totalPoints = BigDecimal.ZERO;
@@ -77,19 +72,4 @@ public class Assignment {
 
     @OneToMany(mappedBy = "assignment")
     private Set<Submission> assignmentSubmissions;
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false, updatable = true)
-    private OffsetDateTime updatedAt;
-
-    private void updateTotalPoints() {
-        this.totalPoints = rubrics.stream()
-                .filter(Rubric::getIsActive)
-                .map(Rubric::getMaxPoints)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 }

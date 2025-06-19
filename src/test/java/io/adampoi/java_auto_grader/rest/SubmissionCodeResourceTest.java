@@ -62,7 +62,6 @@ public class SubmissionCodeResourceTest {
         SubmissionCodeDTO submissionCodeDTO = new SubmissionCodeDTO();
         submissionCodeDTO.setFileName("NewFile.java");
         submissionCodeDTO.setSourceCode("public class NewFile {}");
-        submissionCodeDTO.setPackagePath("com.example");
         submissionCodeDTO.setClassName("NewFile");
         submissionCodeDTO.setSubmission(UUID.randomUUID());
 
@@ -70,7 +69,6 @@ public class SubmissionCodeResourceTest {
         createdSubmissionCodeDTO.setId(UUID.randomUUID());
         createdSubmissionCodeDTO.setFileName("NewFile.java");
         createdSubmissionCodeDTO.setSourceCode("public class NewFile {}");
-        createdSubmissionCodeDTO.setPackagePath("com.example");
         createdSubmissionCodeDTO.setClassName("NewFile");
         createdSubmissionCodeDTO.setSubmission(UUID.randomUUID());
 

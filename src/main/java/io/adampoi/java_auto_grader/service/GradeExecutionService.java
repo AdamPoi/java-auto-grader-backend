@@ -73,7 +73,7 @@ public class GradeExecutionService {
 
     private GradeExecutionDTO mapToDTO(final GradeExecution gradeExecution, final GradeExecutionDTO gradeExecutionDTO) {
         gradeExecutionDTO.setId(gradeExecution.getId());
-        gradeExecutionDTO.setPointsAwarded(gradeExecution.getPointsAwarded());
+        gradeExecutionDTO.setPoints(gradeExecution.getPoints());
         gradeExecutionDTO.setStatus(gradeExecution.getStatus().name());
         gradeExecutionDTO.setActual(gradeExecution.getActual());
         gradeExecutionDTO.setExpected(gradeExecution.getExpected());
@@ -90,8 +90,8 @@ public class GradeExecutionService {
     }
 
     private GradeExecution mapToEntity(final GradeExecutionDTO gradeExecutionDTO, final GradeExecution gradeExecution) {
-        if (gradeExecutionDTO.getPointsAwarded() != null) {
-            gradeExecution.setPointsAwarded(gradeExecutionDTO.getPointsAwarded());
+        if (gradeExecutionDTO.getPoints() != null) {
+            gradeExecution.setPoints(gradeExecutionDTO.getPoints());
         }
         if (gradeExecutionDTO.getStatus() != null) {
             gradeExecution.setStatus(GradeExecution.ExecutionStatus.valueOf(gradeExecutionDTO.getStatus()));
@@ -118,12 +118,7 @@ public class GradeExecutionService {
 //                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
 //            gradeExecution.setSubmission(submission);
 //        }
-        if (gradeExecutionDTO.getCreatedAt() != null) {
-            gradeExecution.setCreatedAt(gradeExecutionDTO.getCreatedAt());
-        }
-        if (gradeExecutionDTO.getUpdatedAt() != null) {
-            gradeExecution.setUpdatedAt(gradeExecutionDTO.getUpdatedAt());
-        }
+
         return gradeExecution;
     }
 

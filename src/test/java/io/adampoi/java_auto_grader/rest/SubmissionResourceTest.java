@@ -62,11 +62,10 @@ class SubmissionResourceTest {
     private SubmissionDTO createTestSubmissionDTO() {
         return builder()
                 .id(testSubmissionId)
-                .submissionTime(OffsetDateTime.now())
-                .attemptNumber(1)
+                .executionTime(OffsetDateTime.now().toEpochSecond() * 1000) // ms
                 .status("PENDING")
-                .assignment(UUID.randomUUID())
-                .student(UUID.randomUUID())
+                .assignmentId(UUID.randomUUID())
+                .studentId(UUID.randomUUID())
                 .build();
     }
 
@@ -139,7 +138,7 @@ class SubmissionResourceTest {
         @DisplayName("Should return 201 Created with new submission")
         void createSubmission_ReturnsCreated() throws Exception {
             SubmissionDTO request = builder()
-                    .submissionTime(OffsetDateTime.now())
+                    .executionTime(OffsetDateTime.now())
                     .attemptNumber(1)
                     .status("PENDING")
                     .assignment(UUID.randomUUID())
@@ -148,7 +147,7 @@ class SubmissionResourceTest {
 
             SubmissionDTO createdSubmission = builder()
                     .id(UUID.randomUUID())
-                    .submissionTime(request.getSubmissionTime())
+                    .executionTime(request.getSubmissionTime())
                     .attemptNumber(request.getAttemptNumber())
                     .status(request.getStatus())
                     .assignment(request.getAssignment())

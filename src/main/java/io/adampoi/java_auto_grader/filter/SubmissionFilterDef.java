@@ -18,14 +18,14 @@ public class SubmissionFilterDef {
     @QFElement("status")
     private String status;
 
-    @QFElement("graderFeedback")
-    private String graderFeedback;
+    @QFElement("feedback")
+    private String feedback;
 
-//    @QFElement("gradingStartedAt")
-//    private String gradingStartedAt;
+//    @QFElement("startedAt")
+//    private String startedAt;
 //
-//    @QFElement("gradingCompletedAt")
-//    private String gradingCompletedAt;
+//    @QFElement("completedAt")
+//    private String completedAt;
 
     @QFElement("mainClassName")
     private String mainClassName;

@@ -47,7 +47,6 @@ public class AssignmentSeeder {
                 Assignment assignment = new Assignment();
                 assignment.setTitle(data.getTitle());
                 assignment.setDescription(data.getDescription());
-                assignment.setInstructions(data.getInstructions());
                 // ... existing code ...
 
                 assignment.setDueDate(OffsetDateTime.now().plusDays(7 + (i * 7))); // Stagger due dates weekly
@@ -59,8 +58,6 @@ public class AssignmentSeeder {
 //                assignment.setLatePenaltyPercent(new BigDecimal("10"));
 //                assignment.setMaxSubmissions(3);
                 assignment.setCourse(course);
-                assignment.setCreatedAt(OffsetDateTime.now());
-                assignment.setUpdatedAt(OffsetDateTime.now());
 
                 assignmentsToSave.add(assignment);
                 totalAssignments++;

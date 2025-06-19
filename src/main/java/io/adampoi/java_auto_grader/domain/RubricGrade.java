@@ -8,14 +8,10 @@ import io.adampoi.java_auto_grader.model.type.GradeArguments;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +22,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class RubricGrade {
+public class RubricGrade extends Auditable {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -35,14 +31,8 @@ public class RubricGrade {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @Column(nullable = false, length = 200)
-    private String functionName;
-
     @Column(length = 1000)
     private String description;
-
-    @Column(nullable = false, precision = 5, scale = 2)
-    private BigDecimal points;
 
     @Column(nullable = false)
     private Integer displayOrder;
@@ -51,10 +41,10 @@ public class RubricGrade {
     @Column(name = "arguments", columnDefinition = "jsonb")
     private Map<String, Object> arguments = new HashMap<>();
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private GradeType gradeType;
+
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rubric_id", referencedColumnName = "id", nullable = false)
@@ -67,13 +57,6 @@ public class RubricGrade {
     @OneToMany(mappedBy = "rubricGrade", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<GradeExecution> gradeExecutions;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false, updatable = true)
-    private OffsetDateTime updatedAt;
 
     @PrePersist
     private void ensureId() {

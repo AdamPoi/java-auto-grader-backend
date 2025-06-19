@@ -7,26 +7,30 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClassroomDTO {
+public class ClassroomDTO extends AuditableDTO {
     private UUID id;
 
     @NotNull
     @Size(min = 3, max = 255)
     private String name;
 
-    private Boolean isActive;
+
+    private UUID teacherId;
+
+    private List<UUID> studentIds;
 
     @JsonProperty("teacher")
     @JsonManagedReference("classroom-teacher")
@@ -37,15 +41,6 @@ public class ClassroomDTO {
     @JsonManagedReference("classroom-students")
     @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
     private List<UserDTO> enrolledStudents;
-
-    private OffsetDateTime createdAt;
-
-    private OffsetDateTime updatedAt;
-
-    private UUID teacherId;
-
-    private List<UUID> studentIds;
-
 
     public interface CreateGroup extends Default {
     }

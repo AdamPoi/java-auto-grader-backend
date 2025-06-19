@@ -98,7 +98,6 @@ public class ClassroomSeeder {
 
             Classroom classroom = new Classroom();
             classroom.setName(data.getName());
-            classroom.setIsActive(true);
             classroom.setTeacher(teacher);
             classroom.setCreatedAt(OffsetDateTime.now());
             classroom.setUpdatedAt(OffsetDateTime.now());

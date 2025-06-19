@@ -3,12 +3,9 @@ package io.adampoi.java_auto_grader.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -36,13 +33,4 @@ public class SubmissionCode {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submission_id", referencedColumnName = "id", nullable = false)
     private Submission submission;
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false, updatable = true)
-    private OffsetDateTime updatedAt;
-
 }

@@ -123,12 +123,7 @@ public class UserService {
         if (userDTO.getIsActive() != null) {
             user.setIsActive(userDTO.getIsActive());
         }
-        if (userDTO.getCreatedAt() != null) {
-            user.setCreatedAt(userDTO.getCreatedAt());
-        }
-        if (userDTO.getUpdatedAt() != null) {
-            user.setUpdatedAt(userDTO.getUpdatedAt());
-        }
+
         if (!userDTO.getRoles().isEmpty()) {
             user.setUserRoles(userDTO.getRoles().stream()
                     .map(roleRepository::findByName)

@@ -1,17 +1,14 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -19,11 +16,12 @@ import java.util.List;
 import java.util.UUID;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AssignmentDTO {
+public class AssignmentDTO extends AuditableDTO {
     private UUID id;
 
     @NotNull(groups = CreateGroup.class)
@@ -33,14 +31,10 @@ public class AssignmentDTO {
 
     private String description;
 
+    private String resource;
+
     @NotNull(groups = CreateGroup.class)
     private OffsetDateTime dueDate;
-
-    @JsonIgnore
-    private OffsetDateTime createdAt;
-
-    @JsonIgnore
-    private OffsetDateTime updatedAt;
 
     @JsonProperty("isPublished")
     private Boolean isPublished;
@@ -51,9 +45,7 @@ public class AssignmentDTO {
 
     private String testCode;
 
-    private Integer maxAttempts;
-
-    private Integer timeLimit;
+    private Long timeLimit;
 
     @Builder.Default
     private BigDecimal totalPoints = BigDecimal.ZERO;

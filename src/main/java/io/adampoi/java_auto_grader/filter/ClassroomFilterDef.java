@@ -12,8 +12,7 @@ public class ClassroomFilterDef {
     @QFElement("name")
     private String name;
 
-    @QFElement("isActive")
-    private String isActive;
+  
 //
 //    @QFElement("enrollmentStartDate")
 //    private String enrollmentStartDate;

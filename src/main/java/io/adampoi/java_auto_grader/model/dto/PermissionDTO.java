@@ -5,18 +5,20 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PermissionDTO {
+public class PermissionDTO extends AuditableDTO {
     private UUID id;
     @NotBlank(groups = {CreateGroup.class})
     @Size(min = 3, max = 255, groups = {CreateGroup.class, UpdateGroup.class})

@@ -3,31 +3,31 @@ package io.adampoi.java_auto_grader.model.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourseDTO {
+public class CourseDTO extends AuditableDTO {
 
     private UUID id;
 
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
     @Size(min = 3, max = 20)
+    @Column(nullable = false, unique = true)
     private String code;
 
     @NotNull(groups = CreateGroup.class)
@@ -42,9 +42,11 @@ public class CourseDTO {
     private Boolean isActive = true;
 
 
-    private OffsetDateTime createdAt;
+    private UUID teacherId;
 
-    private OffsetDateTime updatedAt;
+    private List<UUID> studentIds;
+
+    private List<UUID> assignmentIds;
 
 
     @JsonProperty("teacher")
@@ -62,11 +64,6 @@ public class CourseDTO {
     @JsonIgnoreProperties({"password", "description", "starterCode", "solutionCode", "maxAttempts", "timeLimit", "totalPoints", "courseId", "teacherId", "submissions", "rubrics"})
     private List<AssignmentDTO> courseAssignments;
 
-    private UUID teacherId;
-
-    private List<UUID> studentIds;
-
-    private List<UUID> assignmentIds;
 
     public interface CreateGroup extends Default {
     }

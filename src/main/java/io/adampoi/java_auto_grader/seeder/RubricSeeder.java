@@ -7,7 +7,6 @@ import io.adampoi.java_auto_grader.repository.RubricRepository;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,12 +63,9 @@ public class RubricSeeder {
                 Rubric rubric = new Rubric();
                 rubric.setName(rubricNames[i]);
                 rubric.setDescription(rubricDescriptions[i]);
-                rubric.setMaxPoints(rubricPoints[i]);
-                rubric.setDisplayOrder(i + 1);
-                rubric.setIsActive(true);
+                rubric.setPoints(rubricPoints[i]);
                 rubric.setAssignment(assignment);
-                rubric.setCreatedAt(OffsetDateTime.now());
-                rubric.setUpdatedAt(OffsetDateTime.now());
+
 
                 rubricsToSave.add(rubric);
             }

@@ -51,7 +51,6 @@ public class AssignmentService {
         assignmentDTO.setSolutionCode(assignment.getSolutionCode());
         assignmentDTO.setTestCode(assignment.getTestCode());
         assignmentDTO.setTotalPoints(assignment.getTotalPoints());
-        assignmentDTO.setMaxAttempts(assignment.getMaxAttempts());
         assignmentDTO.setTimeLimit(assignment.getTimeLimit());
         assignmentDTO.setCourseId(assignment.getCourse() == null ? null : assignment.getCourse().getId());
         assignmentDTO.setCreatedByTeacher(
@@ -134,9 +133,7 @@ public class AssignmentService {
         if (assignmentDTO.getTestCode() != null) {
             assignment.setTestCode(assignmentDTO.getTestCode());
         }
-        if (assignmentDTO.getMaxAttempts() != null) {
-            assignment.setMaxAttempts(assignmentDTO.getMaxAttempts());
-        }
+
         if (assignmentDTO.getTimeLimit() != null) {
             assignment.setTimeLimit(assignmentDTO.getTimeLimit());
         }
@@ -153,12 +150,7 @@ public class AssignmentService {
                     .orElseThrow(() -> new EntityNotFoundException("createdByTeacher not found"));
             assignment.setCreatedByTeacher(createdByTeacher);
         }
-        if (assignmentDTO.getCreatedAt() != null) {
-            assignment.setCreatedAt(assignmentDTO.getCreatedAt());
-        }
-        if (assignmentDTO.getUpdatedAt() != null) {
-            assignment.setUpdatedAt(assignmentDTO.getUpdatedAt());
-        }
+
         return assignment;
     }
 

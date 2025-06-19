@@ -81,7 +81,6 @@ public class ClassroomService {
     private ClassroomDTO mapToDTO(final Classroom classroom, final ClassroomDTO classroomDTO) {
         classroomDTO.setId(classroom.getId());
         classroomDTO.setName(classroom.getName());
-        classroomDTO.setIsActive(classroom.getIsActive());
         classroomDTO.setCreatedAt(classroom.getCreatedAt());
         classroomDTO.setUpdatedAt(classroom.getUpdatedAt());
         classroomDTO.setEnrolledStudents(classroom.getEnrolledStudents().stream()
@@ -99,9 +98,7 @@ public class ClassroomService {
         if (classroomDTO.getName() != null) {
             classroom.setName(classroomDTO.getName());
         }
-        if (classroomDTO.getIsActive() != null) {
-            classroom.setIsActive(classroomDTO.getIsActive());
-        }
+
         if (classroomDTO.getId() != null) {
             classroom.setId(classroomDTO.getId());
         }

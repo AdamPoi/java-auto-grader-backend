@@ -1,7 +1,6 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.adampoi.java_auto_grader.domain.RubricGrade;
@@ -10,22 +9,22 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RubricGradeDTO {
+public class RubricGradeDTO extends AuditableDTO {
 
     private UUID id;
 
@@ -34,18 +33,14 @@ public class RubricGradeDTO {
     @Size(min = 3, max = 255)
     private String name;
 
-    private String functionName;
-
     private String description;
 
-    private BigDecimal points;
-
     private Integer displayOrder;
-
 
     private Map<String, Object> arguments;
 
     private RubricGrade.GradeType gradeType;
+
 
     private UUID rubricId;
 
@@ -53,11 +48,6 @@ public class RubricGradeDTO {
 
     private Set<UUID> gradeExecutionIds;
 
-    @JsonIgnore
-    private OffsetDateTime createdAt;
-
-    @JsonIgnore
-    private OffsetDateTime updatedAt;
 
     @JsonBackReference("rubric-rubric-grades")
     private RubricDTO rubric;

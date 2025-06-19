@@ -18,7 +18,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class Classroom {
+public class Classroom extends Auditable {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -29,8 +29,6 @@ public class Classroom {
     @Column(nullable = false)
     private String name;
 
-    @Column
-    private Boolean isActive;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "teacher_id", referencedColumnName = "id", nullable = true)

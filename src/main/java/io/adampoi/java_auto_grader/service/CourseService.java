@@ -150,12 +150,6 @@ public class CourseService {
         }
 
 
-        if (courseDTO.getCreatedAt() != null) {
-            course.setCreatedAt(courseDTO.getCreatedAt());
-        }
-        if (courseDTO.getUpdatedAt() != null) {
-            course.setUpdatedAt(courseDTO.getUpdatedAt());
-        }
         return course;
     }
 

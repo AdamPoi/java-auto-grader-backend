@@ -9,8 +9,8 @@ import io.github.acoboh.query.filter.jpa.predicate.PredicateOperation;
 @QFDefinitionClass(GradeExecution.class)
 public class GradeExecutionFilterDef {
 
-    @QFElement("pointsAwarded")
-    private String pointsAwarded;
+    @QFElement("points")
+    private String points;
 
     @QFElement("status")
     private String status;

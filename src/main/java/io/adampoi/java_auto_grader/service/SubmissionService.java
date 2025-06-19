@@ -135,35 +135,32 @@ public class SubmissionService {
 
     private SubmissionDTO mapToDTO(final Submission submission, final SubmissionDTO submissionDTO) {
         submissionDTO.setId(submission.getId());
-        submissionDTO.setSubmissionTime(submission.getSubmissionTime());
-        submissionDTO.setAttemptNumber(submission.getAttemptNumber());
+        submissionDTO.setExecutionTime(submission.getExecutionTime());
         submissionDTO.setStatus(submission.getStatus());
-        submissionDTO.setGraderFeedback(submission.getGraderFeedback());
-        submissionDTO.setGradingStartedAt(submission.getGradingStartedAt());
-        submissionDTO.setGradingCompletedAt(submission.getGradingCompletedAt());
+        submissionDTO.setFeedback(submission.getFeedback());
+        submissionDTO.setStartedAt(submission.getStartedAt());
+        submissionDTO.setCompletedAt(submission.getCompletedAt());
 //        submissionDTO.setAssignment(submission.getAssignment() == null ? null : submission.getAssignment().getId());
 //        submissionDTO.setStudent(submission.getStudent() == null ? null : submission.getStudent().getId());
         return submissionDTO;
     }
 
     private Submission mapToEntity(final SubmissionDTO submissionDTO, final Submission submission) {
-        if (submissionDTO.getSubmissionTime() != null) {
-            submission.setSubmissionTime(submissionDTO.getSubmissionTime());
+        if (submissionDTO.getExecutionTime() != null) {
+            submission.setExecutionTime(submissionDTO.getExecutionTime());
         }
-        if (submissionDTO.getAttemptNumber() != null) {
-            submission.setAttemptNumber(submissionDTO.getAttemptNumber());
-        }
+
         if (submissionDTO.getStatus() != null) {
             submission.setStatus(submissionDTO.getStatus());
         }
-        if (submissionDTO.getGraderFeedback() != null) {
-            submission.setGraderFeedback(submissionDTO.getGraderFeedback());
+        if (submissionDTO.getFeedback() != null) {
+            submission.setFeedback(submissionDTO.getFeedback());
         }
-        if (submissionDTO.getGradingStartedAt() != null) {
-            submission.setGradingStartedAt(submissionDTO.getGradingStartedAt());
+        if (submissionDTO.getStartedAt() != null) {
+            submission.setStartedAt(submissionDTO.getStartedAt());
         }
-        if (submissionDTO.getGradingCompletedAt() != null) {
-            submission.setGradingCompletedAt(submissionDTO.getGradingCompletedAt());
+        if (submissionDTO.getCompletedAt() != null) {
+            submission.setCompletedAt(submissionDTO.getCompletedAt());
         }
 //        if (submissionDTO.getAssignment() != null) {
 //            final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignment())

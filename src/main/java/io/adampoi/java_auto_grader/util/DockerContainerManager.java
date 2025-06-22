@@ -73,7 +73,7 @@ public class DockerContainerManager {
                 "docker", "cp", containerName + ":" + source, destination.toString()
         );
         Process copyProcess = copyCommand.start();
-        copyProcess.waitFor(); // Don't fail if source doesn't exist
+        copyProcess.waitFor();
     }
 
     public ProcessResult executeCommand(String containerName, String command, int timeoutSeconds)
@@ -93,9 +93,9 @@ public class DockerContainerManager {
 
         String output = ProcessUtils.readOutput(process);
         String errors = ProcessUtils.readErrors(process);
-//        int exitCode = process.exitValue();
+        int exitCode = process.exitValue();
 
-//        logExecutionResults(exitCode, output, errors);
+        logExecutionResults(exitCode, output, errors);
 
         return new ProcessResult(process.exitValue(), output, errors, executionTime);
     }

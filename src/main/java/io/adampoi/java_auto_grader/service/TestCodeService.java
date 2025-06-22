@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TestCodeService {
 
-    private static final int TIMEOUT_SECONDS = 120;
+    private static final int TIMEOUT_SECONDS = 300;
     private final ConcurrentMap<BuildTool, ContainerInstance> containers = new ConcurrentHashMap<>();
 
     private final DockerContainerManager dockerManager;
@@ -56,6 +56,7 @@ public class TestCodeService {
     public TestCodeResponse runTestCode(TestCodeRequest request) {
         String uuid = java.util.UUID.randomUUID().toString();
         Path tempDir = null;
+        log.info(uuid);
 
         try {
             BuildTool buildTool = determineBuildTool(request);
@@ -68,6 +69,8 @@ public class TestCodeService {
             projectSetupService.setupProject(tempDir, request, buildTool);
 
             dockerManager.copyToContainer(container.getName(), tempDir, workspace);
+
+            log.info(container.getName());
 
             ProcessResult result = executeBuildCommand(container, workspace, buildTool);
             copyTestResults(container, workspace, tempDir);
@@ -128,7 +131,7 @@ public class TestCodeService {
         String baseCommand = String.format("cd %s && ", workspace);
         switch (buildTool) {
             case GRADLE:
-                return baseCommand + "gradle test --daemon --parallel --build-cache --configuration-cache --console=plain --quiet";
+                return baseCommand + "gradle test -x compileJava --rerun-tasks --daemon --parallel --build-cache --configuration-cache --console=plain --quiet";
             case MAVEN:
                 return baseCommand + "mvn test -Dmaven.repo.local=/workspace/.m2/repository";
             default:

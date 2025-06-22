@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
+import io.adampoi.java_auto_grader.model.dto.RubricDTO;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.*;
@@ -43,6 +44,7 @@ public class AssignmentService {
         assignmentDTO.setId(assignment.getId());
         assignmentDTO.setTitle(assignment.getTitle());
         assignmentDTO.setDescription(assignment.getDescription());
+        assignmentDTO.setResource(assignment.getResource());
         assignmentDTO.setDueDate(assignment.getDueDate());
         assignmentDTO.setCreatedAt(assignment.getCreatedAt());
         assignmentDTO.setUpdatedAt(assignment.getUpdatedAt());
@@ -55,6 +57,9 @@ public class AssignmentService {
         assignmentDTO.setCourseId(assignment.getCourse() == null ? null : assignment.getCourse().getId());
         assignmentDTO.setCreatedByTeacher(
                 assignment.getCreatedByTeacher() == null ? null : assignment.getCreatedByTeacher().getId());
+        assignmentDTO.setRubrics(assignment.getRubrics().stream()
+                .map(rubric -> RubricService.mapToRelationshipDTO(rubric, new RubricDTO()))
+                .collect(Collectors.toList()));
         return assignmentDTO;
     }
 
@@ -117,6 +122,9 @@ public class AssignmentService {
         }
         if (assignmentDTO.getDescription() != null) {
             assignment.setDescription(assignmentDTO.getDescription());
+        }
+        if (assignmentDTO.getResource() != null) {
+            assignment.setResource(assignmentDTO.getResource());
         }
         if (assignmentDTO.getDueDate() != null) {
             assignment.setDueDate(assignmentDTO.getDueDate());

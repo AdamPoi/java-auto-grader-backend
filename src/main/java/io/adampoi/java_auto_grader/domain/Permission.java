@@ -29,7 +29,7 @@ public class Permission extends Auditable {
     @Column(columnDefinition = "text")
     private String description;
 
-    @ManyToMany(mappedBy = "rolePermissions", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "rolePermissions", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Role> permissionRoles;
 
 }

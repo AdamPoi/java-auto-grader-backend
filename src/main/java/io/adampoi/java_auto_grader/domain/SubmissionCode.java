@@ -30,7 +30,7 @@ public class SubmissionCode {
     @Column
     private String className;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "submission_id", referencedColumnName = "id", nullable = false)
     private Submission submission;
 }

@@ -11,7 +11,7 @@ services:
     working_dir: /workspace
     command: tail -f /dev/null  # Keep container running
     environment:
-      - GRADLE_OPTS=-Xmx1g -XX:+UseG1GC -Dorg.gradle.daemon=false
+      - GRADLE_OPTS=-Xmx1g -XX:+UseG1GC -Dorg.gradle.daemon=true
       - GRADLE_USER_HOME=/home/gradle/.gradle
       - GRADLE_BUILD_CACHE_DIR=/gradle-build-cache
       - GRADLE_PARALLEL=true
@@ -32,16 +32,11 @@ services:
         soft: 65536
         hard: 65536
     restart: unless-stopped
-
-  qdrant:
-    image: qdrant/qdrant
-    container_name: qdrant
-    ports:
-      - "6333:6333" # REST API
-      - "6334:6334" # gRPC
-    volumes:
-      - qdrant_storage:/qdrant/storage
-    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "pgrep", "-f", "gradle" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   gradle-cache:
@@ -50,5 +45,3 @@ volumes:
     driver: local
   gradle-build-cache:
     driver: local
-  qdrant_storage:
-  ollama_data:

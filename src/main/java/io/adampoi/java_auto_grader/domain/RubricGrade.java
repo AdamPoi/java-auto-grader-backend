@@ -45,7 +45,6 @@ public class RubricGrade extends Auditable {
     @Column(nullable = false, length = 50)
     private GradeType gradeType;
 
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rubric_id", referencedColumnName = "id", nullable = false)
     private Rubric rubric;

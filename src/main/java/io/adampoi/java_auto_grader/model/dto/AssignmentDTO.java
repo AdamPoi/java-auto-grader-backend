@@ -1,6 +1,7 @@
 package io.adampoi.java_auto_grader.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
@@ -68,7 +69,7 @@ public class AssignmentDTO extends AuditableDTO {
 
     @JsonProperty("rubrics")
     @JsonManagedReference("assignment-rubrics")
-//    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
+    @JsonIgnoreProperties({"assignmentId", "assignment", "rubricGradeIds", "rubricGrades", "createdAt", "updatedAt"})
     private List<RubricDTO> rubrics;
 
     @JsonProperty("rubricGrades")

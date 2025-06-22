@@ -1,6 +1,5 @@
 package io.adampoi.java_auto_grader.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedBy;
@@ -14,7 +13,7 @@ import java.time.OffsetDateTime;
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@JsonIgnoreProperties(value = {"createdBy", "updatedBy"}, allowGetters = true)
+//@JsonIgnoreProperties(value = {"createdBy", "updatedBy"}, allowGetters = true)
 public abstract class Auditable {
 
     @CreatedDate

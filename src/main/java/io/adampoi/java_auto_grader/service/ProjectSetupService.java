@@ -87,11 +87,16 @@ public class ProjectSetupService {
                 }
                 
                 dependencies {
-                    implementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-                    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
-                    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
-                    testImplementation 'org.mockito:mockito-core:5.5.0'
-                    testImplementation 'org.assertj:assertj-core:3.27.2'
+                     implementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+                     implementation 'com.github.javaparser:javaparser-core:3.25.10'
+                     implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.25.10'
+                     implementation 'com.github.javaparser:javaparser-core-serialization:3.25.10'
+                     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+                     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+                     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+                     testImplementation 'org.mockito:mockito-core:5.5.0'
+                     testImplementation 'org.assertj:assertj-core:3.27.2'
+                
                 }
                 
                 java {

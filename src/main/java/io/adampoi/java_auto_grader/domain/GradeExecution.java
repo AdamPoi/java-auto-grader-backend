@@ -41,11 +41,11 @@ public class GradeExecution extends Auditable {
     @Column
     private Long executionTime = 0L; //ms
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rubric_grade_id", referencedColumnName = "id", nullable = false)
     private RubricGrade rubricGrade;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "submission_id", referencedColumnName = "id", nullable = false)
     private Submission submission;
 

@@ -30,8 +30,8 @@ public class SubmissionFilterDef {
     @QFElement("mainClassName")
     private String mainClassName;
 
-//    @QFElement("assignment.id")
-//    private String assignment;
+    @QFElement("assignment.id")
+    private String assignment;
 //
 //    @QFElement("student.id")
 //    private String student;

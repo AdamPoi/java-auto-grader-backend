@@ -51,7 +51,7 @@ public class Submission extends Auditable {
     private Assignment assignment;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "student_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "student_id", referencedColumnName = "id", nullable = true)
     private User student;
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)

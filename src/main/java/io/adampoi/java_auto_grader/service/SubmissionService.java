@@ -1,10 +1,10 @@
 package io.adampoi.java_auto_grader.service;
 
+import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Submission;
-import io.adampoi.java_auto_grader.model.dto.RunResultDTO;
-import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
-import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
-import io.adampoi.java_auto_grader.model.dto.TestResultDTO;
+import io.adampoi.java_auto_grader.domain.SubmissionCode;
+import io.adampoi.java_auto_grader.domain.User;
+import io.adampoi.java_auto_grader.model.dto.*;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.model.response.SubmissionCompileResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
@@ -78,6 +78,13 @@ public class SubmissionService {
     public SubmissionDTO create(final SubmissionDTO submissionDTO) {
         final Submission submission = new Submission();
         mapToEntity(submissionDTO, submission);
+
+        if (submission.getSubmissionCodes() != null) {
+            submission.getSubmissionCodes().forEach(submissionCode ->
+                    submissionCode.setSubmission(submission)
+            );
+        }
+
         Submission savedSubmission = submissionRepository.save(submission);
         return mapToDTO(savedSubmission, new SubmissionDTO());
     }
@@ -140,8 +147,14 @@ public class SubmissionService {
         submissionDTO.setFeedback(submission.getFeedback());
         submissionDTO.setStartedAt(submission.getStartedAt());
         submissionDTO.setCompletedAt(submission.getCompletedAt());
-//        submissionDTO.setAssignment(submission.getAssignment() == null ? null : submission.getAssignment().getId());
-//        submissionDTO.setStudent(submission.getStudent() == null ? null : submission.getStudent().getId());
+        submissionDTO.setSubmissionCodes(submission.getSubmissionCodes().stream()
+                .map(submissiionCode -> SubmissionCodeService.mapToDTO(submissiionCode, new SubmissionCodeDTO()))
+                .collect(Collectors.toList()));
+        if (submission.getStudent() != null) {
+            submissionDTO.setStudent(submission.getStudent() == null ? null :
+                    UserService.mapToDTO(submission.getStudent(), new UserDTO()));
+            submissionDTO.setStudentId(submission.getStudent().getId());
+        }
         return submissionDTO;
     }
 
@@ -162,16 +175,28 @@ public class SubmissionService {
         if (submissionDTO.getCompletedAt() != null) {
             submission.setCompletedAt(submissionDTO.getCompletedAt());
         }
-//        if (submissionDTO.getAssignment() != null) {
-//            final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignment())
-//                    .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
-//            submission.setAssignment(assignment);
-//        }
-//        if (submissionDTO.getStudent() != null) {
-//            final User student = userRepository.findById(submissionDTO.getStudent())
-//                    .orElseThrow(() -> new EntityNotFoundException("student not found"));
-//            submission.setStudent(student);
-//        }
+        if (submissionDTO.getAssignmentId() != null) {
+            final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignmentId())
+                    .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
+            submission.setAssignment(assignment);
+        }
+        if (submissionDTO.getStudentId() != null) {
+            final User student = userRepository.findById(submissionDTO.getStudentId())
+                    .orElseThrow(() -> new EntityNotFoundException("student not found"));
+            submission.setStudent(student);
+        }
+        if (submissionDTO.getSubmissionCodes() != null && !submissionDTO.getSubmissionCodes().isEmpty()) {
+            submission.setSubmissionCodes(submissionDTO.getSubmissionCodes()
+                    .stream()
+                    .map(codeDTO -> {
+                        SubmissionCode submissionCode = SubmissionCodeService.mapToEntity(codeDTO, new SubmissionCode());
+                        // Set the submission reference for bidirectional relationship
+                        submissionCode.setSubmission(submission);
+                        return submissionCode;
+                    })
+                    .collect(Collectors.toSet()));
+        }
+
         return submission;
     }
 

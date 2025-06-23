@@ -48,6 +48,37 @@ public class SubmissionCodeService {
         this.submissionRepository = submissionRepository;
     }
 
+    public static SubmissionCode mapToEntity(final SubmissionCodeDTO submissionCodeDTO, final SubmissionCode submissionCode) {
+        if (submissionCodeDTO.getFileName() != null) {
+            submissionCode.setFileName(submissionCodeDTO.getFileName());
+        }
+        if (submissionCodeDTO.getSourceCode() != null) {
+            submissionCode.setSourceCode(submissionCodeDTO.getSourceCode());
+        }
+
+        if (submissionCodeDTO.getClassName() != null) {
+            submissionCode.setClassName(submissionCodeDTO.getClassName());
+        }
+//        if (submissionCodeDTO.getSubmission() != null) {
+//            final Submission submission = submissionRepository.findById(submissionCodeDTO.getSubmission())
+//                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
+//            submissionCode.setSubmission(submission);
+//        }
+
+        return submissionCode;
+    }
+
+    public static SubmissionCodeDTO mapToDTO(final SubmissionCode submissionCode, final SubmissionCodeDTO submissionCodeDTO) {
+        submissionCodeDTO.setId(submissionCode.getId());
+        submissionCodeDTO.setFileName(submissionCode.getFileName());
+        submissionCodeDTO.setSourceCode(submissionCode.getSourceCode());
+        submissionCodeDTO.setClassName(submissionCode.getClassName());
+//        submissionCodeDTO
+//                .setSubmission(submissionCode.getSubmission() == null ? null : submissionCode.getSubmission().getId());
+//        submissionCodeDTO.setCreatedAt(submissionCode.getCreatedAt());
+        return submissionCodeDTO;
+    }
+
     public PageResponse<SubmissionCodeDTO> findAll(QueryFilter<SubmissionCode> filter, Pageable pageable) {
         final Page<SubmissionCode> page = submissionCodeRepository.findAll(filter, pageable);
         Page<SubmissionCodeDTO> dtoPage = new PageImpl<>(page.getContent()
@@ -81,37 +112,6 @@ public class SubmissionCodeService {
 
     public void delete(final UUID submissionCodeId) {
         submissionCodeRepository.deleteById(submissionCodeId);
-    }
-
-    private SubmissionCodeDTO mapToDTO(final SubmissionCode submissionCode, final SubmissionCodeDTO submissionCodeDTO) {
-        submissionCodeDTO.setId(submissionCode.getId());
-        submissionCodeDTO.setFileName(submissionCode.getFileName());
-        submissionCodeDTO.setSourceCode(submissionCode.getSourceCode());
-        submissionCodeDTO.setClassName(submissionCode.getClassName());
-//        submissionCodeDTO
-//                .setSubmission(submissionCode.getSubmission() == null ? null : submissionCode.getSubmission().getId());
-//        submissionCodeDTO.setCreatedAt(submissionCode.getCreatedAt());
-        return submissionCodeDTO;
-    }
-
-    private SubmissionCode mapToEntity(final SubmissionCodeDTO submissionCodeDTO, final SubmissionCode submissionCode) {
-        if (submissionCodeDTO.getFileName() != null) {
-            submissionCode.setFileName(submissionCodeDTO.getFileName());
-        }
-        if (submissionCodeDTO.getSourceCode() != null) {
-            submissionCode.setSourceCode(submissionCodeDTO.getSourceCode());
-        }
-
-        if (submissionCodeDTO.getClassName() != null) {
-            submissionCode.setClassName(submissionCodeDTO.getClassName());
-        }
-//        if (submissionCodeDTO.getSubmission() != null) {
-//            final Submission submission = submissionRepository.findById(submissionCodeDTO.getSubmission())
-//                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
-//            submissionCode.setSubmission(submission);
-//        }
-
-        return submissionCode;
     }
 
     @SneakyThrows

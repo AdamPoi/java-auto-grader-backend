@@ -46,7 +46,7 @@ public class SubmissionDTO extends AuditableDTO {
     @NotNull(groups = CreateGroup.class)
     private UUID assignmentId;
 
-    @NotNull(groups = CreateGroup.class)
+    //    @NotNull(groups = CreateGroup.class)
     private UUID studentId;
 
     private List<SubmissionCodeDTO> submissionCodeIds;

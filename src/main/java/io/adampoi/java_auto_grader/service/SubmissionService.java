@@ -59,6 +59,31 @@ public class SubmissionService {
         this.userRepository = userRepository;
     }
 
+    public static SubmissionDTO mapToDTO(final Submission submission, final SubmissionDTO submissionDTO) {
+        submissionDTO.setId(submission.getId());
+        submissionDTO.setExecutionTime(submission.getExecutionTime());
+        submissionDTO.setStatus(submission.getStatus());
+        submissionDTO.setFeedback(submission.getFeedback());
+        submissionDTO.setStartedAt(submission.getStartedAt());
+        submissionDTO.setCompletedAt(submission.getCompletedAt());
+        submissionDTO.setSubmissionCodes(submission.getSubmissionCodes().stream()
+                .map(submissionCode -> SubmissionCodeService.mapToDTO(submissionCode, new SubmissionCodeDTO()))
+                .collect(Collectors.toList()));
+        if (submission.getTestExecutions() != null) {
+            submissionDTO.setTestExecutions(submission.getTestExecutions().stream()
+                    .map(testExecution -> TestExecutionService.mapToDTO(testExecution, new TestExecutionDTO()))
+                    .collect(Collectors.toList()));
+        } else {
+            submissionDTO.setTestExecutions(new ArrayList<>()); // or null, depending on desired behavior
+        }
+        if (submission.getStudent() != null) {
+            submissionDTO.setStudent(submission.getStudent() == null ? null :
+                    UserService.mapToDTO(submission.getStudent(), new UserDTO()));
+            submissionDTO.setStudentId(submission.getStudent().getId());
+        }
+        return submissionDTO;
+    }
+
     public PageResponse<SubmissionDTO> findAll(QueryFilter<Submission> filter, Pageable pageable) {
         final Page<Submission> page = submissionRepository.findAll(filter, pageable);
         Page<SubmissionDTO> dtoPage = new PageImpl<>(page.getContent()
@@ -140,24 +165,6 @@ public class SubmissionService {
         return baos.toString();
     }
 
-    private SubmissionDTO mapToDTO(final Submission submission, final SubmissionDTO submissionDTO) {
-        submissionDTO.setId(submission.getId());
-        submissionDTO.setExecutionTime(submission.getExecutionTime());
-        submissionDTO.setStatus(submission.getStatus());
-        submissionDTO.setFeedback(submission.getFeedback());
-        submissionDTO.setStartedAt(submission.getStartedAt());
-        submissionDTO.setCompletedAt(submission.getCompletedAt());
-        submissionDTO.setSubmissionCodes(submission.getSubmissionCodes().stream()
-                .map(submissiionCode -> SubmissionCodeService.mapToDTO(submissiionCode, new SubmissionCodeDTO()))
-                .collect(Collectors.toList()));
-        if (submission.getStudent() != null) {
-            submissionDTO.setStudent(submission.getStudent() == null ? null :
-                    UserService.mapToDTO(submission.getStudent(), new UserDTO()));
-            submissionDTO.setStudentId(submission.getStudent().getId());
-        }
-        return submissionDTO;
-    }
-
     private Submission mapToEntity(final SubmissionDTO submissionDTO, final Submission submission) {
         if (submissionDTO.getExecutionTime() != null) {
             submission.setExecutionTime(submissionDTO.getExecutionTime());
@@ -234,32 +241,6 @@ public class SubmissionService {
                     "/bin/bash", "-c",
                     "chmod +x " + gradlewPath + " && " + gradlewPath + " --version && " + gradlewPath
                             + " dependencies --no-daemon");
-
-            // log.info("Downloading Gradle dependencies...");
-            // downloadBuilder.redirectErrorStream(true);
-            // Process downloadProcess = downloadBuilder.start();
-            //
-            // StringBuilder downloadOutput = new StringBuilder();
-            // try (BufferedReader reader = new BufferedReader(new
-            // InputStreamReader(downloadProcess.getInputStream()))) {
-            // String line;
-            // while ((line = reader.readLine()) != null) {
-            // downloadOutput.append(line).append("\n");
-            // log.debug("Download: {}", line);
-            // }
-            // }
-            //
-            // if (!downloadProcess.waitFor(120, TimeUnit.SECONDS)) { // 2 minutes for
-            // download
-            // downloadProcess.destroyForcibly();
-            // throw new InterruptedException("Dependency download timed out.");
-            // }
-
-            // int downloadExitCode = downloadProcess.exitValue();
-            // if (downloadExitCode != 0) {
-            // log.error("Dependency download failed with exit code: {}", downloadExitCode);
-            // log.error("Download output: {}", downloadOutput.toString());
-            // }
 
             ProcessBuilder processBuilder = new ProcessBuilder(
                     "docker", "run", "--rm", "--network=none", "--memory=512m",

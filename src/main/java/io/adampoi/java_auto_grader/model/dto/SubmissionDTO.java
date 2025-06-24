@@ -51,7 +51,7 @@ public class SubmissionDTO extends AuditableDTO {
 
     private List<SubmissionCodeDTO> submissionCodeIds;
 
-    private List<GradeExecutionDTO> gradeExecutionIds;
+    private List<TestExecutionDTO> gradeExecutionIds;
 
 
     @JsonBackReference("assignment-submissions")
@@ -62,9 +62,9 @@ public class SubmissionDTO extends AuditableDTO {
     @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
     private UserDTO student;
 
-    @JsonProperty("gradeExecutions")
-    @JsonManagedReference("submission-grade-executions")
-    private List<GradeExecutionDTO> gradeExecutions;
+    @JsonProperty("testExecutions")
+    @JsonManagedReference("submission-test-executions")
+    private List<TestExecutionDTO> testExecutions;
 
     @JsonProperty("submissionCodes")
     @JsonManagedReference("submission-codes")

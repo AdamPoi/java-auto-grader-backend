@@ -1,6 +1,8 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -11,7 +13,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -19,36 +20,36 @@ import java.util.UUID;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GradeExecutionDTO extends AuditableDTO {
+public class TestExecutionDTO extends AuditableDTO {
 
     private UUID id;
 
-    private BigDecimal points;
+    private String methodName;
 
     @Size(min = 1, max = 255)
     @Pattern(regexp = "PENDING|RUNNING|PASSED|FAILED|ERROR|TIMEOUT|SKIPPED",
             message = "Status must be one of: PENDING, RUNNING, PASSED, FAILED, ERROR, TIMEOUT, SKIPPED")
     private String status;
 
-    private String actual;
-
-    private String expected;
+    private String output;
 
     private String error;
 
     private Long executionTime;
 
-    @NotNull(groups = CreateGroup.class)
     private UUID rubricGradeId;
 
     @NotNull(groups = CreateGroup.class)
     private UUID submissionId;
 
+    private UUID assignmentId;
 
-    @JsonBackReference("rubric-grade-executions")
+    private TestCodeRequest testCodeRequest;
+
+    @JsonBackReference("rubric-grade-test-executions")
     private RubricGradeDTO rubricGrade;
 
-    @JsonBackReference("submission-grade-executions")
+    @JsonBackReference("submission-test-executions")
     private SubmissionDTO submission;
 
     public interface CreateGroup extends Default {

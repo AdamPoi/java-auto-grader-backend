@@ -71,6 +71,7 @@ public class RubricGradeResource {
                 .build();
     }
 
+
     @PatchMapping("/{rubricGradeId}")
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('RUBRIC_GRADE:UPDATE')")

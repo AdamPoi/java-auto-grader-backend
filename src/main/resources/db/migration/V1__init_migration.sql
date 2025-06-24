@@ -54,24 +54,6 @@ CREATE TABLE courses
     CONSTRAINT pk_courses PRIMARY KEY (id)
 );
 
-CREATE TABLE grade_executions
-(
-    id              UUID                        NOT NULL,
-    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by      UUID,
-    updated_by      UUID,
-    points          DECIMAL(5, 2)               NOT NULL,
-    status          VARCHAR(50)                 NOT NULL,
-    actual          TEXT,
-    expected        TEXT,
-    error           TEXT,
-    execution_time  BIGINT,
-    rubric_grade_id UUID                        NOT NULL,
-    submission_id   UUID                        NOT NULL,
-    CONSTRAINT pk_grade_executions PRIMARY KEY (id)
-);
-
 CREATE TABLE permissions
 (
     id          UUID                        NOT NULL,
@@ -119,12 +101,10 @@ CREATE TABLE rubric_grades
     updated_at    TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     created_by    UUID,
     updated_by    UUID,
-    name          VARCHAR(200)                NOT NULL,
+    name      VARCHAR(255) NOT NULL,
     description   VARCHAR(1000),
-    display_order INTEGER                     NOT NULL,
-    arguments     JSONB,
     grade_type    VARCHAR(50)                 NOT NULL,
-    rubric_id     UUID                        NOT NULL,
+    rubric_id UUID,
     assignment_id UUID                        NOT NULL,
     CONSTRAINT pk_rubric_grades PRIMARY KEY (id)
 );
@@ -168,8 +148,25 @@ CREATE TABLE submissions
     main_class_name VARCHAR(255),
     total_points    DECIMAL(5, 2),
     assignment_id   UUID                        NOT NULL,
-    student_id      UUID                        NOT NULL,
+    student_id UUID,
     CONSTRAINT pk_submissions PRIMARY KEY (id)
+);
+
+CREATE TABLE test_executions
+(
+    id              UUID                        NOT NULL,
+    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    created_by      UUID,
+    updated_by      UUID,
+    method_name     VARCHAR(255),
+    status          VARCHAR(50)                 NOT NULL,
+    output          TEXT,
+    error           TEXT,
+    execution_time  BIGINT,
+    rubric_grade_id UUID                        NOT NULL,
+    submission_id   UUID                        NOT NULL,
+    CONSTRAINT pk_test_executions PRIMARY KEY (id)
 );
 
 CREATE TABLE user_classrooms
@@ -243,18 +240,6 @@ ALTER TABLE courses
 ALTER TABLE courses
     ADD CONSTRAINT FK_COURSES_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
-ALTER TABLE grade_executions
-    ADD CONSTRAINT FK_GRADE_EXECUTIONS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE grade_executions
-    ADD CONSTRAINT FK_GRADE_EXECUTIONS_ON_RUBRIC_GRADE FOREIGN KEY (rubric_grade_id) REFERENCES rubric_grades (id);
-
-ALTER TABLE grade_executions
-    ADD CONSTRAINT FK_GRADE_EXECUTIONS_ON_SUBMISSION FOREIGN KEY (submission_id) REFERENCES submissions (id);
-
-ALTER TABLE grade_executions
-    ADD CONSTRAINT FK_GRADE_EXECUTIONS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
-
 ALTER TABLE permissions
     ADD CONSTRAINT FK_PERMISSIONS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
 
@@ -305,6 +290,18 @@ ALTER TABLE submissions
 
 ALTER TABLE submission_codes
     ADD CONSTRAINT FK_SUBMISSION_CODES_ON_SUBMISSION FOREIGN KEY (submission_id) REFERENCES submissions (id);
+
+ALTER TABLE test_executions
+    ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
+
+ALTER TABLE test_executions
+    ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_RUBRIC_GRADE FOREIGN KEY (rubric_grade_id) REFERENCES rubric_grades (id);
+
+ALTER TABLE test_executions
+    ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_SUBMISSION FOREIGN KEY (submission_id) REFERENCES submissions (id);
+
+ALTER TABLE test_executions
+    ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
 ALTER TABLE users
     ADD CONSTRAINT FK_USERS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);

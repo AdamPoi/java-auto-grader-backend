@@ -1,25 +1,22 @@
 package io.adampoi.java_auto_grader.filter;
 
-import io.adampoi.java_auto_grader.domain.GradeExecution;
+import io.adampoi.java_auto_grader.domain.TestExecution;
 import io.github.acoboh.query.filter.jpa.annotations.QFDefinitionClass;
 import io.github.acoboh.query.filter.jpa.annotations.QFElement;
 import io.github.acoboh.query.filter.jpa.annotations.QFElements;
 import io.github.acoboh.query.filter.jpa.predicate.PredicateOperation;
 
-@QFDefinitionClass(GradeExecution.class)
-public class GradeExecutionFilterDef {
+@QFDefinitionClass(TestExecution.class)
+public class TestExecutionFilterDef {
 
-    @QFElement("points")
-    private String points;
+    @QFElement("methodName")
+    private String methodName;
 
     @QFElement("status")
     private String status;
 
-    @QFElement("actual")
-    private String actual;
-
-    @QFElement("expected")
-    private String expected;
+    @QFElement("output")
+    private String output;
 
     @QFElement("error")
     private String error;
@@ -34,8 +31,8 @@ public class GradeExecutionFilterDef {
     private String submission;
 
     @QFElements(value = {
-            @QFElement("actual"),
-            @QFElement("expected"),
+            @QFElement("methodName"),
+            @QFElement("output"),
             @QFElement("error")
     }, operation = PredicateOperation.OR)
     private String search;

@@ -56,6 +56,7 @@ public class Assignment extends Auditable {
     @Column(precision = 5, scale = 2)
     private BigDecimal totalPoints = BigDecimal.ZERO;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", referencedColumnName = "id", nullable = false)
     private Course course;
@@ -64,12 +65,15 @@ public class Assignment extends Auditable {
     @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
-    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "assignment", fetch = FetchType.EAGER)
     private Set<Rubric> rubrics = new HashSet<>();
 
-    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+
+    @OneToMany(mappedBy = "assignment", fetch = FetchType.EAGER)
     private Set<RubricGrade> rubricGrades;
 
     @OneToMany(mappedBy = "assignment")
     private Set<Submission> assignmentSubmissions;
+
+
 }

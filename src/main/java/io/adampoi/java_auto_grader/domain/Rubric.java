@@ -36,7 +36,7 @@ public class Rubric extends Auditable {
     @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)
     private Assignment assignment;
 
-    @OneToMany(mappedBy = "rubric", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "rubric")
     private Set<RubricGrade> rubricGrades;
 
 }

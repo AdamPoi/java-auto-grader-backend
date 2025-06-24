@@ -15,8 +15,6 @@ public class RubricGradeFilterDef {
     @QFElement("description")
     private String description;
 
-    @QFElement("displayOrder")
-    private String displayOrder;
 
     @QFElement("gradeType")
     private String gradeType;
@@ -26,6 +24,7 @@ public class RubricGradeFilterDef {
 
     @QFElement("assignment.id")
     private String assignment;
+
 
     @QFElements(value = {
             @QFElement("name"),

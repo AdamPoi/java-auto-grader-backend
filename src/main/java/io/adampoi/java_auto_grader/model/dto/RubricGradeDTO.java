@@ -26,7 +26,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RubricGradeDTO extends AuditableDTO {
 
-    private UUID id;
+    private String id;
 
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
@@ -46,7 +46,7 @@ public class RubricGradeDTO extends AuditableDTO {
 
     private UUID assignmentId;
 
-    private Set<UUID> gradeExecutionIds;
+    private Set<UUID> testExecutionIds;
 
 
     @JsonBackReference("rubric-rubric-grades")
@@ -55,10 +55,10 @@ public class RubricGradeDTO extends AuditableDTO {
     @JsonBackReference("assignment-rubric-grades")
     private AssignmentDTO assignment;
 
-    @JsonProperty("gradeExecutions")
-    @JsonManagedReference("rubric-grade-executions")
+    @JsonProperty("testExecutions")
+    @JsonManagedReference("rubric-grade-test-executions")
 //    @JsonIgnoreProperties({"})
-    private List<GradeExecutionDTO> gradeExecutions;
+    private List<TestExecutionDTO> testExecutions;
 
     public interface CreateGroup extends Default {
     }

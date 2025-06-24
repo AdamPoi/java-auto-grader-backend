@@ -131,7 +131,11 @@ public class TestCodeService {
         String baseCommand = String.format("cd %s && ", workspace);
         switch (buildTool) {
             case GRADLE:
-                return baseCommand + "gradle test -x compileJava --rerun-tasks --daemon --parallel --build-cache --configuration-cache --console=plain --quiet";
+                return baseCommand + "gradle test" +
+//                        "-x compileJava"+
+                        " --rerun-tasks " +
+                        "--daemon --parallel --build-cache --configuration-cache " +
+                        "--console=plain --info";
             case MAVEN:
                 return baseCommand + "mvn test -Dmaven.repo.local=/workspace/.m2/repository";
             default:

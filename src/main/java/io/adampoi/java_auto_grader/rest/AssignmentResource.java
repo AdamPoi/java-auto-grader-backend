@@ -13,6 +13,7 @@ import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.service.AssignmentService;
+import io.adampoi.java_auto_grader.service.RubricGradeService;
 import io.adampoi.java_auto_grader.util.CustomCollectors;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
@@ -20,6 +21,7 @@ import io.github.acoboh.query.filter.jpa.annotations.QFParam;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,6 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,12 +43,14 @@ public class AssignmentResource {
     private final AssignmentService assignmentService;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final RubricGradeService rubricGradeService;
 
     public AssignmentResource(final AssignmentService assignmentService,
-                              final CourseRepository courseRepository, final UserRepository userRepository) {
+                              final CourseRepository courseRepository, final UserRepository userRepository, RubricGradeService rubricGradeService) {
         this.assignmentService = assignmentService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
+        this.rubricGradeService = rubricGradeService;
     }
 
     @GetMapping
@@ -126,6 +131,19 @@ public class AssignmentResource {
             @ParameterObject Pageable pageable) {
         return ApiSuccessResponse.<PageResponse<RubricGradeDTO>>builder()
                 .data(assignmentService.getAssignmentRubricGrades(assignmentId, filter, pageable))
+                .statusCode(HttpStatus.OK)
+                .build();
+    }
+
+    @PostMapping("/{assignmentId}/rubric-grades/bulk")
+    @PreAuthorize("hasAuthority('RUBRIC_GRADE:CREATE')")
+    @Operation(summary = "Create Rubric Grade", description = "Create a new rubric grade")
+    public ApiSuccessResponse<List<RubricGradeDTO>> saveManyRubricGrade(
+            @PathVariable(name = "assignmentId") final UUID assignmentId,
+            @RequestBody final List<@Valid RubricGradeDTO> rubricGradeDTOs) {
+        final List<RubricGradeDTO> createdRubricGrade = rubricGradeService.saveManyByAssignment(assignmentId, rubricGradeDTOs);
+        return ApiSuccessResponse.<List<RubricGradeDTO>>builder()
+                .data(createdRubricGrade)
                 .statusCode(HttpStatus.OK)
                 .build();
     }

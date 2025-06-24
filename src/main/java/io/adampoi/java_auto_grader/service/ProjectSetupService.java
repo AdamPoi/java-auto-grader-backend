@@ -41,33 +41,35 @@ public class ProjectSetupService {
     }
 
     private void writeSourceFiles(Path projectDir, TestCodeRequest request) throws IOException {
-        Path srcMainJava = projectDir.resolve("src/main/java");
+        Path srcMainJava = projectDir.resolve("src/main/java/workspace");
         log.info("Writing {} source files to {}", request.getSourceFiles().size(), srcMainJava);
 
         for (CodeFile sourceFile : request.getSourceFiles()) {
             Path filePath = srcMainJava.resolve(sourceFile.getFileName());
             // Create parent directories if they don't exist
             Files.createDirectories(filePath.getParent());
-            Files.writeString(filePath, sourceFile.getContent());
+            String sourceCode = "package workspace;\n" + sourceFile.getContent();
+            Files.writeString(filePath, sourceCode);
         }
     }
 
     private void writeTestFiles(Path projectDir, TestCodeRequest request) throws IOException {
-        Path srcTestJava = projectDir.resolve("src/test/java");
+        Path srcTestJava = projectDir.resolve("src/test/java/workspace");
         log.info("Writing {} test files to {}", request.getTestFiles().size(), srcTestJava);
 
         for (CodeFile testFile : request.getTestFiles()) {
             Path filePath = srcTestJava.resolve(testFile.getFileName());
             // Create parent directories if they don't exist
             Files.createDirectories(filePath.getParent());
+
             Files.writeString(filePath, testFile.getContent());
         }
     }
 
     private Path createSourceDirectories(Path projectDir) throws IOException {
         Path srcDir = projectDir.resolve("src");
-        Files.createDirectories(srcDir.resolve("main/java"));
-        Files.createDirectories(srcDir.resolve("test/java"));
+        Files.createDirectories(srcDir.resolve("main/java/workspace"));
+        Files.createDirectories(srcDir.resolve("test/java/workspace"));
         return srcDir;
     }
 
@@ -232,8 +234,8 @@ public class ProjectSetupService {
     }
 
     private void createMavenDirectoryStructure(Path projectDir) throws IOException {
-        Files.createDirectories(projectDir.resolve("src/main/java"));
-        Files.createDirectories(projectDir.resolve("src/test/java"));
+        Files.createDirectories(projectDir.resolve("src/main/java/workspace"));
+        Files.createDirectories(projectDir.resolve("src/test/java/workspace"));
         Files.createDirectories(projectDir.resolve("src/main/resources"));
         Files.createDirectories(projectDir.resolve("src/test/resources"));
     }

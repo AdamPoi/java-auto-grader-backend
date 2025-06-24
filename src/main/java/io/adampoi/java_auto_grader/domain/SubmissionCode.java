@@ -1,8 +1,10 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -11,8 +13,10 @@ import java.util.UUID;
 @Entity
 @Table(name = "submission_codes")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SubmissionCode {
 
     @Id
@@ -24,11 +28,9 @@ public class SubmissionCode {
     @Column(nullable = false)
     private String fileName;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Lob
     private String sourceCode;
 
-    @Column
-    private String className;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "submission_id", referencedColumnName = "id", nullable = false)

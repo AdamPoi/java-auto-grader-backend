@@ -15,15 +15,11 @@ public class SubmissionCodeFilterDef {
     @QFElement("sourceCode")
     private String sourceCode;
 
-    @QFElement("className")
-    private String className;
-
     @QFElement("submission.id")
     private String submission;
 
     @QFElements(value = {
             @QFElement("fileName"),
-            @QFElement("className")
     }, operation = PredicateOperation.OR)
     private String search;
 }

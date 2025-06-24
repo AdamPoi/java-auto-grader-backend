@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -13,8 +12,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "roles")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"rolesUser", "rolePermissions"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role extends Auditable {
 
     @Id

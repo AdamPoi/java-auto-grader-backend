@@ -1,34 +1,30 @@
 package io.adampoi.java_auto_grader.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.adampoi.java_auto_grader.model.dto.BulkSubmissionDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
-import io.adampoi.java_auto_grader.model.response.PageResponse;
+import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
+import io.adampoi.java_auto_grader.model.type.CodeFile;
 import io.adampoi.java_auto_grader.service.SubmissionService;
-import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.OffsetDateTime;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-import static io.adampoi.java_auto_grader.model.dto.SubmissionDTO.builder;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,146 +33,72 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SubmissionResourceTest {
 
     private static final String BASE_API_PATH = "/api/submissions";
-    private static final String AUTHORITY_LIST = "SUBMISSION:LIST";
-    private static final String AUTHORITY_CREATE = "SUBMISSION:CREATE";
-    private static final String AUTHORITY_READ = "SUBMISSION:READ";
-    private static final String AUTHORITY_UPDATE = "SUBMISSION:UPDATE";
-    private static final String AUTHORITY_DELETE = "SUBMISSION:DELETE";
+    private static final String AUTHORITY_SUBMIT = "SUBMISSION:CREATE";
+    private static final String AUTHORITY_BULK = "SUBMISSION:BULK_CREATE";
+    private static final String AUTHORITY_TRYOUT = "SUBMISSION:TRYOUT";
 
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
+
     @MockitoBean
     private SubmissionService submissionService;
 
-    private UUID testSubmissionId;
-    private SubmissionDTO testSubmissionDTO;
-
-    @BeforeEach
-    void setUp() {
-        testSubmissionId = UUID.randomUUID();
-        testSubmissionDTO = createTestSubmissionDTO();
+    // ----- Mock helpers -----
+    private CodeFile codeFile(String name, String content) {
+        return CodeFile.builder().fileName(name).content(content).build();
     }
 
-    private SubmissionDTO createTestSubmissionDTO() {
-        return builder()
-                .id(testSubmissionId)
-                .executionTime(OffsetDateTime.now().toEpochSecond() * 1000) // ms
-                .status("PENDING")
-                .assignmentId(UUID.randomUUID())
-                .studentId(UUID.randomUUID())
-                .build();
+    private List<CodeFile> mockSourceFiles() {
+        return List.of(codeFile("Main.java", "public class Main {}"));
     }
 
-    @Nested
-    @DisplayName("GET /api/submissions")
-    class GetAllSubmissions {
-        @Test
-        @WithMockUser(authorities = {AUTHORITY_LIST})
-        @DisplayName("Should return 200 OK with submissions list")
-        void getAllSubmissions_ReturnsOk() throws Exception {
-            SubmissionDTO submission = builder()
-                    .id(UUID.randomUUID())
-                    .status("GRADED")
-                    .build();
+    private List<CodeFile> mockTestFiles() {
+        return List.of(codeFile("MainTest.java", "public class MainTest {}"));
+    }
 
-            List<SubmissionDTO> submissionList = Collections.singletonList(submission);
-            Page<SubmissionDTO> submissionPage = new PageImpl<>(submissionList);
-
-            when(submissionService.findAll(any(), any()))
-                    .thenReturn(PageResponse.from(submissionPage));
-
-            mockMvc.perform(get(BASE_API_PATH)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content[0].status").value(submission.getStatus()));
-        }
-
-        @Test
-        @WithMockUser(authorities = {AUTHORITY_LIST})
-        @DisplayName("Should return 200 OK with paginated submissions")
-        void getAllSubmissions_WithPagination_ReturnsOk() throws Exception {
-            SubmissionDTO submission = builder()
-                    .id(UUID.randomUUID())
-                    .status("PAGED_SUBMISSION")
-                    .build();
-
-            List<SubmissionDTO> submissionList = Collections.singletonList(submission);
-            Page<SubmissionDTO> submissionPage = new PageImpl<>(submissionList);
-
-            when(submissionService.findAll(any(), any()))
-                    .thenReturn(PageResponse.from(submissionPage));
-
-            mockMvc.perform(get(BASE_API_PATH + "?page=0&size=10")
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.content[0].status").value("PAGED_SUBMISSION"))
-                    .andExpect(jsonPath("$.data.page").value(0))
-                    .andExpect(jsonPath("$.data.size").value(1))
-                    .andExpect(jsonPath("$.data.totalElements").value(1))
-                    .andExpect(jsonPath("$.data.totalPages").value(1))
-                    .andExpect(jsonPath("$.data.hasNext").value(false))
-                    .andExpect(jsonPath("$.data.hasPrevious").value(false));
-        }
-
-        @Test
-        @WithMockUser(authorities = {})
-        @DisplayName("Should return 401 Unauthorized when missing authority")
-        void getAllSubmissions_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-            mockMvc.perform(get(BASE_API_PATH)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isUnauthorized());
-        }
+    private UUID randomId() {
+        return UUID.randomUUID();
     }
 
     @Nested
-    @DisplayName("POST /api/submissions")
-    class CreateSubmission {
+    @DisplayName("POST /api/submissions (submit by student)")
+    class SubmitStudentSubmission {
+
         @Test
-        @WithMockUser(authorities = {AUTHORITY_CREATE})
-        @DisplayName("Should return 201 Created with new submission")
-        void createSubmission_ReturnsCreated() throws Exception {
-            SubmissionDTO request = builder()
-                    .executionTime(OffsetDateTime.now())
-                    .attemptNumber(1)
-                    .status("PENDING")
-                    .assignment(UUID.randomUUID())
-                    .student(UUID.randomUUID())
+        @WithMockUser(authorities = {AUTHORITY_SUBMIT})
+        @DisplayName("Should return 201 Created for valid submission")
+        void submitStudent_ReturnsCreated() throws Exception {
+            TestSubmitRequest request = TestSubmitRequest.builder()
+                    .sourceFiles(mockSourceFiles())
+                    .testFiles(mockTestFiles())
+                    .mainClassName("Main")
+                    .assignmentId(String.valueOf(UUID.randomUUID()))
+                    .buildTool("gradle")
                     .build();
 
-            SubmissionDTO createdSubmission = builder()
-                    .id(UUID.randomUUID())
-                    .executionTime(request.getSubmissionTime())
-                    .attemptNumber(request.getAttemptNumber())
-                    .status(request.getStatus())
-                    .assignment(request.getAssignment())
-                    .student(request.getStudent())
+            SubmissionDTO responseDTO = SubmissionDTO.builder()
+                    .id(randomId())
+                    .assignmentId(UUID.fromString(request.getAssignmentId()))
+                    .status("PASSED")
                     .build();
 
-            when(submissionService.create(any())).thenReturn(createdSubmission);
+            when(submissionService.submitStudentSubmission(any(), any())).thenReturn(responseDTO);
 
             mockMvc.perform(post(BASE_API_PATH)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.data.id").exists())
-                    .andExpect(jsonPath("$.data.attemptNumber")
-                            .value(createdSubmission.getAttemptNumber()))
-                    .andExpect(jsonPath("$.data.status").value(createdSubmission.getStatus()))
-                    .andExpect(jsonPath("$.data.assignment").exists())
-                    .andExpect(jsonPath("$.data.student").exists());
+                    .andExpect(jsonPath("$.data.status").value("PASSED"));
         }
 
         @Test
         @WithMockUser(authorities = {})
         @DisplayName("Should return 401 Unauthorized when missing authority")
-        void createSubmission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-            SubmissionDTO request = new SubmissionDTO();
-            request.setSubmissionTime(OffsetDateTime.now());
-            request.setAttemptNumber(1);
-            request.setAssignment(UUID.randomUUID());
-            request.setStudent(UUID.randomUUID());
+        void submitStudent_Unauthorized() throws Exception {
+            TestSubmitRequest request = TestSubmitRequest.builder().build();
 
             mockMvc.perform(post(BASE_API_PATH)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -185,175 +107,153 @@ class SubmissionResourceTest {
         }
 
         @Test
-        @WithMockUser(authorities = {AUTHORITY_CREATE})
+        @WithMockUser(authorities = {AUTHORITY_SUBMIT})
         @DisplayName("Should return 400 Bad Request for invalid input")
-        void createSubmission_WithValidationError_ReturnsBadRequest() throws Exception {
-            SubmissionDTO request = new SubmissionDTO();
-            request.setStatus(null);
+        void submitStudent_InvalidInput_ReturnsBadRequest() throws Exception {
+            TestSubmitRequest request = TestSubmitRequest.builder().build();
 
             mockMvc.perform(post(BASE_API_PATH)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"));
         }
     }
 
     @Nested
-    @DisplayName("GET /api/submissions/{id}")
-    class GetSubmissionById {
+    @DisplayName("POST /api/submissions/bulk (bulk upload)")
+    class BulkUploadSubmission {
+
         @Test
-        @WithMockUser(authorities = {AUTHORITY_READ})
-        @DisplayName("Should return 200 OK with submission details")
-        void getSubmission_ReturnsOk() throws Exception {
-            SubmissionDTO submission = builder()
-                    .id(testSubmissionId)
-                    .status("GRADED")
+        @WithMockUser(authorities = {AUTHORITY_BULK})
+        @DisplayName("Should return 201 Created for bulk upload")
+        void bulkUpload_ReturnsCreated() throws Exception {
+            Map<String, List<CodeFile>> nimToCodeFiles = Map.of(
+                    "2141720001", mockSourceFiles(),
+                    "2141720002", mockSourceFiles()
+            );
+            BulkSubmissionDTO bulkResponse = BulkSubmissionDTO.builder()
+                    .results(List.of(
+                            BulkSubmissionDTO.Item.builder().nim("2141720001").success(true).message("OK").build(),
+                            BulkSubmissionDTO.Item.builder().nim("2141720002").success(true).message("OK").build()
+                    ))
                     .build();
 
-            when(submissionService.get(testSubmissionId)).thenReturn(submission);
+            Map<String, Object> request = new HashMap<>();
+            request.put("assignmentId", randomId());
+            request.put("nimToCodeFiles", nimToCodeFiles);
+            request.put("testFiles", mockTestFiles());
+            request.put("mainClassName", "Main");
+            request.put("buildTool", "gradle");
 
-            mockMvc.perform(get(BASE_API_PATH + "/" + testSubmissionId)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.status").value(submission.getStatus()));
+            when(submissionService.uploadBulkSubmission(any(), any(), any(), any(), any(), any()))
+                    .thenReturn(bulkResponse);
+
+            mockMvc.perform(post(BASE_API_PATH + "/bulk")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.results[0].success").value(true));
         }
 
         @Test
         @WithMockUser(authorities = {})
         @DisplayName("Should return 401 Unauthorized when missing authority")
-        void getSubmissionById_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-            mockMvc.perform(get(BASE_API_PATH + "/" + testSubmissionId)
-                            .contentType(MediaType.APPLICATION_JSON))
+        void bulkUpload_Unauthorized() throws Exception {
+            Map<String, Object> request = new HashMap<>();
+            request.put("assignmentId", randomId());
+            request.put("nimToCodeFiles", Map.of("2141720001", mockSourceFiles()));
+            request.put("testFiles", mockTestFiles());
+            request.put("mainClassName", "Main");
+            request.put("buildTool", "gradle");
+
+            mockMvc.perform(post(BASE_API_PATH + "/bulk")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @WithMockUser(authorities = {AUTHORITY_READ})
-        @DisplayName("Should return 404 Not Found for non-existent submission")
-        void getSubmission_NotFound_ReturnsNotFound() throws Exception {
-            when(submissionService.get(testSubmissionId))
-                    .thenThrow(new EntityNotFoundException("Submission not found"));
-
-            mockMvc.perform(get(BASE_API_PATH + "/" + testSubmissionId)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNotFound());
-        }
-    }
-
-    @Nested
-    @DisplayName("PATCH /api/submissions/{id}")
-    class UpdateSubmission {
-        @Test
-        @WithMockUser(authorities = {AUTHORITY_UPDATE})
-        @DisplayName("Should return 200 OK with updated submission")
-        void updateSubmission_ReturnsOk() throws Exception {
-            SubmissionDTO updateRequest = builder()
-                    .status("COMPLETED")
-                    .graderFeedback("Good job!")
-                    .attemptNumber(2)
-                    .build();
-
-            SubmissionDTO updatedSubmission = builder()
-                    .id(testSubmissionId)
-                    .status(updateRequest.getStatus())
-                    .graderFeedback(updateRequest.getGraderFeedback())
-                    .attemptNumber(updateRequest.getAttemptNumber())
-                    .assignment(UUID.randomUUID())
-                    .student(UUID.randomUUID())
-                    .build();
-
-            when(submissionService.update(eq(testSubmissionId), any(SubmissionDTO.class)))
-                    .thenReturn(updatedSubmission);
-
-            mockMvc.perform(patch(BASE_API_PATH + "/" + testSubmissionId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.id").value(testSubmissionId.toString()))
-                    .andExpect(jsonPath("$.data.status").value(updatedSubmission.getStatus()))
-                    .andExpect(jsonPath("$.data.graderFeedback")
-                            .value(updatedSubmission.getGraderFeedback()));
-        }
-
-        @Test
-        @WithMockUser(authorities = {})
-        @DisplayName("Should return 401 Unauthorized when missing authority")
-        void updateSubmission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-            SubmissionDTO updateRequest = new SubmissionDTO();
-            updateRequest.setStatus("COMPLETED");
-            updateRequest.setAttemptNumber(2);
-
-            mockMvc.perform(patch(BASE_API_PATH + "/" + testSubmissionId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isUnauthorized());
-        }
-
-        @Test
-        @WithMockUser(authorities = {AUTHORITY_UPDATE})
-        @DisplayName("Should return 404 Not Found for non-existent submission")
-        void updateSubmission_NotFound_ReturnsNotFound() throws Exception {
-            SubmissionDTO updateRequest = new SubmissionDTO();
-            updateRequest.setStatus("FAILED");
-            updateRequest.setAttemptNumber(2);
-
-            doThrow(new EntityNotFoundException("Submission not found"))
-                    .when(submissionService)
-                    .update(eq(testSubmissionId), any());
-
-            mockMvc.perform(patch(BASE_API_PATH + "/" + testSubmissionId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isNotFound());
-        }
-
-        @Test
-        @WithMockUser(authorities = {AUTHORITY_UPDATE})
+        @WithMockUser(authorities = {AUTHORITY_BULK})
         @DisplayName("Should return 400 Bad Request for invalid input")
-        void updateSubmission_WithValidationError_ReturnsBadRequest() throws Exception {
-            SubmissionDTO updateRequest = new SubmissionDTO();
+        void bulkUpload_InvalidInput_ReturnsBadRequest() throws Exception {
+            Map<String, Object> request = new HashMap<>();
 
-            mockMvc.perform(patch(BASE_API_PATH + "/" + testSubmissionId)
+            mockMvc.perform(post(BASE_API_PATH + "/bulk")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.error.message").value("Validation failed"))
-                    .andExpect(jsonPath("$.error.fieldErrors").isArray());
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"));
         }
     }
 
     @Nested
-    @DisplayName("DELETE /api/submissions/{id}")
-    class DeleteSubmission {
-        @Test
-        @WithMockUser(authorities = {AUTHORITY_DELETE})
-        @DisplayName("Should return 204 No Content on successful deletion")
-        void deleteSubmission_ReturnsOk() throws Exception {
-            doNothing().when(submissionService).delete(testSubmissionId);
+    @DisplayName("POST /api/submissions/tryout (tryout submission)")
+    class TryoutSubmission {
 
-            mockMvc.perform(delete(BASE_API_PATH + "/" + testSubmissionId))
-                    .andExpect(status().isNoContent());
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_TRYOUT})
+        @DisplayName("Should return 200 OK for valid tryout")
+        void tryout_ReturnsOk() throws Exception {
+            TestSubmitRequest request = TestSubmitRequest.builder()
+                    .sourceFiles(mockSourceFiles())
+                    .testFiles(mockTestFiles())
+                    .mainClassName("Main")
+                    .assignmentId(String.valueOf(UUID.randomUUID()))
+                    .buildTool("gradle")
+                    .build();
+
+            SubmissionDTO responseDTO = SubmissionDTO.builder()
+                    .id(randomId())
+                    .assignmentId(UUID.fromString(request.getAssignmentId()))
+                    .status("PASSED")
+                    .build();
+
+            when(submissionService.tryoutSubmission(request)).thenReturn(responseDTO);
+
+            mockMvc.perform(post(BASE_API_PATH + "/tryout")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.id").exists())
+                    .andExpect(jsonPath("$.data.status").value("PASSED"));
         }
 
         @Test
         @WithMockUser(authorities = {})
         @DisplayName("Should return 401 Unauthorized when missing authority")
-        void deleteSubmission_WithNoAuthority_ReturnsUnauthorized() throws Exception {
-            mockMvc.perform(delete(BASE_API_PATH + "/" + testSubmissionId))
+        void tryout_Unauthorized() throws Exception {
+            TestSubmitRequest request = TestSubmitRequest.builder()
+                    .sourceFiles(mockSourceFiles())
+                    .testFiles(mockTestFiles())
+                    .mainClassName("Main")
+                    .assignmentId(String.valueOf(UUID.randomUUID()))
+                    .buildTool("gradle")
+                    .build();
+
+            mockMvc.perform(post(BASE_API_PATH + "/tryout")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @WithMockUser(authorities = {AUTHORITY_DELETE})
-        @DisplayName("Should return 404 Not Found for non-existent submission")
-        void deleteSubmission_NotFound_ReturnsNotFound() throws Exception {
-            doThrow(new EntityNotFoundException("Submission not found"))
-                    .when(submissionService).delete(testSubmissionId);
+        @WithMockUser(authorities = {AUTHORITY_TRYOUT})
+        @DisplayName("Should return 400 Bad Request for invalid input")
+        void tryout_InvalidInput_ReturnsBadRequest() throws Exception {
+            TestSubmitRequest request = TestSubmitRequest.builder()
+                    .sourceFiles(mockSourceFiles())
+                    .testFiles(mockTestFiles())
+                    .mainClassName("Main")
+                    .assignmentId(String.valueOf(UUID.randomUUID()))
+                    .buildTool("gradle")
+                    .build();
 
-            mockMvc.perform(delete(BASE_API_PATH + "/" + testSubmissionId))
-                    .andExpect(status().isNotFound());
+            mockMvc.perform(post(BASE_API_PATH + "/tryout")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.message").value("Validation failed"));
         }
     }
 }

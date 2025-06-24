@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -14,8 +13,12 @@ import java.util.UUID;
 @Entity
 @Table(name = "courses")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"enrolledUsers", "courseAssignments"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class Course extends Auditable {
 
     @Id
@@ -36,11 +39,11 @@ public class Course extends Auditable {
     @Column
     private Boolean isActive;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "course_enrollments",
             joinColumns = @JoinColumn(name = "course_id"),
@@ -48,7 +51,7 @@ public class Course extends Auditable {
     )
     private Set<User> enrolledUsers = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> courseAssignments;
 
 

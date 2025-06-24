@@ -41,7 +41,6 @@ public class RubricGradeService {
     public static RubricGradeDTO mapToDTO(final RubricGrade rubricGrade, final RubricGradeDTO rubricGradeDTO) {
         rubricGradeDTO.setId(String.valueOf(rubricGrade.getId()));
         rubricGradeDTO.setName(rubricGrade.getName());
-        rubricGradeDTO.setDescription(rubricGrade.getDescription());
         rubricGradeDTO.setGradeType(rubricGrade.getGradeType());
         rubricGradeDTO.setRubricId(Optional.ofNullable(rubricGrade.getRubric())
                 .map(Rubric::getId)
@@ -207,11 +206,6 @@ public class RubricGradeService {
             rubricGrade.setName(rubricGradeDTO.getName());
         }
 
-        if (rubricGradeDTO.getDescription() != null) {
-            rubricGrade.setDescription(rubricGradeDTO.getDescription());
-        }
-
-
 
 
         if (rubricGradeDTO.getGradeType() != null) {
@@ -238,9 +232,6 @@ public class RubricGradeService {
             rubricGrade.setName(rubricGradeDTO.getName());
         }
 
-        if (rubricGradeDTO.getDescription() != null) {
-            rubricGrade.setDescription(rubricGradeDTO.getDescription());
-        }
 
         if (rubricGradeDTO.getGradeType() != null) {
             rubricGrade.setGradeType(rubricGradeDTO.getGradeType());

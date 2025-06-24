@@ -6,13 +6,13 @@ CREATE TABLE assignments
     created_by            UUID,
     updated_by            UUID,
     title                 VARCHAR(255)                NOT NULL,
-    description           TEXT,
-    resource              TEXT,
+    description   OID,
+    resource      OID,
     due_date              TIMESTAMP WITHOUT TIME ZONE,
     is_published          BOOLEAN,
-    starter_code          TEXT,
-    solution_code         TEXT,
-    test_code             TEXT,
+    starter_code  OID,
+    solution_code OID,
+    test_code     OID,
     time_limit            BIGINT,
     total_points          DECIMAL(5, 2),
     course_id             UUID                        NOT NULL,
@@ -102,7 +102,6 @@ CREATE TABLE rubric_grades
     created_by    UUID,
     updated_by    UUID,
     name      VARCHAR(255) NOT NULL,
-    description   VARCHAR(1000),
     grade_type    VARCHAR(50)                 NOT NULL,
     rubric_id UUID,
     assignment_id UUID                        NOT NULL,
@@ -117,7 +116,7 @@ CREATE TABLE rubrics
     created_by    UUID,
     updated_by    UUID,
     name          VARCHAR(200)                NOT NULL,
-    description   VARCHAR(1000),
+    description OID,
     points        DECIMAL(10, 2)              NOT NULL,
     assignment_id UUID                        NOT NULL,
     CONSTRAINT pk_rubrics PRIMARY KEY (id)
@@ -127,8 +126,7 @@ CREATE TABLE submission_codes
 (
     id            UUID         NOT NULL,
     file_name     VARCHAR(255) NOT NULL,
-    source_code   TEXT         NOT NULL,
-    class_name    VARCHAR(255),
+    source_code OID,
     submission_id UUID         NOT NULL,
     CONSTRAINT pk_submission_codes PRIMARY KEY (id)
 );
@@ -142,13 +140,13 @@ CREATE TABLE submissions
     updated_by      UUID,
     status          VARCHAR(255),
     execution_time  BIGINT,
-    feedback        TEXT,
+    feedback        OID,
+    main_class_name VARCHAR(255),
     started_at      TIMESTAMP WITHOUT TIME ZONE,
     completed_at    TIMESTAMP WITHOUT TIME ZONE,
-    main_class_name VARCHAR(255),
     total_points    DECIMAL(5, 2),
     assignment_id   UUID                        NOT NULL,
-    student_id UUID,
+    student_id      UUID,
     CONSTRAINT pk_submissions PRIMARY KEY (id)
 );
 
@@ -161,9 +159,9 @@ CREATE TABLE test_executions
     updated_by      UUID,
     method_name     VARCHAR(255),
     status          VARCHAR(50)                 NOT NULL,
-    output          TEXT,
-    error           TEXT,
+    error  OID,
     execution_time  BIGINT,
+    output OID,
     rubric_grade_id UUID                        NOT NULL,
     submission_id   UUID                        NOT NULL,
     CONSTRAINT pk_test_executions PRIMARY KEY (id)
@@ -191,6 +189,8 @@ CREATE TABLE users
     created_by UUID,
     updated_by UUID,
     email      VARCHAR(100)                NOT NULL,
+    nim VARCHAR(255),
+    nip VARCHAR(255),
     password   VARCHAR(255)                NOT NULL,
     first_name VARCHAR(50),
     last_name  VARCHAR(50),
@@ -209,6 +209,12 @@ ALTER TABLE roles
 
 ALTER TABLE users
     ADD CONSTRAINT uc_users_email UNIQUE (email);
+
+ALTER TABLE users
+    ADD CONSTRAINT uc_users_nim UNIQUE (nim);
+
+ALTER TABLE users
+    ADD CONSTRAINT uc_users_nip UNIQUE (nip);
 
 ALTER TABLE assignments
     ADD CONSTRAINT FK_ASSIGNMENTS_ON_COURSE FOREIGN KEY (course_id) REFERENCES courses (id);

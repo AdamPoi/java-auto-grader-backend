@@ -1,20 +1,18 @@
 package io.adampoi.java_auto_grader.rest;
 
-import io.adampoi.java_auto_grader.domain.Assignment;
-import io.adampoi.java_auto_grader.domain.Classroom;
 import io.adampoi.java_auto_grader.domain.Submission;
-import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.filter.SubmissionFilterDef;
+import io.adampoi.java_auto_grader.model.dto.BulkSubmissionDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
+import io.adampoi.java_auto_grader.model.request.BulkUploadSubmissionRequest;
+import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
-import io.adampoi.java_auto_grader.model.response.SubmissionCompileResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.service.SubmissionService;
-import io.adampoi.java_auto_grader.util.CustomCollectors;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.annotations.QFParam;
@@ -24,7 +22,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
+import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -80,28 +77,6 @@ public class SubmissionResource {
                 .build();
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ApiResponse(responseCode = "200")
-    @Operation(summary = "Upload Submission", description = "Upload a submission file")
-    public ApiSuccessResponse<SubmissionCompileResponse> handleFileUpload(@Valid SubmissionCompileDTO submissionDTO)
-            throws Exception {
-        return ApiSuccessResponse.<SubmissionCompileResponse>builder()
-                .data(submissionService.executeGradleTest(submissionDTO.getFile()))
-                .statusCode(HttpStatus.OK)
-                .build();
-    }
-
-    @PostMapping(value = "/upload-docker", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ApiResponse(responseCode = "200")
-    @Operation(summary = "Upload Submission to Docker", description = "Upload a submission file and execute tests in Docker")
-    public ApiSuccessResponse<SubmissionCompileResponse> handleFileUploadDocker(
-            @Valid SubmissionCompileDTO submissionDTO) throws Exception {
-        return ApiSuccessResponse.<SubmissionCompileResponse>builder()
-                .data(submissionService.executeDockerGradleTest(submissionDTO.getFile()))
-                .statusCode(HttpStatus.OK)
-                .build();
-    }
-
     @GetMapping(value = "/{submissionId}")
     @ApiResponse(responseCode = "200")
     @PreAuthorize("hasAuthority('SUBMISSION:READ')")
@@ -114,18 +89,18 @@ public class SubmissionResource {
                 .build();
     }
 
-    @PostMapping
-    @ApiResponse(responseCode = "201")
-    @PreAuthorize("hasAuthority('SUBMISSION:CREATE')")
-    @Operation(summary = "Create Submission", description = "Create a new submission")
-    public ApiSuccessResponse<SubmissionDTO> createSubmission(
-            @RequestBody @Validated(SubmissionDTO.CreateGroup.class) final SubmissionDTO submissionDTO) {
-        final SubmissionDTO createdSubmission = submissionService.create(submissionDTO);
-        return ApiSuccessResponse.<SubmissionDTO>builder()
-                .data(createdSubmission)
-                .statusCode(HttpStatus.CREATED)
-                .build();
-    }
+//    @PostMapping
+//    @ApiResponse(responseCode = "201")
+//    @PreAuthorize("hasAuthority('SUBMISSION:CREATE')")
+//    @Operation(summary = "Create Submission", description = "Create a new submission")
+//    public ApiSuccessResponse<SubmissionDTO> createSubmission(
+//            @RequestBody @Validated(SubmissionDTO.CreateGroup.class) final SubmissionDTO submissionDTO) {
+//        final SubmissionDTO createdSubmission = submissionService.create(submissionDTO);
+//        return ApiSuccessResponse.<SubmissionDTO>builder()
+//                .data(createdSubmission)
+//                .statusCode(HttpStatus.CREATED)
+//                .build();
+//    }
 
     @PatchMapping("/{submissionId}")
     @ApiResponse(responseCode = "200")
@@ -157,43 +132,58 @@ public class SubmissionResource {
                 .build();
     }
 
-    @GetMapping("/assignmentValues")
-    @ApiResponse(responseCode = "200")
-    @PreAuthorize("hasAuthority('SUBMISSION:READ')")
-    @Operation(summary = "Get Assignment Values", description = "Get assignment values for dropdowns")
-    public ApiSuccessResponse<Map<UUID, String>> getAssignmentValues() {
-        return ApiSuccessResponse.<Map<UUID, String>>builder()
-                .data(assignmentRepository.findAll(Sort.by("assignmentId"))
-                        .stream()
-                        .collect(CustomCollectors.toSortedMap(Assignment::getId,
-                                Assignment::getTitle)))
-                .statusCode(HttpStatus.OK)
+
+    // --- 1. Student submits their assignment ---
+    @PostMapping
+    @PreAuthorize("hasAuthority('SUBMISSION:CREATE')")
+    @Operation(summary = "Create Submission", description = "Create a new student submission for an assignment")
+    @ApiResponse(responseCode = "201", description = "Submission created")
+    public ApiSuccessResponse<SubmissionDTO> createSubmission(
+            @RequestBody @Validated(SubmissionDTO.CreateGroup.class) final TestSubmitRequest request
+    ) {
+        final SubmissionDTO createdSubmission = submissionService.submitStudentSubmission(UUID.fromString(request.getUserId()), request);
+        return ApiSuccessResponse.<SubmissionDTO>builder()
+                .data(createdSubmission)
+                .statusCode(HttpStatus.CREATED)
                 .build();
     }
 
-    @GetMapping("/studentValues")
-    @ApiResponse(responseCode = "200")
-    @PreAuthorize("hasAuthority('SUBMISSION:READ')")
-    @Operation(summary = "Get Student Values", description = "Get student values for dropdowns")
-    public ApiSuccessResponse<Map<UUID, String>> getStudentValues() {
-        return ApiSuccessResponse.<Map<UUID, String>>builder()
-                .data(userRepository.findAll(Sort.by("userId"))
-                        .stream()
-                        .collect(CustomCollectors.toSortedMap(User::getId, User::getEmail)))
-                .statusCode(HttpStatus.OK)
+    // --- 2. Teacher bulk upload ---
+    @PostMapping("/bulk")
+    @PreAuthorize("hasAuthority('SUBMISSION:BULK_CREATE')")
+    @Operation(summary = "Bulk Submission Upload", description = "Teacher bulk upload student submissions")
+    @ApiResponse(responseCode = "201", description = "Bulk submissions processed")
+    public ApiSuccessResponse<BulkSubmissionDTO> createBulkSubmission(
+            @RequestBody @Validated(BulkUploadSubmissionRequest.CreateGroup.class) final BulkUploadSubmissionRequest bulkUploadRequest,
+            Principal principal
+    ) {
+        // Set teacherId from principal
+        UUID teacherId = principal != null ? UUID.fromString(principal.getName()) : null;
+        BulkSubmissionDTO result = submissionService.uploadBulkSubmission(
+                teacherId,
+                bulkUploadRequest.getAssignmentId(),
+                bulkUploadRequest.getNimToCodeFiles(),
+                bulkUploadRequest.getTestFiles(),
+                bulkUploadRequest.getMainClassName(),
+                bulkUploadRequest.getBuildTool()
+        );
+        return ApiSuccessResponse.<BulkSubmissionDTO>builder()
+                .data(result)
+                .statusCode(HttpStatus.CREATED)
                 .build();
     }
 
-    @GetMapping("/classroomValues")
-    @ApiResponse(responseCode = "200")
-    @PreAuthorize("hasAuthority('SUBMISSION:READ')")
-    @Operation(summary = "Get Classroom Values", description = "Get classroom values for dropdowns")
-    public ApiSuccessResponse<Map<UUID, String>> getClassroomValues() {
-        return ApiSuccessResponse.<Map<UUID, String>>builder()
-                .data(classroomRepository.findAll(Sort.by("classroomId"))
-                        .stream()
-                        .collect(CustomCollectors.toSortedMap(Classroom::getId,
-                                Classroom::getName)))
+    // --- 3. Tryout submission ---
+    @PostMapping("/tryout")
+//    @PreAuthorize("hasAuthority('SUBMISSION:TRYOUT')")
+    @Operation(summary = "Tryout Submission", description = "Try out code submission (not persisted, just returns results)")
+    @ApiResponse(responseCode = "200", description = "Tryout results returned")
+    public ApiSuccessResponse<SubmissionDTO> tryoutSubmission(
+            @RequestBody @Validated(TestSubmitRequest.TryoutGroup.class) final TestSubmitRequest request
+    ) {
+        SubmissionDTO result = submissionService.tryoutSubmission(request);
+        return ApiSuccessResponse.<SubmissionDTO>builder()
+                .data(result)
                 .statusCode(HttpStatus.OK)
                 .build();
     }

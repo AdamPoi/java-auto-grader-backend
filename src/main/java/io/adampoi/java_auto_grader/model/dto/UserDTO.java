@@ -29,6 +29,16 @@ public class UserDTO extends AuditableDTO {
     @JsonView(Views.External.class)
     private String email;
 
+    //    @NotNull(groups = CreateGroup.class)
+    @Size(min = 3, max = 100)
+    @JsonView(Views.External.class)
+    private String nim;
+
+    @Size(min = 3, max = 100)
+    @JsonView(Views.External.class)
+    private String nip;
+
+
     @NotNull(groups = CreateGroup.class)
     @Size(min = 6, max = 255)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

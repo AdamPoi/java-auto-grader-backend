@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,14 +32,7 @@ public class RubricGradeDTO extends AuditableDTO {
     @Size(min = 3, max = 255)
     private String name;
 
-    private String description;
-
-    private Integer displayOrder;
-
-    private Map<String, Object> arguments;
-
     private RubricGrade.GradeType gradeType;
-
 
     private UUID rubricId;
 

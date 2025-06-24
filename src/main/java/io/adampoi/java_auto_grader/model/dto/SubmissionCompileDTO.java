@@ -12,6 +12,5 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 public class SubmissionCompileDTO {
     private String code;
-
     private MultipartFile file;
 }

@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,8 +15,11 @@ import java.util.stream.Collectors;
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"userRoles", "teacherCourses", "teacherClassrooms", "teacherAssignments", "studentSubmissions", "enrolledCourses", "enrolledClassrooms"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User extends Auditable implements UserDetails {
 
     @Id
@@ -28,6 +30,12 @@ public class User extends Auditable implements UserDetails {
 
     @Column(nullable = false, length = 100, unique = true)
     private String email;
+
+    @Column(unique = true)
+    private String nim;
+
+    @Column(unique = true)
+    private String nip;
 
     @Column(nullable = false)
     private String password;

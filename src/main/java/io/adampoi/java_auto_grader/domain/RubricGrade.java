@@ -2,8 +2,7 @@ package io.adampoi.java_auto_grader.domain;
 
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.HashSet;
@@ -13,8 +12,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "rubric_grades")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"testExecutions"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RubricGrade extends Auditable {
 
     @Id
@@ -23,9 +25,6 @@ public class RubricGrade extends Auditable {
 
     @Column(nullable = false)
     private String name;
-
-    @Column(length = 1000)
-    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)

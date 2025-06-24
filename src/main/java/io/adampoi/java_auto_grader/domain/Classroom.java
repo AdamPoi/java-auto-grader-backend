@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
@@ -16,8 +15,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "classrooms")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"enrolledStudents"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Classroom extends Auditable {
 
     @Id

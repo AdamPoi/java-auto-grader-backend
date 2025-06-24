@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -16,8 +15,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "assignments")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"rubrics", "rubricGrades", "assignmentSubmissions"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Assignment extends Auditable {
 
     @Id
@@ -29,10 +31,10 @@ public class Assignment extends Auditable {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String description;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String resource;
 
     @Column
@@ -41,13 +43,13 @@ public class Assignment extends Auditable {
     @Column
     private Boolean isPublished;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String starterCode;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String solutionCode;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String testCode;
 
     @Column
@@ -57,11 +59,11 @@ public class Assignment extends Auditable {
     private BigDecimal totalPoints = BigDecimal.ZERO;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "course_id", referencedColumnName = "id", nullable = false)
     private Course course;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 

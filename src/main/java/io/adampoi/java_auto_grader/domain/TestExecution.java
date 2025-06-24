@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -11,8 +10,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "test_executions")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TestExecution extends Auditable {
 
     @Id
@@ -27,14 +29,14 @@ public class TestExecution extends Auditable {
     @Column(nullable = false, length = 50)
     private ExecutionStatus status;
 
-    @Column(columnDefinition = "TEXT")
-    private String output;
-
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String error;
 
     @Column
     private Long executionTime = 0L; //ms
+
+    @Lob
+    private String output;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rubric_grade_id", referencedColumnName = "id", nullable = false)

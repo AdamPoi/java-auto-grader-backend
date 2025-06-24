@@ -27,18 +27,16 @@ public class SubmissionFilterDef {
 //    @QFElement("completedAt")
 //    private String completedAt;
 
-    @QFElement("mainClassName")
-    private String mainClassName;
+
 
     @QFElement("assignment.id")
     private String assignment;
-//
-//    @QFElement("student.id")
-//    private String student;
+
+    @QFElement("student.id")
+    private String student;
 
     @QFElements(value = {
             @QFElement("status"),
-            @QFElement("mainClassName")
     }, operation = PredicateOperation.OR)
     private String search;
 }

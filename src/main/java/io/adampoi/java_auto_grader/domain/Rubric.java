@@ -1,8 +1,7 @@
 package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -13,8 +12,11 @@ import java.util.UUID;
 @Entity
 @Table(name = "rubrics")
 @EntityListeners(AuditingEntityListener.class)
-@Getter
-@Setter
+@EqualsAndHashCode(callSuper = true, exclude = {"rubricGrades"})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Rubric extends Auditable {
 
     @Id
@@ -26,7 +28,7 @@ public class Rubric extends Auditable {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @Column(length = 1000)
+    @Lob
     private String description;
 
     @Column(nullable = false, precision = 10, scale = 2)

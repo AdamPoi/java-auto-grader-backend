@@ -141,7 +141,6 @@ public class AssignmentService {
         if (assignmentDTO.getTestCode() != null) {
             assignment.setTestCode(assignmentDTO.getTestCode());
         }
-
         if (assignmentDTO.getTimeLimit() != null) {
             assignment.setTimeLimit(assignmentDTO.getTimeLimit());
         }

@@ -30,8 +30,6 @@ public class SubmissionCodeDTO {
     @Size(min = 0, max = 5000)
     private String sourceCode;
 
-    private String className;
-
     @NotNull(groups = CreateGroup.class)
     private UUID submissionId;
 

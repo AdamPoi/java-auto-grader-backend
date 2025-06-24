@@ -56,39 +56,12 @@ public class CourseSeeder {
             return;
         }
 
-        // Course data with comprehensive information
         CourseData[] coursesData = {
-                new CourseData("CS101", "Introduction to Programming",
-                        "Learn fundamental programming concepts using Java. Cover variables, data types, control structures, methods, and basic object-oriented principles.",
-                        3, "Beginner"),
-
-                new CourseData("CS201", "Advanced Data Structures",
-                        "Master advanced data structures including trees, graphs, hash tables, and heaps. Learn algorithm analysis and complexity theory.",
-                        4, "Intermediate"),
-
-                new CourseData("CS102", "Object-Oriented Design Patterns",
-                        "Explore design patterns and object-oriented principles. Learn SOLID principles, common design patterns, and software architecture.",
-                        3, "Intermediate"),
-
-                new CourseData("CS301", "Database Design & Implementation",
-                        "Design and implement relational database systems. Cover SQL, normalization, indexing, and database optimization techniques.",
-                        4, "Advanced"),
-
-                new CourseData("CS151", "Full-Stack Web Development",
-                        "Build modern web applications using front-end and back-end technologies. Learn React, Spring Boot, RESTful APIs, and deployment.",
-                        4, "Intermediate"),
-
-                new CourseData("CS250", "Software Engineering Principles",
-                        "Learn software development methodologies, version control, testing strategies, and project management in software engineering.",
-                        3, "Intermediate"),
-
-                new CourseData("CS350", "Computer Networks",
-                        "Study network protocols, architecture, and security. Cover TCP/IP, HTTP, network programming, and distributed systems.",
-                        4, "Advanced"),
-
-                new CourseData("CS401", "Advanced Programming Concepts",
-                        "Explore advanced programming topics including concurrency, functional programming, and performance optimization.",
-                        4, "Advanced")
+                new CourseData("JAVA101", "Java Basics: Syntax & Data", "Learn the very first steps in Java programming, including how to write simple programs, understand basic syntax, declare variables, and work with different data types."),
+                new CourseData("JAVA102", "Java Basics: Control Flow", "Master conditional statements (if-else, switch) and looping constructs (for, while, do-while) to control the flow of your Java programs."),
+                new CourseData("JAVA103", "Java Basics: Methods & Modularity", "Explore how to create and use methods to break down your code into reusable and manageable units, understanding parameters, return types, and method overloading."),
+                new CourseData("JAVA104", "Java Basics: Arrays", "Learn to work with arrays to store and manage collections of data. Understand how to declare, initialize, access, and iterate through one-dimensional arrays."),
+                new CourseData("JAVA201", "Java Intermediate: Object-Oriented Programming (OOP)", "Dive deep into the core principles of Object-Oriented Programming in Java, including classes, objects, constructors, encapsulation, inheritance, and polymorphism.")
         };
 
         List<Course> coursesToSave = new ArrayList<>();
@@ -115,8 +88,8 @@ public class CourseSeeder {
             course.setName(data.getName());
             course.setDescription(data.getDescription());
             course.setIsActive(true);
+            course.setCreatedByTeacher(teacher);
 
-            // Assign students to course (same distribution as classrooms for consistency)
             int startIndex = i * studentsPerCourse;
             int endIndex = Math.min(startIndex + studentsPerCourse, shuffledStudents.size());
 
@@ -143,15 +116,13 @@ public class CourseSeeder {
         private final String code;
         private final String name;
         private final String description;
-        private final Integer creditHours;
-        private final String difficultyLevel;
 
-        public CourseData(String code, String name, String description, Integer creditHours, String difficultyLevel) {
+
+        public CourseData(String code, String name, String description) {
             this.code = code;
             this.name = name;
             this.description = description;
-            this.creditHours = creditHours;
-            this.difficultyLevel = difficultyLevel;
+
         }
 
         public String getCode() {
@@ -166,12 +137,6 @@ public class CourseSeeder {
             return description;
         }
 
-        public Integer getCreditHours() {
-            return creditHours;
-        }
 
-        public String getDifficultyLevel() {
-            return difficultyLevel;
-        }
     }
 }

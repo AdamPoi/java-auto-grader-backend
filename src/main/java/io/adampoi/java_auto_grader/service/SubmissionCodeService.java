@@ -56,9 +56,7 @@ public class SubmissionCodeService {
             submissionCode.setSourceCode(submissionCodeDTO.getSourceCode());
         }
 
-        if (submissionCodeDTO.getClassName() != null) {
-            submissionCode.setClassName(submissionCodeDTO.getClassName());
-        }
+
 //        if (submissionCodeDTO.getSubmission() != null) {
 //            final Submission submission = submissionRepository.findById(submissionCodeDTO.getSubmission())
 //                    .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
@@ -72,7 +70,6 @@ public class SubmissionCodeService {
         submissionCodeDTO.setId(submissionCode.getId());
         submissionCodeDTO.setFileName(submissionCode.getFileName());
         submissionCodeDTO.setSourceCode(submissionCode.getSourceCode());
-        submissionCodeDTO.setClassName(submissionCode.getClassName());
 //        submissionCodeDTO
 //                .setSubmission(submissionCode.getSubmission() == null ? null : submissionCode.getSubmission().getId());
 //        submissionCodeDTO.setCreatedAt(submissionCode.getCreatedAt());

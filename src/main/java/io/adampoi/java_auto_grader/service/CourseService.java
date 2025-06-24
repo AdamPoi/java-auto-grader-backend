@@ -99,9 +99,9 @@ public class CourseService {
         courseDTO.setIsActive(course.getIsActive());
         courseDTO.setCreatedAt(course.getCreatedAt());
         courseDTO.setUpdatedAt(course.getUpdatedAt());
-//        courseDTO.setEnrolledStudents(course.getEnrolledUsers().stream()
-//                .map(user -> UserService.mapToDTO(user, new UserDTO()))
-//                .collect(Collectors.toList()));
+        courseDTO.setEnrolledStudents(course.getEnrolledUsers().stream()
+                .map(user -> UserService.mapToDTO(user, new UserDTO()))
+                .collect(Collectors.toList()));
         courseDTO.setCreatedByTeacher(course.getCreatedByTeacher() == null ? null :
                 UserService.mapToDTO(course.getCreatedByTeacher(), new UserDTO()));
 

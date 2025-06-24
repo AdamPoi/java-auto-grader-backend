@@ -8,11 +8,7 @@ import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Component
 public class CourseSeeder {
@@ -51,7 +47,7 @@ public class CourseSeeder {
             return;
         }
 
-        if (students.size() < 30) {
+        if (students.isEmpty()) {
             System.out.println("Not enough students found, skipping course seeding...");
             return;
         }
@@ -93,9 +89,7 @@ public class CourseSeeder {
             int startIndex = i * studentsPerCourse;
             int endIndex = Math.min(startIndex + studentsPerCourse, shuffledStudents.size());
 
-            Set<User> courseStudents = shuffledStudents.subList(startIndex, endIndex)
-                    .stream()
-                    .collect(Collectors.toSet());
+            Set<User> courseStudents = new HashSet<>(shuffledStudents.subList(startIndex, endIndex));
 
             course.setEnrolledUsers(courseStudents);
 

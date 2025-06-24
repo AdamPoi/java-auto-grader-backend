@@ -57,8 +57,8 @@ public class SubmissionDTO extends AuditableDTO {
     @JsonBackReference("assignment-submissions")
     private AssignmentDTO assignment;
 
-    @JsonProperty("student")
-    @JsonBackReference("student-submissions")
+    //    @JsonProperty("student")
+//    @JsonBackReference("student-submissions")
     @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
     private UserDTO student;
 

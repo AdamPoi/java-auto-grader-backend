@@ -25,6 +25,9 @@ public class UserFilterDef {
     @QFElement("userRoles.id")
     private String roleId;
 
+    @QFElement("enrolledCourses.id")
+    private String course;
+
 
     @QFElement("isActive")
     private Boolean isActive;

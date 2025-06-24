@@ -53,6 +53,8 @@ public class UserService {
         userDTO.setEmail(user.getEmail());
         userDTO.setFirstName(user.getFirstName());
         userDTO.setLastName(user.getLastName());
+        userDTO.setNim(user.getNim());
+        userDTO.setNip(user.getNip());
         userDTO.setIsActive(user.getIsActive());
         userDTO.setCreatedAt(user.getCreatedAt());
         userDTO.setUpdatedAt(user.getUpdatedAt());
@@ -110,6 +112,12 @@ public class UserService {
     private User mapToEntity(final UserDTO userDTO, final User user) {
         if (userDTO.getEmail() != null) {
             user.setEmail(userDTO.getEmail());
+        }
+        if (userDTO.getNim() != null) {
+            user.setNim(userDTO.getNim());
+        }
+        if (userDTO.getNip() != null) {
+            user.setNip(userDTO.getNip());
         }
         if (userDTO.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(userDTO.getPassword()));

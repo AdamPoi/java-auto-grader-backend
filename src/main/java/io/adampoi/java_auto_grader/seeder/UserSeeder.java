@@ -4,14 +4,13 @@ import io.adampoi.java_auto_grader.domain.Role;
 import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -40,29 +39,49 @@ public class UserSeeder {
 
         List<User> usersToSave = new ArrayList<>();
 
-        // Seed admin if none exists
         if (userCountByRole.getOrDefault("admin", 0L) == 0) {
-            usersToSave.add(createUser("admin@example.com", "admin123",
-                    "Admin", "User", roles.get("admin")));
+            usersToSave.add(User.builder()
+                    .email("admin@example.com")
+                    .password(passwordEncoder.encode("admin123"))
+                    .firstName("Admin")
+                    .lastName("User")
+                    .userRoles(Collections.singleton(roles.get("admin")))
+                    .isActive(true)
+
+                    .build());
         }
 
-        // Seed teachers if less than 5 exist
-        long existingTeachers = userCountByRole.getOrDefault("teacher", 0L);
-        if (existingTeachers < 5) {
-            for (int i = (int) existingTeachers + 1; i <= 5; i++) {
-                usersToSave.add(createUser("teacher" + i + "@example.com", "teacher123",
-                        "Teacher", "User" + i, roles.get("teacher")));
+// Seed teachers if less than 5 exist
+
+        if (userCountByRole.getOrDefault("teacher", 0L) == 0) {
+            for (int i = 1; i <= 5; i++) {
+                usersToSave.add(User.builder()
+                        .email("teacher" + i + "@example.com")
+                        .password(passwordEncoder.encode("teacher123"))
+                        .firstName("Teacher")
+                        .lastName("User" + i)
+                        .userRoles(Collections.singleton(roles.get("teacher")))
+                        .isActive(true)
+
+                        .nip("124172018" + i)
+                        .build());
             }
         }
 
-        // Seed students if less than 30 exist
-        long existingStudents = userCountByRole.getOrDefault("student", 0L);
-        if (existingStudents < 30) {
-            for (int i = (int) existingStudents + 1; i <= 30; i++) {
-                usersToSave.add(createUser("student" + i + "@example.com", "student123",
-                        "Student", "User" + i, roles.get("student")));
+        if (userCountByRole.getOrDefault("student", 0L) == 0) {
+            for (int i = 1; i <= 30; i++) {
+                usersToSave.add(User.builder()
+                        .email("student" + i + "@example.com")
+                        .password(passwordEncoder.encode("student123"))
+                        .firstName("Student")
+                        .lastName("User" + i)
+                        .userRoles(Collections.singleton(roles.get("student")))
+                        .nim("214172018" + String.format("%02d", i))
+                        .isActive(true)
+                        .build());
             }
         }
+
 
         // Batch save all users
         if (!usersToSave.isEmpty()) {
@@ -70,18 +89,5 @@ public class UserSeeder {
         }
     }
 
-    private User createUser(String email, String password, String firstName, String lastName, Role role) {
-        if (role == null) {
-            throw new EntityNotFoundException("Role not found");
-        }
 
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setIsActive(true);
-        user.setUserRoles(Set.of(role));
-        return user;
-    }
 }

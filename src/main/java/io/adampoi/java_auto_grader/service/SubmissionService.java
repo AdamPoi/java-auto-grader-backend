@@ -72,13 +72,12 @@ public class SubmissionService {
                     .map(testExecution -> TestExecutionService.mapToDTO(testExecution, new TestExecutionDTO()))
                     .collect(Collectors.toList()));
         } else {
-            submissionDTO.setTestExecutions(new ArrayList<>()); // or null, depending on desired behavior
+            submissionDTO.setTestExecutions(new ArrayList<>());
         }
-        if (submission.getStudent() != null) {
-            submissionDTO.setStudent(submission.getStudent() == null ? null :
-                    UserService.mapToDTO(submission.getStudent(), new UserDTO()));
+//        if (submission.getStudent() != null) {
+        submissionDTO.setStudent(UserService.mapToDTO(submission.getStudent(), new UserDTO()));
             submissionDTO.setStudentId(submission.getStudent().getId());
-        }
+//        }
         return submissionDTO;
     }
 
@@ -182,6 +181,7 @@ public class SubmissionService {
         return SubmissionService.mapToDTO(savedSubmission, new SubmissionDTO());
     }
 
+
     public SubmissionDTO tryoutSubmission(TestSubmitRequest request) {
         Assignment assignment = assignmentRepository.getById(UUID.fromString(request.getAssignmentId()));
 
@@ -200,7 +200,7 @@ public class SubmissionService {
 
 
     @Transactional
-    public BulkSubmissionDTO uploadBulkSubmission(
+    public BulkSubmissionDTO uploadBulkSubmissionByNime(
             UUID teacherId,
             UUID assignmentId,
             Map<String, List<CodeFile>> nimToCodeFiles,
@@ -220,7 +220,6 @@ public class SubmissionService {
                 User student = userRepository.findByNim(nim)
                         .orElseThrow(() -> new EntityNotFoundException("Student with NIM " + nim + " not found"));
 
-                // Reuse the central processing method (persist = true)
                 Submission savedSubmission = processSubmissionWithTestResults(
                         assignment,
                         student,
@@ -340,19 +339,16 @@ public class SubmissionService {
                 .status(testCodeResponse.isSuccess() ? "PASSED" : "FAILED")
                 .build();
 
-        // Set submission reference on codes and executions
         codes.forEach(code -> code.setSubmission(submission));
         testExecutions.forEach(exec -> exec.setSubmission(submission));
 
-        // --- 5. Save if needed ---
         return persist ? submissionRepository.save(submission) : submission;
     }
 
-    // --- Helper: Map RubricGrade to TestExecution ---
     private TestExecution mapRubricToTestExecution(
             RubricGrade rubricGrade,
             TestCodeResponse testCodeResponse,
-            Submission submission // can be null, will set later
+            Submission submission
     ) {
         String expectedMethodName = rubricGrade.getName() + "()";
         Optional<TestCaseResult> maybeCase = testCodeResponse.getTestSuites().stream()

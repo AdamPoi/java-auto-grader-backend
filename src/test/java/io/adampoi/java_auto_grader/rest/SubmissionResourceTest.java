@@ -49,15 +49,12 @@ class SubmissionResourceTest {
     private CodeFile codeFile(String name, String content) {
         return CodeFile.builder().fileName(name).content(content).build();
     }
-
     private List<CodeFile> mockSourceFiles() {
         return List.of(codeFile("Main.java", "public class Main {}"));
     }
-
     private List<CodeFile> mockTestFiles() {
         return List.of(codeFile("MainTest.java", "public class MainTest {}"));
     }
-
     private UUID randomId() {
         return UUID.randomUUID();
     }

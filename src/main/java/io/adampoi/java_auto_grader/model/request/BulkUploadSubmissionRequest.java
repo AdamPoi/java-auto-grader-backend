@@ -30,6 +30,8 @@ public class BulkUploadSubmissionRequest {
     @NotBlank(groups = CreateGroup.class)
     private String buildTool;
 
+    private String teacherId;
+
     public interface CreateGroup {
     }
 }

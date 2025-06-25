@@ -13,7 +13,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +64,7 @@ public class AssignmentSeeder {
 
                 assignment.setDueDate(OffsetDateTime.now().plusDays(7 + (i * 7)));//weekly
                 assignment.setTimeLimit(2 * 60 * 60 * 1000L);// 2 hours in ms
-                assignment.setTotalPoints(BigDecimal.valueOf(100));
+                assignment.setTotalPoints(100);
                 assignment.setCreatedByTeacher(teachers.get(0));
                 assignment.setCourse(course);
 

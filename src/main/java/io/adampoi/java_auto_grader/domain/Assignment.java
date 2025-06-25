@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,8 +54,7 @@ public class Assignment extends Auditable {
     @Column
     private Long timeLimit; // in ms
 
-    @Column(precision = 5, scale = 2)
-    private BigDecimal totalPoints = BigDecimal.ZERO;
+    private int totalPoints;
 
 
     @ManyToOne(fetch = FetchType.EAGER)

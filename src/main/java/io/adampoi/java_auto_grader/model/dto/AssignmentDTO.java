@@ -8,10 +8,11 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +20,6 @@ import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AssignmentDTO extends AuditableDTO {
@@ -48,8 +48,7 @@ public class AssignmentDTO extends AuditableDTO {
 
     private Long timeLimit;
 
-    @Builder.Default
-    private BigDecimal totalPoints = BigDecimal.ZERO;
+    private int totalPoints;
 
     @JsonProperty("courseId")
     @NotNull(groups = CreateGroup.class)

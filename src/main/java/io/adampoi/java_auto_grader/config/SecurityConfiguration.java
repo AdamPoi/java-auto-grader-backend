@@ -2,7 +2,6 @@ package io.adampoi.java_auto_grader.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -46,19 +45,19 @@ public class SecurityConfiguration {
 
     }
 
-    @Bean
-    @Order(1)
-    public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .securityMatcher("/actuator/**")
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/**").hasAuthority("ROLE_ADMIN")
-                        .anyRequest().authenticated()
-
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+//    @Bean
+//    @Order(1)
+//    public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
+//        return http
+//                .securityMatcher("/actuator/**")
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/actuator/**").hasAuthority("ROLE_ADMIN")
+//                        .anyRequest().authenticated()
+//
+//                )
+//                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+//                .build();
+//    }
 
 
     @Bean

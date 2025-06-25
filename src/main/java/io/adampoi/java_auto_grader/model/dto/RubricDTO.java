@@ -14,7 +14,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -35,7 +34,7 @@ public class RubricDTO extends AuditableDTO {
 
     private String description;
 
-    private BigDecimal points;
+    private int points;
 
     @NotNull(groups = CreateGroup.class)
     private UUID assignmentId;

@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,8 +30,7 @@ public class Rubric extends Auditable {
     @Lob
     private String description;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal points;
+    private int points;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)

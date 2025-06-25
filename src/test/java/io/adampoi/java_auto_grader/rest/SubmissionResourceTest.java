@@ -143,8 +143,8 @@ class SubmissionResourceTest {
             request.put("mainClassName", "Main");
             request.put("buildTool", "gradle");
 
-            when(submissionService.uploadBulkSubmission(any(), any(), any(), any(), any(), any()))
-                    .thenReturn(bulkResponse);
+//            when(submissionService.uploadBulkSubmission(any(), any(), any(), any(), any(), any()))
+//                    .thenReturn(bulkResponse);
 
             mockMvc.perform(post(BASE_API_PATH + "/bulk")
                             .contentType(MediaType.APPLICATION_JSON)

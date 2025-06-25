@@ -14,7 +14,7 @@ CREATE TABLE assignments
     solution_code OID,
     test_code     OID,
     time_limit            BIGINT,
-    total_points          DECIMAL(5, 2),
+    total_points  INTEGER NOT NULL,
     course_id             UUID                        NOT NULL,
     created_by_teacher_id UUID,
     CONSTRAINT pk_assignments PRIMARY KEY (id)
@@ -117,7 +117,7 @@ CREATE TABLE rubrics
     updated_by    UUID,
     name          VARCHAR(200)                NOT NULL,
     description OID,
-    points        DECIMAL(10, 2)              NOT NULL,
+    points      INTEGER NOT NULL,
     assignment_id UUID                        NOT NULL,
     CONSTRAINT pk_rubrics PRIMARY KEY (id)
 );
@@ -144,7 +144,7 @@ CREATE TABLE submissions
     main_class_name VARCHAR(255),
     started_at      TIMESTAMP WITHOUT TIME ZONE,
     completed_at    TIMESTAMP WITHOUT TIME ZONE,
-    total_points    DECIMAL(5, 2),
+    total_points INTEGER NOT NULL,
     assignment_id   UUID                        NOT NULL,
     student_id      UUID,
     CONSTRAINT pk_submissions PRIMARY KEY (id)

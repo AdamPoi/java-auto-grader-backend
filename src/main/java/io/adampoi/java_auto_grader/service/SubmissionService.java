@@ -64,6 +64,7 @@ public class SubmissionService {
         submissionDTO.setFeedback(submission.getFeedback());
         submissionDTO.setStartedAt(submission.getStartedAt());
         submissionDTO.setCompletedAt(submission.getCompletedAt());
+        submissionDTO.setTotalPoints(submission.getTotalPoints());
         submissionDTO.setSubmissionCodes(submission.getSubmissionCodes().stream()
                 .map(submissionCode -> SubmissionCodeService.mapToDTO(submissionCode, new SubmissionCodeDTO()))
                 .collect(Collectors.toList()));
@@ -74,10 +75,10 @@ public class SubmissionService {
         } else {
             submissionDTO.setTestExecutions(new ArrayList<>());
         }
-//        if (submission.getStudent() != null) {
+        if (submission.getStudent() != null) {
         submissionDTO.setStudent(UserService.mapToDTO(submission.getStudent(), new UserDTO()));
             submissionDTO.setStudentId(submission.getStudent().getId());
-//        }
+        }
         return submissionDTO;
     }
 
@@ -321,12 +322,18 @@ public class SubmissionService {
                 )
                 .collect(Collectors.toSet());
 
+
         // --- 3. Build Test Executions (from rubrics) ---
+
+
         Set<TestExecution> testExecutions = rubricGradeRepository.findByAssignmentId(assignment.getId()).stream()
-                .map(rubricGrade -> mapRubricToTestExecution(rubricGrade, testCodeResponse, null)) // Submission set below
+                .map(rubricGrade -> mapRubricToTestExecution(rubricGrade, testCodeResponse, null))
                 .collect(Collectors.toSet());
 
-        // --- 4. Build Submission (using builder or setters) ---
+        // --- 4. Calculate total points ---
+        int totalPoints = calculateTotalPoints(testExecutions);
+
+        // --- 5. Build Submission ---
         Submission submission = Submission.builder()
                 .assignment(assignment)
                 .student(student)
@@ -335,6 +342,7 @@ public class SubmissionService {
                 .startedAt(OffsetDateTime.now())
                 .completedAt(OffsetDateTime.now())
                 .executionTime(testCodeResponse.getExecutionTime())
+                .totalPoints(totalPoints)
                 .feedback(testCodeResponse.isSuccess() ? "All tests passed" : "Some or all tests failed")
                 .status(testCodeResponse.isSuccess() ? "PASSED" : "FAILED")
                 .build();
@@ -345,15 +353,25 @@ public class SubmissionService {
         return persist ? submissionRepository.save(submission) : submission;
     }
 
+
     private TestExecution mapRubricToTestExecution(
             RubricGrade rubricGrade,
             TestCodeResponse testCodeResponse,
             Submission submission
     ) {
         String expectedMethodName = rubricGrade.getName() + "()";
+        log.info("Looking for test method: {}", expectedMethodName);
+
+        // Handle null/empty test response
+        if (testCodeResponse == null || testCodeResponse.getTestSuites() == null) {
+            log.warn("TestCodeResponse or test suites is null for rubric: {}", rubricGrade.getName());
+            return createFailedTestExecution(rubricGrade, submission, "Test execution failed - no test results available");
+        }
+
         Optional<TestCaseResult> maybeCase = testCodeResponse.getTestSuites().stream()
+                .filter(suite -> suite != null && suite.getTestCases() != null) // Null safety
                 .flatMap(suite -> suite.getTestCases().stream())
-                .filter(tc -> tc.getMethodName().equals(expectedMethodName))
+                .filter(tc -> tc != null && matchesTestMethod(tc, rubricGrade.getName())) // Improved matching
                 .findFirst();
 
         if (maybeCase.isPresent()) {
@@ -362,20 +380,82 @@ public class SubmissionService {
                     .rubricGrade(rubricGrade)
                     .submission(submission)
                     .methodName(tc.getMethodName())
-                    .executionTime((long) tc.getExecutionTime())
-                    .output(Optional.ofNullable(tc.getFailureMessage()).orElse(""))
+                    .executionTime(tc.getExecutionTime() > 0 ? Math.round(tc.getExecutionTime() * 1000) : 0L)
+                    .output(String.valueOf(Optional.ofNullable(tc.getFailureMessage())))
                     .error(tc.getFailureMessage())
-                    .status(TestExecution.ExecutionStatus.valueOf(tc.getStatus()))
+                    .status(parseExecutionStatus(tc.getStatus()))
                     .build();
         } else {
-            return TestExecution.builder()
-                    .rubricGrade(rubricGrade)
-                    .submission(submission)
-                    .status(TestExecution.ExecutionStatus.FAILED)
-                    .error("No matching test case found for rubric grade: " + rubricGrade.getName())
-                    .build();
+            log.warn("No matching test case found for rubric grade: {}", rubricGrade.getName());
+            return createFailedTestExecution(rubricGrade, submission, "No matching test case found for rubric grade: " + rubricGrade.getName());
         }
     }
 
+    // Helper method for more flexible test method matching
+    private boolean matchesTestMethod(TestCaseResult testCase, String rubricName) {
+        if (testCase.getMethodName() == null || rubricName == null) {
+            return false;
+        }
+
+        String methodName = testCase.getMethodName();
+        String expectedName = rubricName + "()";
+
+        // Exact match
+        if (methodName.equals(expectedName)) {
+            return true;
+        }
+
+        // Case-insensitive match
+        if (methodName.equalsIgnoreCase(expectedName)) {
+            return true;
+        }
+
+        // Match without parentheses
+        if (methodName.equals(rubricName)) {
+            return true;
+        }
+
+        // Match with test prefix (e.g., "testMethodName" matches "methodName")
+        if (methodName.toLowerCase().startsWith("test") &&
+                methodName.substring(4).equalsIgnoreCase(rubricName)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // Helper method to safely parse execution status
+    private TestExecution.ExecutionStatus parseExecutionStatus(String status) {
+        if (status == null) {
+            return TestExecution.ExecutionStatus.FAILED;
+        }
+
+        try {
+            return TestExecution.ExecutionStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown test execution status: {}, defaulting to FAILED", status);
+            return TestExecution.ExecutionStatus.FAILED;
+        }
+    }
+
+    // Helper method to create failed test execution
+    private TestExecution createFailedTestExecution(RubricGrade rubricGrade, Submission submission, String errorMessage) {
+        return TestExecution.builder()
+                .rubricGrade(rubricGrade)
+                .submission(submission)
+                .methodName(rubricGrade.getName())
+                .executionTime(0L)
+                .output("")
+                .error(errorMessage)
+                .status(TestExecution.ExecutionStatus.FAILED)
+                .build();
+    }
+
+    private int calculateTotalPoints(Set<TestExecution> testExecutions) {
+        return testExecutions.stream()
+                .filter(execution -> execution.getStatus() == TestExecution.ExecutionStatus.PASSED)
+                .mapToInt(execution -> execution.getRubricGrade().getRubric().getPoints())
+                .sum();
+    }
 
 }

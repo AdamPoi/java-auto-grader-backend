@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.rest;
 
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.filter.SubmissionFilterDef;
+import io.adampoi.java_auto_grader.model.dto.CodeFeedbackDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
 import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
@@ -10,6 +11,7 @@ import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.adampoi.java_auto_grader.service.CodeFeedbackService;
 import io.adampoi.java_auto_grader.service.SubmissionService;
 import io.adampoi.java_auto_grader.util.ReferencedException;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
@@ -39,14 +41,16 @@ public class SubmissionResource {
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
     private final ClassroomRepository classroomRepository;
+    private final CodeFeedbackService codeFeedbackService;
 
     public SubmissionResource(final SubmissionService submissionService,
                               final AssignmentRepository assignmentRepository, final UserRepository userRepository,
-                              final ClassroomRepository classroomRepository) {
+                              final ClassroomRepository classroomRepository, CodeFeedbackService codeFeedbackService) {
         this.submissionService = submissionService;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
         this.classroomRepository = classroomRepository;
+        this.codeFeedbackService = codeFeedbackService;
     }
 
     @GetMapping
@@ -143,6 +147,15 @@ public class SubmissionResource {
         return ApiSuccessResponse.<SubmissionDTO>builder()
                 .data(createdSubmission)
                 .statusCode(HttpStatus.CREATED)
+                .build();
+    }
+
+    @PostMapping("/code-feedback")
+    public ApiSuccessResponse<CodeFeedbackDTO> submitCode(@RequestBody String code) {
+        CodeFeedbackDTO feedback = codeFeedbackService.generateFeedback(code);
+        return ApiSuccessResponse.<CodeFeedbackDTO>builder()
+                .data(feedback)
+                .statusCode(HttpStatus.OK)
                 .build();
     }
 

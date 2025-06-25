@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -44,8 +43,7 @@ public class Submission extends Auditable {
     @Column
     private OffsetDateTime completedAt;
 
-    @Column(precision = 5, scale = 2)
-    private BigDecimal totalPoints = BigDecimal.ZERO;
+    private int totalPoints;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)

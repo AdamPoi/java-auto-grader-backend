@@ -46,7 +46,6 @@ public class ProjectSetupService {
 
         for (CodeFile sourceFile : request.getSourceFiles()) {
             Path filePath = srcMainJava.resolve(sourceFile.getFileName());
-            // Create parent directories if they don't exist
             Files.createDirectories(filePath.getParent());
             String sourceCode = "package workspace;\n" + sourceFile.getContent();
             Files.writeString(filePath, sourceCode);

@@ -13,7 +13,6 @@ import java.time.OffsetDateTime;
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-//@JsonIgnoreProperties(value = {"createdBy", "updatedBy"}, allowGetters = true)
 public abstract class Auditable {
 
     @CreatedDate

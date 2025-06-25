@@ -144,7 +144,7 @@ public class AssignmentService {
         if (assignmentDTO.getTimeLimit() != null) {
             assignment.setTimeLimit(assignmentDTO.getTimeLimit());
         }
-        if (assignmentDTO.getTotalPoints() != null) {
+        if (assignmentDTO.getTotalPoints() > 0) {
             assignment.setTotalPoints(assignmentDTO.getTotalPoints());
         }
         if (assignmentDTO.getCourseId() != null) {

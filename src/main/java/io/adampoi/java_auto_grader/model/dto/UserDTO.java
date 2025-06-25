@@ -1,6 +1,9 @@
 package io.adampoi.java_auto_grader.model.dto;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -74,7 +77,7 @@ public class UserDTO extends AuditableDTO {
     @JsonBackReference("course-students")
     private CourseDTO studentCourse;
 
-    @JsonManagedReference("student-submissions")
+    //    @JsonManagedReference("student-submissions")
     private List<SubmissionDTO> submissions;
 
     @NotNull(groups = CreateGroup.class)

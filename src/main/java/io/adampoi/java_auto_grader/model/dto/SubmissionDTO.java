@@ -7,10 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,12 +38,9 @@ public class SubmissionDTO extends AuditableDTO {
 
     private OffsetDateTime completedAt;
 
-    @Builder.Default
     private String mainClassName = "Main";
 
-    @Builder.Default
-    private BigDecimal totalPoints = BigDecimal.ZERO;
-
+    private int totalPoints;
 
     @NotNull(groups = CreateGroup.class)
     private UUID assignmentId;

@@ -51,6 +51,7 @@ public class RubricService {
         rubricDTO.setPoints(rubric.getPoints());
         rubricDTO.setAssignment(rubric.getAssignment() == null ? null :
                 AssignmentService.mapToDTO(rubric.getAssignment(), new AssignmentDTO()));
+
         rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
                 .map(rubricGrade -> RubricGradeService.mapToDTO(rubricGrade, new RubricGradeDTO()))
                 .collect(Collectors.toList()));
@@ -106,7 +107,7 @@ public class RubricService {
         if (rubricDTO.getDescription() != null) {
             rubric.setDescription(rubricDTO.getDescription());
         }
-        if (rubricDTO.getPoints() != null) {
+        if (rubricDTO.getPoints() > 0) {
             rubric.setPoints(rubricDTO.getPoints());
         }
 

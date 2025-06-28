@@ -10,7 +10,9 @@ import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
+import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.adampoi.java_auto_grader.service.ChatService;
 import io.adampoi.java_auto_grader.service.CodeFeedbackService;
 import io.adampoi.java_auto_grader.service.SubmissionService;
 import io.adampoi.java_auto_grader.util.ReferencedException;
@@ -32,6 +34,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
+import static org.reflections.Reflections.log;
+
 @RestController
 @RequestMapping(value = "/api/submissions",
         produces = MediaType.APPLICATION_JSON_VALUE)
@@ -42,15 +46,19 @@ public class SubmissionResource {
     private final UserRepository userRepository;
     private final ClassroomRepository classroomRepository;
     private final CodeFeedbackService codeFeedbackService;
+    private final ChatService chatService;
+    private final SubmissionRepository submissionRepository;
 
     public SubmissionResource(final SubmissionService submissionService,
                               final AssignmentRepository assignmentRepository, final UserRepository userRepository,
-                              final ClassroomRepository classroomRepository, CodeFeedbackService codeFeedbackService) {
+                              final ClassroomRepository classroomRepository, CodeFeedbackService codeFeedbackService, ChatService chatService, SubmissionRepository submissionRepository) {
         this.submissionService = submissionService;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
         this.classroomRepository = classroomRepository;
         this.codeFeedbackService = codeFeedbackService;
+        this.chatService = chatService;
+        this.submissionRepository = submissionRepository;
     }
 
     @GetMapping
@@ -159,6 +167,19 @@ public class SubmissionResource {
                 .build();
     }
 
+    @GetMapping("/{userId}/analyze-code")
+    public ApiSuccessResponse<String> generateCodeAnalysis(@PathVariable String submissionId, @RequestBody String javaCode) {
+        String response = chatService.generateCodeFeedback(javaCode);
+        log.info("Generated code analysis: {}", response);
+        Submission submission = submissionRepository.getById(UUID.fromString(submissionId));
+        submission.setFeedback(response);
+
+        return ApiSuccessResponse.<String>builder()
+                .data(response)
+                .statusCode(HttpStatus.OK)
+                .build();
+
+    }
     // --- 2. Teacher bulk upload ---
 //    @PostMapping("/bulk")
 

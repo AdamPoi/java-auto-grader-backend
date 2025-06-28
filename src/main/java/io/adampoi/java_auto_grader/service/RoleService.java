@@ -77,6 +77,12 @@ public class RoleService {
         roleDTO.setPermissions(role.getRolePermissions().stream()
                 .map(permission -> PermissionService.mapToDTO(permission, new PermissionDTO()))
                 .collect(Collectors.toList()));
+
+        roleDTO.setCreatedAt(role.getCreatedAt());
+        roleDTO.setUpdatedAt(role.getUpdatedAt());
+
+        roleDTO.setCreatedBy(role.getCreatedBy());
+        roleDTO.setUpdatedBy(role.getUpdatedBy());
         return roleDTO;
     }
 

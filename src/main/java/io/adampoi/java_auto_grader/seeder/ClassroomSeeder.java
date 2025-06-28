@@ -9,7 +9,6 @@ import io.adampoi.java_auto_grader.repository.UserRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -99,8 +98,6 @@ public class ClassroomSeeder {
             Classroom classroom = new Classroom();
             classroom.setName(data.getName());
             classroom.setTeacher(teacher);
-            classroom.setCreatedAt(OffsetDateTime.now());
-            classroom.setUpdatedAt(OffsetDateTime.now());
 
             // Assign students to classroom - ensure users are managed entities
             int startIndex = i * studentsPerClass;

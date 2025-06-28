@@ -114,12 +114,7 @@ public class ClassroomService {
                     .collect(Collectors.toSet());
             classroom.setEnrolledStudents(students);
         }
-        if (classroomDTO.getCreatedAt() != null) {
-            classroom.setCreatedAt(classroomDTO.getCreatedAt());
-        }
-        if (classroomDTO.getUpdatedAt() != null) {
-            classroom.setUpdatedAt(classroomDTO.getUpdatedAt());
-        }
+
         return classroom;
     }
 

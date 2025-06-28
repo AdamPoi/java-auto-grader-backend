@@ -1,7 +1,13 @@
 package io.adampoi.java_auto_grader.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MappedSuperclass;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -12,6 +18,9 @@ import java.time.OffsetDateTime;
 
 @Getter
 @MappedSuperclass
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public abstract class Auditable {
 
@@ -24,12 +33,10 @@ public abstract class Auditable {
     private OffsetDateTime updatedAt;
 
     @CreatedBy
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", updatable = false)
-    private User createdBy;
+    private String createdBy;
 
     @LastModifiedBy
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by")
-    private User updatedBy;
+    private String updatedBy;
 }

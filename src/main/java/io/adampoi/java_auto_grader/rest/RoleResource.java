@@ -1,9 +1,11 @@
 package io.adampoi.java_auto_grader.rest;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import io.adampoi.java_auto_grader.domain.Permission;
 import io.adampoi.java_auto_grader.domain.Role;
 import io.adampoi.java_auto_grader.filter.RoleFilterDef;
 import io.adampoi.java_auto_grader.model.dto.RoleDTO;
+import io.adampoi.java_auto_grader.model.dto.Views;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.PermissionRepository;
@@ -45,6 +47,7 @@ public class RoleResource {
     @GetMapping
     @Operation(summary = "Get Role",
             description = "Get all roles with pagination and filtering capabilities")
+    @JsonView(Views.External.class)
     public ApiSuccessResponse<PageResponse<RoleDTO>> getAllRoles(
             @RequestParam(required = false, defaultValue = "") @QFParam(RoleFilterDef.class) QueryFilter<Role> filter,
             @ParameterObject @PageableDefault(page = 0, size = 10) Pageable params) {

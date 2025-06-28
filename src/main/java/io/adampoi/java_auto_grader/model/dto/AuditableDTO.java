@@ -1,5 +1,6 @@
 package io.adampoi.java_auto_grader.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,9 +14,12 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class AuditableDTO {
 
-    private OffsetDateTime createdBy;
-    private OffsetDateTime updatedBy;
+    @JsonView(Views.Internal.class)
+    private String createdBy;
+    @JsonView(Views.Internal.class)
+    private String updatedBy;
+    @JsonView(Views.Internal.class)
     private OffsetDateTime createdAt;
+    @JsonView(Views.Internal.class)
     private OffsetDateTime updatedAt;
-
 }

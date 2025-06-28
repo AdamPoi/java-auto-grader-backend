@@ -3,8 +3,8 @@ CREATE TABLE assignments
     id                    UUID                        NOT NULL,
     created_at            TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at            TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by            UUID,
-    updated_by            UUID,
+    created_by    VARCHAR(255),
+    updated_by    VARCHAR(255),
     title                 VARCHAR(255)                NOT NULL,
     description   OID,
     resource      OID,
@@ -25,8 +25,8 @@ CREATE TABLE classrooms
     id         UUID                        NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by UUID,
-    updated_by UUID,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     name       VARCHAR(255)                NOT NULL,
     teacher_id UUID,
     CONSTRAINT pk_classrooms PRIMARY KEY (id)
@@ -44,8 +44,8 @@ CREATE TABLE courses
     id                    UUID                        NOT NULL,
     created_at            TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at            TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by            UUID,
-    updated_by            UUID,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     code                  VARCHAR(20)                 NOT NULL,
     name                  VARCHAR(255)                NOT NULL,
     description           TEXT,
@@ -59,8 +59,8 @@ CREATE TABLE permissions
     id          UUID                        NOT NULL,
     created_at  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by  UUID,
-    updated_by  UUID,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     name        VARCHAR(100)                NOT NULL,
     description TEXT,
     CONSTRAINT pk_permissions PRIMARY KEY (id)
@@ -88,8 +88,8 @@ CREATE TABLE roles
     id         UUID                        NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by UUID,
-    updated_by UUID,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     name       VARCHAR(255)                NOT NULL,
     CONSTRAINT pk_roles PRIMARY KEY (id)
 );
@@ -99,11 +99,11 @@ CREATE TABLE rubric_grades
     id            UUID                        NOT NULL,
     created_at    TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at    TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by    UUID,
-    updated_by    UUID,
-    name      VARCHAR(255) NOT NULL,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    name       VARCHAR(255) NOT NULL,
     grade_type    VARCHAR(50)                 NOT NULL,
-    rubric_id UUID,
+    rubric_id  UUID,
     assignment_id UUID                        NOT NULL,
     CONSTRAINT pk_rubric_grades PRIMARY KEY (id)
 );
@@ -113,8 +113,8 @@ CREATE TABLE rubrics
     id            UUID                        NOT NULL,
     created_at    TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at    TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by    UUID,
-    updated_by    UUID,
+    created_by  VARCHAR(255),
+    updated_by  VARCHAR(255),
     name          VARCHAR(200)                NOT NULL,
     description OID,
     points      INTEGER NOT NULL,
@@ -136,8 +136,8 @@ CREATE TABLE submissions
     id              UUID                        NOT NULL,
     created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by      UUID,
-    updated_by      UUID,
+    created_by   VARCHAR(255),
+    updated_by   VARCHAR(255),
     status          VARCHAR(255),
     execution_time  BIGINT,
     feedback        OID,
@@ -155,13 +155,13 @@ CREATE TABLE test_executions
     id              UUID                        NOT NULL,
     created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by      UUID,
-    updated_by      UUID,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     method_name     VARCHAR(255),
     status          VARCHAR(50)                 NOT NULL,
-    error  OID,
+    error      OID,
     execution_time  BIGINT,
-    output OID,
+    output     OID,
     rubric_grade_id UUID                        NOT NULL,
     submission_id   UUID                        NOT NULL,
     CONSTRAINT pk_test_executions PRIMARY KEY (id)
@@ -186,11 +186,11 @@ CREATE TABLE users
     id         UUID                        NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    created_by UUID,
-    updated_by UUID,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     email      VARCHAR(100)                NOT NULL,
-    nim VARCHAR(255),
-    nip VARCHAR(255),
+    nim        VARCHAR(255),
+    nip        VARCHAR(255),
     password   VARCHAR(255)                NOT NULL,
     first_name VARCHAR(50),
     last_name  VARCHAR(50),
@@ -220,100 +220,40 @@ ALTER TABLE assignments
     ADD CONSTRAINT FK_ASSIGNMENTS_ON_COURSE FOREIGN KEY (course_id) REFERENCES courses (id);
 
 ALTER TABLE assignments
-    ADD CONSTRAINT FK_ASSIGNMENTS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE assignments
     ADD CONSTRAINT FK_ASSIGNMENTS_ON_CREATED_BY_TEACHER FOREIGN KEY (created_by_teacher_id) REFERENCES users (id);
-
-ALTER TABLE assignments
-    ADD CONSTRAINT FK_ASSIGNMENTS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
-
-ALTER TABLE classrooms
-    ADD CONSTRAINT FK_CLASSROOMS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
 
 ALTER TABLE classrooms
     ADD CONSTRAINT FK_CLASSROOMS_ON_TEACHER FOREIGN KEY (teacher_id) REFERENCES users (id);
 
-ALTER TABLE classrooms
-    ADD CONSTRAINT FK_CLASSROOMS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
-
-ALTER TABLE courses
-    ADD CONSTRAINT FK_COURSES_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
 ALTER TABLE courses
     ADD CONSTRAINT FK_COURSES_ON_CREATED_BY_TEACHER FOREIGN KEY (created_by_teacher_id) REFERENCES users (id);
-
-ALTER TABLE courses
-    ADD CONSTRAINT FK_COURSES_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
-
-ALTER TABLE permissions
-    ADD CONSTRAINT FK_PERMISSIONS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE permissions
-    ADD CONSTRAINT FK_PERMISSIONS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
 ALTER TABLE refresh_token
     ADD CONSTRAINT FK_REFRESHTOKEN_ON_USER FOREIGN KEY (user_id) REFERENCES users (id);
 
-ALTER TABLE roles
-    ADD CONSTRAINT FK_ROLES_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE roles
-    ADD CONSTRAINT FK_ROLES_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
-
 ALTER TABLE rubrics
     ADD CONSTRAINT FK_RUBRICS_ON_ASSIGNMENT FOREIGN KEY (assignment_id) REFERENCES assignments (id);
-
-ALTER TABLE rubrics
-    ADD CONSTRAINT FK_RUBRICS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE rubrics
-    ADD CONSTRAINT FK_RUBRICS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
 ALTER TABLE rubric_grades
     ADD CONSTRAINT FK_RUBRIC_GRADES_ON_ASSIGNMENT FOREIGN KEY (assignment_id) REFERENCES assignments (id);
 
 ALTER TABLE rubric_grades
-    ADD CONSTRAINT FK_RUBRIC_GRADES_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE rubric_grades
     ADD CONSTRAINT FK_RUBRIC_GRADES_ON_RUBRIC FOREIGN KEY (rubric_id) REFERENCES rubrics (id);
-
-ALTER TABLE rubric_grades
-    ADD CONSTRAINT FK_RUBRIC_GRADES_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
 ALTER TABLE submissions
     ADD CONSTRAINT FK_SUBMISSIONS_ON_ASSIGNMENT FOREIGN KEY (assignment_id) REFERENCES assignments (id);
 
 ALTER TABLE submissions
-    ADD CONSTRAINT FK_SUBMISSIONS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE submissions
     ADD CONSTRAINT FK_SUBMISSIONS_ON_STUDENT FOREIGN KEY (student_id) REFERENCES users (id);
-
-ALTER TABLE submissions
-    ADD CONSTRAINT FK_SUBMISSIONS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
 ALTER TABLE submission_codes
     ADD CONSTRAINT FK_SUBMISSION_CODES_ON_SUBMISSION FOREIGN KEY (submission_id) REFERENCES submissions (id);
-
-ALTER TABLE test_executions
-    ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
 
 ALTER TABLE test_executions
     ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_RUBRIC_GRADE FOREIGN KEY (rubric_grade_id) REFERENCES rubric_grades (id);
 
 ALTER TABLE test_executions
     ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_SUBMISSION FOREIGN KEY (submission_id) REFERENCES submissions (id);
-
-ALTER TABLE test_executions
-    ADD CONSTRAINT FK_TEST_EXECUTIONS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
-
-ALTER TABLE users
-    ADD CONSTRAINT FK_USERS_ON_CREATED_BY FOREIGN KEY (created_by) REFERENCES users (id);
-
-ALTER TABLE users
-    ADD CONSTRAINT FK_USERS_ON_UPDATED_BY FOREIGN KEY (updated_by) REFERENCES users (id);
 
 ALTER TABLE course_enrollments
     ADD CONSTRAINT fk_couenr_on_course FOREIGN KEY (course_id) REFERENCES courses (id);

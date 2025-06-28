@@ -2,12 +2,9 @@ package io.adampoi.java_auto_grader.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,11 +41,4 @@ public class Classroom extends Auditable {
     )
     private Set<User> enrolledStudents;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false, updatable = true)
-    private OffsetDateTime updatedAt;
 }

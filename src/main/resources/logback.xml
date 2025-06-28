@@ -1,10 +1,10 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
-    <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
+    <!--    <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>-->
     <springProperty scope="context" name="springAppName" source="spring.application.name"
                     defaultValue="application"/>
-    <springProperty scope="context" name="logPath" source="logging.file.path" defaultValue="./logs"/>
+    <springProperty scope="context" name="logPath" source="logging.file.path" defaultValue="${LOG_PATH:-./logs}"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -17,14 +17,14 @@
 
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logPath}/${springAppName}.log</file>
+        <file>${LOG_PATH:-./logs}/java-auto-grader.log</file>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{correlationId:-NO_CID}] -
                 %msg%n%ex
             </pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${logPath}/${springAppName}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <fileNamePattern>${LOG_PATH:-./logs}/java-auto-grader.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>
             <maxFileSize>10MB</maxFileSize>

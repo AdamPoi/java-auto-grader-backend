@@ -31,7 +31,6 @@ public class AssignmentDTO extends AuditableDTO {
     private String title;
 
     private String description;
-
     private String resource;
 
     @NotNull(groups = CreateGroup.class)
@@ -41,13 +40,10 @@ public class AssignmentDTO extends AuditableDTO {
     private Boolean isPublished;
 
     private String starterCode;
-
     private String solutionCode;
-
     private String testCode;
 
-    private Long timeLimit;
-
+    private Long timeLimit;      // [optionally deprecated, move to options.timeLimit]
     private int totalPoints;
 
     @JsonProperty("courseId")
@@ -63,7 +59,6 @@ public class AssignmentDTO extends AuditableDTO {
 
     @JsonProperty("submissions")
     @JsonManagedReference("assignment-submissions")
-//    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
     private List<SubmissionDTO> assignmentSubmissions;
 
     @JsonProperty("rubrics")
@@ -73,8 +68,11 @@ public class AssignmentDTO extends AuditableDTO {
 
     @JsonProperty("rubricGrades")
     @JsonManagedReference("assignment-rubric-grades")
-//    @JsonIgnoreProperties({"password", "roles", "permissions", "createdAt", "updatedAt"})
     private List<RubricGradeDTO> rubricGrades;
+
+    // 🟢 ADD THIS FIELD:
+    @JsonProperty("options")
+    private AssignmentOptionsDTO options;
 
     public interface CreateGroup extends Default {
     }

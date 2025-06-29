@@ -1,9 +1,6 @@
 package io.adampoi.java_auto_grader.seeder;
 
-import io.adampoi.java_auto_grader.domain.Assignment;
-import io.adampoi.java_auto_grader.domain.Course;
-import io.adampoi.java_auto_grader.domain.Role;
-import io.adampoi.java_auto_grader.domain.User;
+import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
@@ -61,9 +58,14 @@ public class AssignmentSeeder {
                 Assignment assignment = new Assignment();
                 assignment.setTitle(data.getTitle());
                 assignment.setDescription(data.getDescription());
-
                 assignment.setDueDate(OffsetDateTime.now().plusDays(7 + (i * 7)));//weekly
-                assignment.setTimeLimit(2 * 60 * 60 * 1000L);// 2 hours in ms
+
+                AssignmentOptions options = new AssignmentOptions();
+                options.setIsTimed(true);          // or false, as needed
+                options.setTimeLimit(2 * 60 * 60); //2 hours in second
+
+
+                assignment.setOptions(options);// 2 hours in ms
                 assignment.setTotalPoints(100);
                 assignment.setCreatedByTeacher(teachers.get(0));
                 assignment.setCourse(course);

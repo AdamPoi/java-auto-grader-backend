@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
+import io.adampoi.java_auto_grader.model.dto.AssignmentOptionsDTO;
 import io.adampoi.java_auto_grader.model.dto.RubricDTO;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
@@ -48,19 +49,33 @@ public class AssignmentService {
         assignmentDTO.setDueDate(assignment.getDueDate());
         assignmentDTO.setCreatedAt(assignment.getCreatedAt());
         assignmentDTO.setUpdatedAt(assignment.getUpdatedAt());
-        assignmentDTO.setIsPublished(assignment.getIsPublished());
         assignmentDTO.setStarterCode(assignment.getStarterCode());
         assignmentDTO.setSolutionCode(assignment.getSolutionCode());
         assignmentDTO.setTestCode(assignment.getTestCode());
         assignmentDTO.setTotalPoints(assignment.getTotalPoints());
-        assignmentDTO.setTimeLimit(assignment.getTimeLimit());
         assignmentDTO.setCourseId(assignment.getCourse() == null ? null : assignment.getCourse().getId());
         assignmentDTO.setCreatedByTeacher(
                 assignment.getCreatedByTeacher() == null ? null : assignment.getCreatedByTeacher().getId());
         assignmentDTO.setRubrics(assignment.getRubrics().stream()
                 .map(rubric -> RubricService.mapToRelationshipDTO(rubric, new RubricDTO()))
                 .collect(Collectors.toList()));
+
+        assignmentDTO.setOptions(mapOptionsToDTO(assignment.getOptions()));
+
         return assignmentDTO;
+    }
+
+    public static AssignmentOptionsDTO mapOptionsToDTO(AssignmentOptions options) {
+        if (options == null) return null;
+        AssignmentOptionsDTO dto = new AssignmentOptionsDTO();
+        dto.setIsTimed(options.getIsTimed());
+        dto.setTimeLimit(options.getTimeLimit());
+        dto.setMaxAttempts(options.getMaxAttempts());
+        dto.setShowTrySubmission(options.getShowTrySubmission());
+        dto.setShowFeedback(options.getShowFeedback());
+        dto.setShowSolution(options.getShowSolution());
+        dto.setAllowUpload(options.getAllowUpload());
+        return dto;
     }
 
     public PageResponse<AssignmentDTO> findAll(QueryFilter<Assignment> filter, Pageable pageable) {
@@ -129,9 +144,6 @@ public class AssignmentService {
         if (assignmentDTO.getDueDate() != null) {
             assignment.setDueDate(assignmentDTO.getDueDate());
         }
-        if (assignmentDTO.getIsPublished() != null) {
-            assignment.setIsPublished(assignmentDTO.getIsPublished());
-        }
         if (assignmentDTO.getStarterCode() != null) {
             assignment.setStarterCode(assignmentDTO.getStarterCode());
         }
@@ -141,9 +153,7 @@ public class AssignmentService {
         if (assignmentDTO.getTestCode() != null) {
             assignment.setTestCode(assignmentDTO.getTestCode());
         }
-        if (assignmentDTO.getTimeLimit() != null) {
-            assignment.setTimeLimit(assignmentDTO.getTimeLimit());
-        }
+
         if (assignmentDTO.getTotalPoints() > 0) {
             assignment.setTotalPoints(assignmentDTO.getTotalPoints());
         }
@@ -158,8 +168,31 @@ public class AssignmentService {
             assignment.setCreatedByTeacher(createdByTeacher);
         }
 
+        if (assignmentDTO.getOptions() != null) {
+            assignment.setOptions(
+                    mapOptionsToEntity(assignmentDTO.getOptions(), assignment.getOptions())
+            );
+        }
+
         return assignment;
     }
+
+    private AssignmentOptions mapOptionsToEntity(AssignmentOptionsDTO optionsDTO, AssignmentOptions entityOptions) {
+        if (optionsDTO == null) return entityOptions;
+
+        AssignmentOptions options = entityOptions != null ? entityOptions : new AssignmentOptions();
+
+        if (optionsDTO.getIsTimed() != null) options.setIsTimed(optionsDTO.getIsTimed());
+        if (optionsDTO.getTimeLimit() != null) options.setTimeLimit(optionsDTO.getTimeLimit());
+        if (optionsDTO.getMaxAttempts() != null) options.setMaxAttempts(optionsDTO.getMaxAttempts());
+        if (optionsDTO.getShowTrySubmission() != null) options.setShowTrySubmission(optionsDTO.getShowTrySubmission());
+        if (optionsDTO.getShowFeedback() != null) options.setShowFeedback(optionsDTO.getShowFeedback());
+        if (optionsDTO.getShowSolution() != null) options.setShowSolution(optionsDTO.getShowSolution());
+        if (optionsDTO.getAllowUpload() != null) options.setAllowUpload(optionsDTO.getAllowUpload());
+
+        return options;
+    }
+
 
     public ReferencedWarning getReferencedWarning(final UUID assignmentId) {
         final ReferencedWarning referencedWarning = new ReferencedWarning();

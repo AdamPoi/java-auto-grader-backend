@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -19,14 +22,36 @@ public class RestLoggingFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RestLoggingFilter.class);
 
+    // List of endpoint patterns to skip logging (exact match or endsWith/startsWith as you prefer)
+    private static final Set<String> EXCLUDED_ENDPOINTS = new HashSet<>(Arrays.asList(
+            "/api/timed-assessments/status",
+            "/api/health",
+            "/api/metrics"
+            // Add more endpoints here!
+    ));
+
+    private boolean isExcluded(String uri) {
+        // Exact match
+        if (EXCLUDED_ENDPOINTS.contains(uri)) return true;
+        // Pattern match (e.g., ignore all /api/timed-assessments/{id}/status)
+        // Adjust as needed for your URL patterns:
+        if (uri.matches("^/api/timed-assessments/.+/status$")) return true;
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+        if (isExcluded(uri)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         long start = System.currentTimeMillis();
 
         String method = request.getMethod();
-        String uri = request.getRequestURI();
         String query = request.getQueryString();
         String ip = request.getRemoteAddr();
 

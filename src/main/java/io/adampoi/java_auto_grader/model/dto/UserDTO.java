@@ -3,7 +3,6 @@ package io.adampoi.java_auto_grader.model.dto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -23,42 +22,34 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserDTO extends AuditableDTO {
 
-    @JsonView(Views.External.class)
     private UUID id;
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 3, max = 100)
     @Email()
-    @JsonView(Views.External.class)
     private String email;
 
     //    @NotNull(groups = CreateGroup.class)
     @Size(min = 3, max = 100)
-    @JsonView(Views.External.class)
     private String nim;
 
     @Size(min = 3, max = 100)
-    @JsonView(Views.External.class)
     private String nip;
 
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 6, max = 255)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @JsonView(Views.External.class)
     private String password;
 
     @NotNull(groups = CreateGroup.class)
     @Size(min = 3, max = 255)
-    @JsonView(Views.External.class)
     private String firstName;
 
     @Size(min = 0, max = 255)
-    @JsonView(Views.External.class)
     private String lastName;
 
     @JsonProperty("isActive")
-    @JsonView(Views.External.class)
     @Builder.Default
     private Boolean isActive = true;
 
@@ -82,10 +73,8 @@ public class UserDTO extends AuditableDTO {
 
     @NotNull(groups = CreateGroup.class)
     @NotEmpty(groups = CreateGroup.class)
-    @JsonView(Views.Internal.class)
     private List<String> roles;
 
-    @JsonView(Views.Internal.class)
     private List<String> permissions;
 
     public interface CreateGroup extends Default {

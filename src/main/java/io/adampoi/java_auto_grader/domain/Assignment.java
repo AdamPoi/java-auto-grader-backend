@@ -39,9 +39,6 @@ public class Assignment extends Auditable {
     @Column
     private OffsetDateTime dueDate;
 
-    @Column
-    private Boolean isPublished;
-
     @Lob
     private String starterCode;
 
@@ -51,10 +48,10 @@ public class Assignment extends Auditable {
     @Lob
     private String testCode;
 
-    @Column
-    private Long timeLimit; // in ms
-
     private int totalPoints;
+
+    @Embedded
+    private AssignmentOptions options;
 
 
     @ManyToOne(fetch = FetchType.EAGER)

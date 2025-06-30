@@ -94,52 +94,6 @@ public class RubricGradeService {
         RubricGrade savedRubricGrade = rubricGradeRepository.save(rubricGrade);
         return mapToDTO(savedRubricGrade, new RubricGradeDTO());
     }
-//    public List<RubricGradeDTO> saveManyByAssignment(UUID assignmentId, final List<RubricGradeDTO> rubricGradeDTOs) {
-//        log.info("Saving {} rubric grades for assignment {}", rubricGradeDTOs.size(), assignmentId);
-//
-//        // Fetch existing rubric grades for the assignment
-//        List<RubricGrade> existingRubricGrades = rubricGradeRepository.findByAssignmentId(assignmentId);
-//        log.info("Found {} existing rubric grades for assignment {}", existingRubricGrades.size(), assignmentId);
-//        // Map of existing IDs to RubricGrade entities for quick lookup
-//        Map<UUID, RubricGrade> existingRubricGradeMap = existingRubricGrades.stream()
-//                .collect(Collectors.toMap(RubricGrade::getId, Function.identity()));
-//
-//        List<RubricGrade> rubricGradesToSave = new ArrayList<>();
-//        Set<UUID> incomingRubricGradeIds = new HashSet<>();
-//
-//        for (RubricGradeDTO rubricGradeDTO : rubricGradeDTOs) {
-//            RubricGrade rubricGrade;
-//            if (rubricGradeDTO.getId() != null) {
-//                UUID dtoId = UUID.fromString(rubricGradeDTO.getId());
-//                rubricGrade = existingRubricGradeMap.getOrDefault(dtoId, new RubricGrade());
-//                incomingRubricGradeIds.add(dtoId); // Track IDs from the incoming DTOs
-//            } else {
-//                rubricGrade = new RubricGrade();
-//            }
-//
-//            mapToEntity(rubricGradeDTO, rubricGrade);
-//            rubricGradesToSave.add(rubricGrade);
-//        }
-//
-//        // Determine which existing rubric grades need to be deleted
-//        List<RubricGrade> rubricGradesToDelete = existingRubricGrades.stream()
-//                .filter(existingGrade -> !incomingRubricGradeIds.contains(existingGrade.getId()))
-//                .collect(Collectors.toList());
-//
-//        // Perform deletions before saving, to avoid potential conflicts
-//        if (!rubricGradesToDelete.isEmpty()) {
-//            rubricGradeRepository.deleteAll(rubricGradesToDelete);
-//            log.info("Deleted {} rubric grades for assignment {}", rubricGradesToDelete.size(), assignmentId);
-//        }
-//
-//        // Save or update the rubric grades
-//        List<RubricGrade> savedEntities = rubricGradeRepository.saveAll(rubricGradesToSave);
-//
-//        return savedEntities.stream()
-//                .map(rubricGrade -> mapToDTO(rubricGrade, new RubricGradeDTO()))
-//                .collect(Collectors.toList());
-//    }
-
 
     public List<RubricGradeDTO> saveManyByAssignment(UUID assignmentId, final List<RubricGradeDTO> rubricGradeDTOs) {
         log.info("Saving {} rubric grades for assignment {}", rubricGradeDTOs.size(), assignmentId);
@@ -205,8 +159,6 @@ public class RubricGradeService {
         if (rubricGradeDTO.getName() != null) {
             rubricGrade.setName(rubricGradeDTO.getName());
         }
-
-
 
         if (rubricGradeDTO.getGradeType() != null) {
             rubricGrade.setGradeType(rubricGradeDTO.getGradeType());

@@ -60,7 +60,8 @@ public class SubmissionService {
     public static SubmissionDTO mapToDTO(final Submission submission, final SubmissionDTO submissionDTO) {
         submissionDTO.setId(submission.getId());
         submissionDTO.setExecutionTime(submission.getExecutionTime());
-        submissionDTO.setStatus(submission.getStatus());
+        submissionDTO.setStatus(String.valueOf(submission.getStatus()));
+        submissionDTO.setType(String.valueOf(submission.getType()));
         submissionDTO.setFeedback(submission.getFeedback());
         submissionDTO.setStartedAt(submission.getStartedAt());
         submissionDTO.setCompletedAt(submission.getCompletedAt());
@@ -167,36 +168,48 @@ public class SubmissionService {
     public SubmissionDTO submitStudentSubmission(UUID studentId, TestSubmitRequest request) {
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new EntityNotFoundException("Student not found"));
-        Assignment assignment = assignmentRepository.getById(UUID.fromString(request.getAssignmentId()));
+        Assignment assignment = assignmentRepository.findById(UUID.fromString(request.getAssignmentId()))
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
 
-        Submission savedSubmission = processSubmissionWithTestResults(
+        // Check maxAttempts if needed
+        Integer maxAttempts = assignment.getOptions() != null ? assignment.getOptions().getMaxAttempts() : null;
+        long attemptCount = submissionRepository.countByAssignmentAndStudentAndType(
+                assignment, student, Submission.SubmissionType.ATTEMPT);
+        if (maxAttempts != null && maxAttempts > 0 && attemptCount >= maxAttempts) {
+            throw new IllegalStateException("Maximum number of attempts reached.");
+        }
+
+        // Build and persist ATTEMPT submission
+        SubmissionDTO submission = processSubmissionWithTestResults(
                 assignment,
                 student,
                 request.getSourceFiles(),
                 request.getTestFiles(),
                 request.getMainClassName(),
                 request.getBuildTool(),
-                true
+                Submission.SubmissionType.ATTEMPT,
+                true // persist
         );
 
-        return SubmissionService.mapToDTO(savedSubmission, new SubmissionDTO());
+        return submission;
     }
 
 
     public SubmissionDTO tryoutSubmission(TestSubmitRequest request) {
         Assignment assignment = assignmentRepository.getById(UUID.fromString(request.getAssignmentId()));
 
-        Submission simulatedSubmission = processSubmissionWithTestResults(
+        SubmissionDTO simulatedSubmission = processSubmissionWithTestResults(
                 assignment,
                 null,
                 request.getSourceFiles(),
                 request.getTestFiles(),
                 request.getMainClassName(),
                 request.getBuildTool(),
+                Submission.SubmissionType.TRYOUT,
                 false
         );
 
-        return SubmissionService.mapToDTO(simulatedSubmission, new SubmissionDTO());
+        return simulatedSubmission;
     }
 
 
@@ -221,13 +234,14 @@ public class SubmissionService {
                 User student = userRepository.findByNim(nim)
                         .orElseThrow(() -> new EntityNotFoundException("Student with NIM " + nim + " not found"));
 
-                Submission savedSubmission = processSubmissionWithTestResults(
+                SubmissionDTO savedSubmission = processSubmissionWithTestResults(
                         assignment,
                         student,
                         entry.getValue(),
                         testFiles,
                         mainClassName,
                         buildTool,
+                        Submission.SubmissionType.ATTEMPT,
                         true
                 );
 
@@ -249,7 +263,11 @@ public class SubmissionService {
         }
 
         if (submissionDTO.getStatus() != null) {
-            submission.setStatus(submissionDTO.getStatus());
+            submission.setStatus(Submission.SubmissionStatus.valueOf(submissionDTO.getStatus()));
+        }
+
+        if (submissionDTO.getType() != null) {
+            submission.setType(Submission.SubmissionType.valueOf(submissionDTO.getType()));
         }
         if (submissionDTO.getFeedback() != null) {
             submission.setFeedback(submissionDTO.getFeedback());
@@ -294,16 +312,17 @@ public class SubmissionService {
         return null;
     }
 
-    private Submission processSubmissionWithTestResults(
+    SubmissionDTO processSubmissionWithTestResults(
             Assignment assignment,
             User student,
             List<CodeFile> sourceFiles,
             List<CodeFile> testFiles,
             String mainClassName,
             String buildTool,
+            Submission.SubmissionType type,
             boolean persist
     ) {
-        // --- 1. Run Tests ---
+        // 1. Run Tests
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(
                 TestCodeRequest.builder()
                         .sourceFiles(sourceFiles)
@@ -312,8 +331,8 @@ public class SubmissionService {
                         .buildTool(buildTool)
                         .build()
         );
-
-        // --- 2. Build Submission Codes ---
+        log.info("test Code Response: {}", testCodeResponse.getError());
+        // 2. Build SubmissionCodes
         Set<SubmissionCode> codes = sourceFiles.stream()
                 .map(sf -> SubmissionCode.builder()
                         .fileName(sf.getFileName())
@@ -322,18 +341,15 @@ public class SubmissionService {
                 )
                 .collect(Collectors.toSet());
 
-
-        // --- 3. Build Test Executions (from rubrics) ---
-
-
+        // 3. Build Test Executions (from rubrics)
         Set<TestExecution> testExecutions = rubricGradeRepository.findByAssignmentId(assignment.getId()).stream()
                 .map(rubricGrade -> mapRubricToTestExecution(rubricGrade, testCodeResponse, null))
                 .collect(Collectors.toSet());
 
-        // --- 4. Calculate total points ---
+        // 4. Calculate total points
         int totalPoints = calculateTotalPoints(testExecutions);
 
-        // --- 5. Build Submission ---
+        // 5. Build Submission object
         Submission submission = Submission.builder()
                 .assignment(assignment)
                 .student(student)
@@ -343,14 +359,19 @@ public class SubmissionService {
                 .completedAt(OffsetDateTime.now())
                 .executionTime(testCodeResponse.getExecutionTime())
                 .totalPoints(totalPoints)
-                .feedback(testCodeResponse.isSuccess() ? "All tests passed" : "Some or all tests failed")
-                .status(testCodeResponse.isSuccess() ? "PASSED" : "FAILED")
+                .feedback(testCodeResponse.isSuccess() ? "All tests passed" : testCodeResponse.getError())
+                .type(type)
+                .status(testCodeResponse.isSuccess()
+                        ? Submission.SubmissionStatus.COMPLETED
+                        : Submission.SubmissionStatus.FAILED)
                 .build();
 
         codes.forEach(code -> code.setSubmission(submission));
         testExecutions.forEach(exec -> exec.setSubmission(submission));
 
-        return persist ? submissionRepository.save(submission) : submission;
+        SubmissionDTO submittedSubmission = SubmissionService.mapToDTO(persist ? submissionRepository.save(submission) : submission, new SubmissionDTO());
+        submittedSubmission.setCompilationErrors(testCodeResponse.getCompilationErrors());
+        return submittedSubmission;
     }
 
 
@@ -362,7 +383,6 @@ public class SubmissionService {
         String expectedMethodName = rubricGrade.getName() + "()";
         log.info("Looking for test method: {}", expectedMethodName);
 
-        // Handle null/empty test response
         if (testCodeResponse == null || testCodeResponse.getTestSuites() == null) {
             log.warn("TestCodeResponse or test suites is null for rubric: {}", rubricGrade.getName());
             return createFailedTestExecution(rubricGrade, submission, "Test execution failed - no test results available");
@@ -391,7 +411,6 @@ public class SubmissionService {
         }
     }
 
-    // Helper method for more flexible test method matching
     private boolean matchesTestMethod(TestCaseResult testCase, String rubricName) {
         if (testCase.getMethodName() == null || rubricName == null) {
             return false;
@@ -424,7 +443,6 @@ public class SubmissionService {
         return false;
     }
 
-    // Helper method to safely parse execution status
     private TestExecution.ExecutionStatus parseExecutionStatus(String status) {
         if (status == null) {
             return TestExecution.ExecutionStatus.FAILED;
@@ -438,7 +456,6 @@ public class SubmissionService {
         }
     }
 
-    // Helper method to create failed test execution
     private TestExecution createFailedTestExecution(RubricGrade rubricGrade, Submission submission, String errorMessage) {
         return TestExecution.builder()
                 .rubricGrade(rubricGrade)

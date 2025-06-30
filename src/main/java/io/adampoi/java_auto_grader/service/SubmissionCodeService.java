@@ -273,9 +273,9 @@ public class SubmissionCodeService {
                 String codeSnippet = null;
                 String pointer = null;
 
-                if (i + 1 < lines.length && !lines[i + 1].trim().isEmpty() &&
+                if (i + 1 < lines.length && !lines[i + 1].isEmpty() &&
                         !lines[i + 1].contains(".java:")) {
-                    codeSnippet = lines[i + 1].trim();
+                    codeSnippet = lines[i + 1];
                     i++; // Skip this line in next iteration
                 }
 

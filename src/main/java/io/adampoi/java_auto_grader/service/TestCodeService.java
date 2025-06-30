@@ -3,6 +3,7 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.model.enums.BuildTool;
 import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import io.adampoi.java_auto_grader.model.response.TestCodeResponse;
+import io.adampoi.java_auto_grader.model.type.CompilationError;
 import io.adampoi.java_auto_grader.model.type.ProcessResult;
 import io.adampoi.java_auto_grader.util.DockerContainerManager;
 import io.adampoi.java_auto_grader.util.TestReportParser;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +59,6 @@ public class TestCodeService {
     public TestCodeResponse runTestCode(TestCodeRequest request) {
         String uuid = java.util.UUID.randomUUID().toString();
         Path tempDir = null;
-        log.info(uuid);
 
         try {
             BuildTool buildTool = determineBuildTool(request);
@@ -70,12 +72,21 @@ public class TestCodeService {
 
             dockerManager.copyToContainer(container.getName(), tempDir, workspace);
 
-            log.info(container.getName());
 
             ProcessResult result = executeBuildCommand(container, workspace, buildTool);
             copyTestResults(container, workspace, tempDir);
 
             TestCodeResponse response = createResponse(result, tempDir);
+
+            if (!result.isSuccess() && result.getOutput().contains("error:")) {
+                List<CompilationError> compilationErrors = parseGradleCompilationErrors(result.getOutput());
+                log.info("Parsed {} compilation errors", compilationErrors.size());
+                compilationErrors.stream().forEach(error ->
+                        log.error("Compilation error in {} at line {}: {}. code snippet {} , pointer {}", error.getErrorFile(), error.getLine(), error.getErrorMessage(), error.getCodeSnippet(), error.getPointer())
+                );
+                response.setCompilationErrors(compilationErrors);
+            }
+
             return response;
 
         } catch (Exception e) {
@@ -135,7 +146,7 @@ public class TestCodeService {
 //                        "-x compileJava"+
                         " --rerun-tasks " +
                         "--daemon --parallel --build-cache --configuration-cache " +
-                        "--console=plain --info";
+                        "--console=plain";
             case MAVEN:
                 return baseCommand + "mvn test -Dmaven.repo.local=/workspace/.m2/repository";
             default:
@@ -200,6 +211,129 @@ public class TestCodeService {
         containers.values().forEach(container ->
                 dockerManager.cleanupWorkspace(container.getName(), "/workspace/" + uuid)
         );
+    }
+
+    private List<CompilationError> parseGradleCompilationErrors(String buildOutput) {
+        String[] lines = buildOutput.split("\n");
+        List<CompilationError> errors = new ArrayList<>();
+
+        boolean inCompileJavaSection = false;
+
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+
+            // Start processing when we hit the compileJava FAILED task
+            if (line.contains("> Task :compileJava FAILED")) {
+                inCompileJavaSection = true;
+                continue;
+            }
+
+            // Stop processing when we hit certain sections that mark the end of the error list
+            if (inCompileJavaSection && (line.startsWith("FAILURE:") ||
+                    line.startsWith("* What went wrong:") ||
+                    line.startsWith("[Incubating]") ||
+                    line.matches("\\d+ errors?"))) {
+                break;
+            }
+
+            // Only process errors in the compileJava section
+            if (inCompileJavaSection && line.contains(".java:") && line.contains(": error:")) {
+                String fileName = extractFileNameFromGradleError(line);
+                int lineNumber = extractLineNumberFromGradleError(line);
+                String errorMessage = extractErrorMessageFromGradleError(line);
+
+                // Get the code snippet (next line after error)
+                String codeSnippet = null;
+                String pointer = null;
+
+                // Check bounds before accessing next line
+                if (i + 1 < lines.length) {
+                    String nextLine = lines[i + 1];
+                    if (!nextLine.isEmpty() &&
+                            !nextLine.contains(".java:") &&
+                            !nextLine.contains("FAILURE:") &&
+                            !nextLine.matches("\\d+ errors?") &&
+                            !nextLine.startsWith("[Incubating]")) {
+                        codeSnippet = nextLine;
+                        i++; // Move to next line
+
+                        // Get the pointer line (line with ^)
+                        if (i + 1 < lines.length && lines[i + 1].contains("^")) {
+                            pointer = lines[i + 1];
+                            i++; // Move to next line
+                        }
+                    }
+                }
+
+                errors.add(CompilationError.builder()
+                        .errorFile(fileName)
+                        .line(lineNumber - 1) // compensate package code at the top
+                        .errorMessage(errorMessage)
+                        .codeSnippet(codeSnippet)
+                        .pointer(pointer)
+                        .build());
+
+                // Continue processing to find more errors - don't break here
+            }
+        }
+
+        log.debug("Parsed {} compilation errors from build output", errors.size());
+        return errors;
+    }
+
+    private String extractFileNameFromGradleError(String line) {
+        if (line.contains("/workspace/") && line.contains(".java:")) {
+            // Extract filename from path like: /workspace/uuid/src/main/java/workspace/Main.java:8: error:
+            int fileNameStart = line.lastIndexOf("/") + 1;
+            int colonIndex = line.indexOf(":", fileNameStart);
+            if (colonIndex != -1 && fileNameStart < colonIndex) {
+                return line.substring(fileNameStart, colonIndex);
+            }
+        }
+        return "unknown";
+    }
+
+    private int extractLineNumberFromGradleError(String line) {
+        try {
+            // Pattern: filename.java:lineNumber: error:
+            if (line.contains(".java:")) {
+                int javaIndex = line.indexOf(".java:");
+                int nextColon = line.indexOf(":", javaIndex + 6);
+                if (nextColon != -1) {
+                    String lineNumberStr = line.substring(javaIndex + 6, nextColon).trim();
+                    return Integer.parseInt(lineNumberStr);
+                }
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Failed to parse line number from: {}", line);
+        }
+        return -1;
+    }
+
+    private String extractErrorMessageFromGradleError(String line) {
+        int errorIndex = line.indexOf(": error:");
+        if (errorIndex != -1) {
+            String fullMessage = line.substring(errorIndex + 8).trim(); // +8 to skip ": error:"
+
+            // If the message is just a symbol like "';' expected",
+            // try to create a more descriptive message
+            if (fullMessage.length() < 20) { // Short messages are likely just symbols
+                if (fullMessage.contains("';'")) {
+                    return "Missing semicolon (;) at end of statement";
+                } else if (fullMessage.contains("')'")) {
+                    return "Missing closing parenthesis )";
+                } else if (fullMessage.contains("'('")) {
+                    return "Missing opening parenthesis (";
+                } else if (fullMessage.contains("'}'")) {
+                    return "Missing closing brace }";
+                } else if (fullMessage.contains("'{'")) {
+                    return "Missing opening brace {";
+                }
+            }
+
+            return fullMessage;
+        }
+        return line.trim();
     }
 
     @lombok.Data

@@ -18,6 +18,9 @@ public class SubmissionFilterDef {
     @QFElement("status")
     private String status;
 
+    @QFElement("type")
+    private String type;
+
     @QFElement("feedback")
     private String feedback;
 

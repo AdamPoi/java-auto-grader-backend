@@ -6,6 +6,7 @@ import io.adampoi.java_auto_grader.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -16,4 +17,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID>, J
     Submission findFirstByStudent(User user);
 
 
+    Optional<Submission> findByAssignmentAndStudent(Assignment assignment, User student);
+
+    Optional<Submission> findByAssignmentAndStudentAndType(Assignment assignment, User student, Submission.SubmissionType type);
+
+    long countByAssignmentAndStudentAndType(Assignment assignment, User student, Submission.SubmissionType type);
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.adampoi.java_auto_grader.model.type.CompilationError;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
@@ -29,6 +30,8 @@ public class SubmissionDTO extends AuditableDTO {
 
     @Size(min = 3, max = 255)
     private String status;
+
+    private String type;
 
     private Long executionTime;
 
@@ -68,6 +71,9 @@ public class SubmissionDTO extends AuditableDTO {
     @JsonProperty("submissionCodes")
     @JsonManagedReference("submission-codes")
     private List<SubmissionCodeDTO> submissionCodes;
+
+    private List<CompilationError> compilationErrors;
+
 
 
     public interface CreateGroup extends Default {

@@ -78,7 +78,6 @@ public class TestExecutionService {
         submission.setExecutionTime(testCodeResponse.getExecutionTime());
         submission.setFeedback("Test execution completed successfully");
 
-
         List<SubmissionCode> submissionCodes = new ArrayList<>();
 
         for (CodeFile sourceFile : request.getSourceFiles()) {
@@ -107,7 +106,7 @@ public class TestExecutionService {
             if (matchingTestCase != null) {
                 testExecution.setExecutionTime((long) matchingTestCase.getExecutionTime());
                 testExecution.setMethodName(matchingTestCase.getMethodName());
-                testExecution.setOutput("");
+                testExecution.setOutput(testCodeResponse.getError());
                 testExecution.setError(matchingTestCase.getFailureMessage());
                 testExecution.setStatus(TestExecution.ExecutionStatus.valueOf(matchingTestCase.getStatus()));
 
@@ -120,7 +119,7 @@ public class TestExecutionService {
         }
 
         log.info("Execution Results: {}", executionResultDTOs);
-        submission.setStatus(testCodeResponse.isSuccess() ? "PASSED" : "FAILED");
+        submission.setStatus(testCodeResponse.isSuccess() ? Submission.SubmissionStatus.COMPLETED : Submission.SubmissionStatus.FAILED);
         submission.setTestExecutions(new HashSet<>(executionResults));
         Submission savedSubmission = submissionRepository.save(submission);
 

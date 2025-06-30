@@ -26,8 +26,13 @@ public class Submission extends Auditable {
     @UuidGenerator
     private UUID id;
 
-    @Column
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubmissionStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubmissionType type;
 
     @Column
     private Long executionTime = 0L; //ms
@@ -59,4 +64,17 @@ public class Submission extends Auditable {
     @OneToMany(mappedBy = "submission", fetch = FetchType.EAGER)
     private Set<SubmissionCode> submissionCodes;
 
+
+    public enum SubmissionType {
+        TRYOUT,    // practice or test run
+        ATTEMPT,   // a graded attempt (within max attempts)
+        FINAL      // the final submission (last or locked-in)
+    }
+
+    public enum SubmissionStatus {
+        IN_PROGRESS,
+        COMPLETED,
+        FAILED,
+        TIMEOUT
+    }
 }

@@ -149,7 +149,7 @@ public class SubmissionResource {
     @Operation(summary = "Create Submission", description = "Create a new student submission for an assignment")
     @ApiResponse(responseCode = "201", description = "Submission created")
     public ApiSuccessResponse<SubmissionDTO> createSubmission(
-            @RequestBody @Validated(SubmissionDTO.CreateGroup.class) final TestSubmitRequest request
+            @RequestBody @Validated(TestSubmitRequest.CreateGroup.class) final TestSubmitRequest request
     ) {
         final SubmissionDTO createdSubmission = submissionService.submitStudentSubmission(UUID.fromString(request.getUserId()), request);
         return ApiSuccessResponse.<SubmissionDTO>builder()

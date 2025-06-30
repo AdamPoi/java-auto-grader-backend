@@ -18,4 +18,6 @@ public class TimedAssessmentAttempt implements Serializable {
     private UUID assignmentId;
     private OffsetDateTime startedAt;
     private boolean submitted;
+    private boolean expired;
+    private Long remainingMs;
 }

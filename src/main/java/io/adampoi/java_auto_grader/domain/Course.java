@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -43,13 +42,14 @@ public class Course extends Auditable {
     @JoinColumn(name = "created_by_teacher_id", referencedColumnName = "id")
     private User createdByTeacher;
 
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "course_enrollments",
             joinColumns = @JoinColumn(name = "course_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private Set<User> enrolledUsers = new HashSet<>();
+    private Set<User> enrolledUsers;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Assignment> courseAssignments;

@@ -34,13 +34,14 @@ public class Submission extends Auditable {
     @Column(nullable = false)
     private SubmissionType type;
 
-    @Column
-    private Long executionTime = 0L; //ms
+    @Column(columnDefinition = "BIGINT DEFAULT 0")
+    private Long executionTime; //ms
 
     @Lob
-    private String feedback;
+    private String manualFeedback;
 
-    private String mainClassName;
+    @Lob
+    private String aiFeedback;
 
     @Column
     private OffsetDateTime startedAt;
@@ -48,7 +49,7 @@ public class Submission extends Auditable {
     @Column
     private OffsetDateTime completedAt;
 
-    private int totalPoints;
+    private Integer totalPoints;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assignment_id", referencedColumnName = "id", nullable = false)

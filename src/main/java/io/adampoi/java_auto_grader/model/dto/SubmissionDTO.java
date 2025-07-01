@@ -35,15 +35,15 @@ public class SubmissionDTO extends AuditableDTO {
 
     private Long executionTime;
 
-    private String feedback;
+    private String manualFeedback;
+
+    private String aiFeedback;
 
     private OffsetDateTime startedAt;
 
     private OffsetDateTime completedAt;
 
-    private String mainClassName = "Main";
-
-    private int totalPoints;
+    private Integer totalPoints;
 
     @NotNull(groups = CreateGroup.class)
     private UUID assignmentId;
@@ -73,7 +73,6 @@ public class SubmissionDTO extends AuditableDTO {
     private List<SubmissionCodeDTO> submissionCodes;
 
     private List<CompilationError> compilationErrors;
-
 
 
     public interface CreateGroup extends Default {

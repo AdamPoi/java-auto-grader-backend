@@ -30,6 +30,11 @@ public class CourseFilterDef {
 //    @QFElement("createdByTeacher.id")
 //    private String createdByTeacher;
 
+
+    @QFElement("enrolledUsers.id")
+    private String student;
+
+
     @QFElements(value = {
             @QFElement("code"),
             @QFElement("name"),

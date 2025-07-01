@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -39,7 +38,7 @@ public class RubricGrade extends Auditable {
     private Assignment assignment;
 
     @OneToMany(mappedBy = "rubricGrade", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<TestExecution> testExecutions = new HashSet<>();
+    private Set<TestExecution> testExecutions;
 
     @PrePersist
     private void ensureId() {

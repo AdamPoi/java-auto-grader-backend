@@ -21,15 +21,14 @@ public class SubmissionFilterDef {
     @QFElement("type")
     private String type;
 
-    @QFElement("feedback")
-    private String feedback;
+//    @QFElement("feedback")
+//    private String feedback;
 
 //    @QFElement("startedAt")
 //    private String startedAt;
 //
 //    @QFElement("completedAt")
 //    private String completedAt;
-
 
 
     @QFElement("assignment.id")

@@ -6,7 +6,6 @@ import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,7 +62,7 @@ public class Assignment extends Auditable {
     private User createdByTeacher;
 
     @OneToMany(mappedBy = "assignment", fetch = FetchType.EAGER)
-    private Set<Rubric> rubrics = new HashSet<>();
+    private Set<Rubric> rubrics;
 
 
     @OneToMany(mappedBy = "assignment", fetch = FetchType.EAGER)

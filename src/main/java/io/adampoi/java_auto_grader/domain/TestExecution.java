@@ -32,8 +32,8 @@ public class TestExecution extends Auditable {
     @Lob
     private String error;
 
-    @Column
-    private Long executionTime = 0L; //ms
+    @Column(columnDefinition = "BIGINT DEFAULT 0")
+    private Long executionTime; //ms
 
     @Lob
     private String output;

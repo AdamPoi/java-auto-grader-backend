@@ -111,10 +111,10 @@ public class ClassroomSeeder {
 
             classroomsToSave.add(classroom);
 
-            System.out.println(String.format("Created classroom: %s with teacher: %s and %d students",
+            System.out.printf("Created classroom: %s with teacher: %s and %d students%n",
                     classroom.getName(),
                     teacher.getUsername(),
-                    classroomStudents.size()));
+                    classroomStudents.size());
         }
 
         // Save all classrooms at once
@@ -137,12 +137,6 @@ public class ClassroomSeeder {
             return name;
         }
 
-        public String getSemester() {
-            return semester;
-        }
 
-        public String getSchedule() {
-            return schedule;
-        }
     }
 }

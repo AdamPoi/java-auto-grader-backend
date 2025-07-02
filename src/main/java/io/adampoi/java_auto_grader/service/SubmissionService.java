@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.*;
+import io.adampoi.java_auto_grader.model.flat_dto.SubmissionFlatDTO;
 import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
@@ -46,15 +47,19 @@ public class SubmissionService {
     private final UserRepository userRepository;
     private final TestCodeService testCodeService;
     private final RubricGradeRepository rubricGradeRepository;
+    private final SubmissionCodeRepository submissionCodeRepository;
+    private final TestExecutionRepository testExecutionRepository;
 
     public SubmissionService(final SubmissionRepository submissionRepository,
                              final AssignmentRepository assignmentRepository, final UserRepository userRepository,
-                             final ClassroomRepository classroomRepository, TestCodeService testCodeService, RubricGradeRepository rubricGradeRepository) {
+                             TestCodeService testCodeService, RubricGradeRepository rubricGradeRepository, SubmissionCodeRepository submissionCodeRepository, TestExecutionRepository testExecutionRepository) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
         this.testCodeService = testCodeService;
         this.rubricGradeRepository = rubricGradeRepository;
+        this.submissionCodeRepository = submissionCodeRepository;
+        this.testExecutionRepository = testExecutionRepository;
     }
 
     public static SubmissionDTO mapToDTO(final Submission submission, final SubmissionDTO submissionDTO) {
@@ -62,13 +67,15 @@ public class SubmissionService {
         submissionDTO.setExecutionTime(submission.getExecutionTime());
         submissionDTO.setStatus(String.valueOf(submission.getStatus()));
         submissionDTO.setType(String.valueOf(submission.getType()));
-        submissionDTO.setFeedback(submission.getFeedback());
+        submissionDTO.setManualFeedback(submission.getManualFeedback());
+        submissionDTO.setAiFeedback(submission.getAiFeedback());
         submissionDTO.setStartedAt(submission.getStartedAt());
         submissionDTO.setCompletedAt(submission.getCompletedAt());
         submissionDTO.setTotalPoints(submission.getTotalPoints());
         submissionDTO.setSubmissionCodes(submission.getSubmissionCodes().stream()
                 .map(submissionCode -> SubmissionCodeService.mapToDTO(submissionCode, new SubmissionCodeDTO()))
                 .collect(Collectors.toList()));
+
         if (submission.getTestExecutions() != null) {
             submissionDTO.setTestExecutions(submission.getTestExecutions().stream()
                     .map(testExecution -> TestExecutionService.mapToDTO(testExecution, new TestExecutionDTO()))
@@ -77,10 +84,29 @@ public class SubmissionService {
             submissionDTO.setTestExecutions(new ArrayList<>());
         }
         if (submission.getStudent() != null) {
-        submissionDTO.setStudent(UserService.mapToDTO(submission.getStudent(), new UserDTO()));
+            submissionDTO.setStudent(UserService.mapToDTO(submission.getStudent(), new UserDTO()));
             submissionDTO.setStudentId(submission.getStudent().getId());
         }
+        submissionDTO.setAssignmentId(submission.getAssignment().getId());
         return submissionDTO;
+    }
+
+    public static SubmissionFlatDTO mapToFlatDTO(final Submission submission) {
+        SubmissionFlatDTO dto = new SubmissionFlatDTO();
+        dto.setId(submission.getId());
+        dto.setExecutionTime(submission.getExecutionTime());
+        dto.setStatus(String.valueOf(submission.getStatus()));
+        dto.setType(String.valueOf(submission.getType()));
+        dto.setManualFeedback(submission.getManualFeedback());
+        dto.setStartedAt(submission.getStartedAt());
+        dto.setCompletedAt(submission.getCompletedAt());
+        dto.setTotalPoints(submission.getTotalPoints());
+        dto.setAssignmentId(submission.getAssignment() != null ? submission.getAssignment().getId() : null);
+        if (submission.getStudent() != null) {
+            dto.setStudentId(submission.getStudent().getId());
+//            dto.setStudentName(submission.getStudent().getName());
+        }
+        return dto;
     }
 
     public PageResponse<SubmissionDTO> findAll(QueryFilter<Submission> filter, Pageable pageable) {
@@ -108,7 +134,6 @@ public class SubmissionService {
                     submissionCode.setSubmission(submission)
             );
         }
-
         Submission savedSubmission = submissionRepository.save(submission);
         return mapToDTO(savedSubmission, new SubmissionDTO());
     }
@@ -142,7 +167,7 @@ public class SubmissionService {
         int compilationResult = compiler.run(null, null, compileErrors, sourceFile.getPath());
 
         if (compilationResult != 0) {
-            throw new RuntimeException("Compilation failed: " + compileErrors.toString());
+            throw new RuntimeException("Compilation failed: " + compileErrors);
         }
 
         URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{root.toURI().toURL()});
@@ -171,15 +196,23 @@ public class SubmissionService {
         Assignment assignment = assignmentRepository.findById(UUID.fromString(request.getAssignmentId()))
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
 
-        // Check maxAttempts if needed
-        Integer maxAttempts = assignment.getOptions() != null ? assignment.getOptions().getMaxAttempts() : null;
-        long attemptCount = submissionRepository.countByAssignmentAndStudentAndType(
-                assignment, student, Submission.SubmissionType.ATTEMPT);
-        if (maxAttempts != null && maxAttempts > 0 && attemptCount >= maxAttempts) {
-            throw new IllegalStateException("Maximum number of attempts reached.");
+
+        Submission.SubmissionType submissionType;
+        try {
+            submissionType = Submission.SubmissionType.valueOf(request.getType());
+        } catch (IllegalArgumentException e) {
+            submissionType = Submission.SubmissionType.ATTEMPT;
         }
 
-        // Build and persist ATTEMPT submission
+        if (submissionType.equals(Submission.SubmissionType.ATTEMPT)) {
+            Integer maxAttempts = assignment.getOptions() != null ? assignment.getOptions().getMaxAttempts() : null;
+            long attemptCount = submissionRepository.countByAssignmentAndStudentAndType(
+                    assignment, student, Submission.SubmissionType.ATTEMPT);
+            if (maxAttempts != null && maxAttempts > 0 && attemptCount >= maxAttempts) {
+                throw new IllegalStateException("Maximum number of attempts reached.");
+            }
+        }
+
         SubmissionDTO submission = processSubmissionWithTestResults(
                 assignment,
                 student,
@@ -187,8 +220,8 @@ public class SubmissionService {
                 request.getTestFiles(),
                 request.getMainClassName(),
                 request.getBuildTool(),
-                Submission.SubmissionType.ATTEMPT,
-                true // persist
+                submissionType,
+                true
         );
 
         return submission;
@@ -269,8 +302,11 @@ public class SubmissionService {
         if (submissionDTO.getType() != null) {
             submission.setType(Submission.SubmissionType.valueOf(submissionDTO.getType()));
         }
-        if (submissionDTO.getFeedback() != null) {
-            submission.setFeedback(submissionDTO.getFeedback());
+        if (submissionDTO.getManualFeedback() != null) {
+            submission.setManualFeedback(submissionDTO.getManualFeedback());
+        }
+        if (submissionDTO.getAiFeedback() != null) {
+            submission.setAiFeedback(submissionDTO.getAiFeedback());
         }
         if (submissionDTO.getStartedAt() != null) {
             submission.setStartedAt(submissionDTO.getStartedAt());
@@ -331,7 +367,6 @@ public class SubmissionService {
                         .buildTool(buildTool)
                         .build()
         );
-        log.info("test Code Response: {}", testCodeResponse.getError());
         // 2. Build SubmissionCodes
         Set<SubmissionCode> codes = sourceFiles.stream()
                 .map(sf -> SubmissionCode.builder()
@@ -359,17 +394,29 @@ public class SubmissionService {
                 .completedAt(OffsetDateTime.now())
                 .executionTime(testCodeResponse.getExecutionTime())
                 .totalPoints(totalPoints)
-                .feedback(testCodeResponse.isSuccess() ? "All tests passed" : testCodeResponse.getError())
+                .manualFeedback(testCodeResponse.isSuccess() ? "All tests passed" : "Some of tests are failed")
                 .type(type)
                 .status(testCodeResponse.isSuccess()
                         ? Submission.SubmissionStatus.COMPLETED
                         : Submission.SubmissionStatus.FAILED)
                 .build();
 
+        Submission finalSubmission = submission;
         codes.forEach(code -> code.setSubmission(submission));
         testExecutions.forEach(exec -> exec.setSubmission(submission));
+        if (persist) {
+            if (testCodeResponse.getCompilationErrors().isEmpty()) {
 
-        SubmissionDTO submittedSubmission = SubmissionService.mapToDTO(persist ? submissionRepository.save(submission) : submission, new SubmissionDTO());
+                finalSubmission = submissionRepository.save(submission);
+                testExecutionRepository.saveAll(testExecutions);
+                submissionCodeRepository.saveAll(codes);
+            } else {
+                finalSubmission.setStatus(Submission.SubmissionStatus.FAILED);
+                finalSubmission.setManualFeedback("Compilation errors occurred");
+            }
+        }
+        SubmissionDTO submittedSubmission = SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
+
         submittedSubmission.setCompilationErrors(testCodeResponse.getCompilationErrors());
         return submittedSubmission;
     }
@@ -381,7 +428,6 @@ public class SubmissionService {
             Submission submission
     ) {
         String expectedMethodName = rubricGrade.getName() + "()";
-        log.info("Looking for test method: {}", expectedMethodName);
 
         if (testCodeResponse == null || testCodeResponse.getTestSuites() == null) {
             log.warn("TestCodeResponse or test suites is null for rubric: {}", rubricGrade.getName());
@@ -435,12 +481,8 @@ public class SubmissionService {
         }
 
         // Match with test prefix (e.g., "testMethodName" matches "methodName")
-        if (methodName.toLowerCase().startsWith("test") &&
-                methodName.substring(4).equalsIgnoreCase(rubricName)) {
-            return true;
-        }
-
-        return false;
+        return methodName.toLowerCase().startsWith("test") &&
+                methodName.substring(4).equalsIgnoreCase(rubricName);
     }
 
     private TestExecution.ExecutionStatus parseExecutionStatus(String status) {

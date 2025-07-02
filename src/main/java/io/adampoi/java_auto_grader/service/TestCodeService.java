@@ -80,11 +80,12 @@ public class TestCodeService {
 
             if (!result.isSuccess() && result.getOutput().contains("error:")) {
                 List<CompilationError> compilationErrors = parseGradleCompilationErrors(result.getOutput());
-                log.info("Parsed {} compilation errors", compilationErrors.size());
                 compilationErrors.stream().forEach(error ->
                         log.error("Compilation error in {} at line {}: {}. code snippet {} , pointer {}", error.getErrorFile(), error.getLine(), error.getErrorMessage(), error.getCodeSnippet(), error.getPointer())
                 );
                 response.setCompilationErrors(compilationErrors);
+            } else {
+                response.setCompilationErrors(new ArrayList<>());
             }
 
             return response;
@@ -272,8 +273,6 @@ public class TestCodeService {
                         .codeSnippet(codeSnippet)
                         .pointer(pointer)
                         .build());
-
-                // Continue processing to find more errors - don't break here
             }
         }
 

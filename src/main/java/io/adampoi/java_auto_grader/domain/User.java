@@ -57,16 +57,16 @@ public class User extends Auditable implements UserDetails {
     )
     private Set<Role> userRoles;
 
-    @OneToMany(mappedBy = "createdByTeacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "createdByTeacher", fetch = FetchType.LAZY)
     private Set<Course> teacherCourses;
 
-    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "teacher", fetch = FetchType.LAZY)
     private Set<Classroom> teacherClassrooms;
 
-    @OneToMany(mappedBy = "createdByTeacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "createdByTeacher", fetch = FetchType.LAZY)
     private Set<Assignment> teacherAssignments;
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)
     private Set<Submission> studentSubmissions;
 
     @ManyToMany(mappedBy = "enrolledUsers", fetch = FetchType.EAGER)

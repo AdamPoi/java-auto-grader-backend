@@ -5,6 +5,7 @@ import io.adampoi.java_auto_grader.domain.RubricGrade;
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.domain.SubmissionCode;
 import io.adampoi.java_auto_grader.domain.TestExecution;
+import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
 import io.adampoi.java_auto_grader.model.dto.TestExecutionDTO;
 import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
@@ -48,10 +49,12 @@ public class TestExecutionService {
         testExecutionDTO.setExecutionTime(testExecution.getExecutionTime());
         testExecutionDTO.setStatus(String.valueOf(testExecution.getStatus()));
 
-//    if (testExecution.getRubricGrade() != null) {
-//        dto.setAssignmentId(testExecution.getRubricGrade().getAssignmentId());
-//        dto.setRubricGradeId(testExecution.getRubricGrade().getId());
-//    }
+        if (testExecution.getRubricGrade() != null) {
+//        testExecutionDTO.setAssignmentId(testExecution.getRubricGrade().getAssignmentId());
+            testExecutionDTO.setRubricGradeId(testExecution.getRubricGrade().getId());
+            RubricGradeDTO rubricGradeDTO = RubricGradeService.mapToDTO(testExecution.getRubricGrade(), new RubricGradeDTO());
+            testExecutionDTO.setRubricGrade(rubricGradeDTO);
+        }
 
         return testExecutionDTO;
     }
@@ -66,17 +69,15 @@ public class TestExecutionService {
                 .build();
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(testCodeRequest);
 
-
         List<RubricGrade> rubricGrades = rubricGradeRepository.findByAssignmentId(UUID.fromString(request.getAssignmentId()));
         List<TestExecutionDTO> executionResultDTOs = new ArrayList<>();
         List<TestExecution> executionResults = new ArrayList<>();
-        log.info("test Code Response: {}", testCodeResponse);
         Submission submission = new Submission();
         submission.setAssignment(assignmentRepository.getById(UUID.fromString(request.getAssignmentId())));
         submission.setStartedAt(OffsetDateTime.now());
         submission.setCompletedAt(OffsetDateTime.now());
         submission.setExecutionTime(testCodeResponse.getExecutionTime());
-        submission.setFeedback("Test execution completed successfully");
+        submission.setManualFeedback("Test execution completed successfully");
 
         List<SubmissionCode> submissionCodes = new ArrayList<>();
 
@@ -91,7 +92,6 @@ public class TestExecutionService {
         submission.setSubmissionCodes(new HashSet<>(submissionCodes));
 
         for (RubricGrade rubricGrade : rubricGrades) {
-            log.info("Processing Rubric Grade: {}", rubricGrade.getName());
 
             TestCaseResult matchingTestCase = testCodeResponse.getTestSuites().stream()
                     .flatMap(suite -> suite.getTestCases().stream())
@@ -118,12 +118,25 @@ public class TestExecutionService {
             executionResults.add(testExecution);
         }
 
-        log.info("Execution Results: {}", executionResultDTOs);
         submission.setStatus(testCodeResponse.isSuccess() ? Submission.SubmissionStatus.COMPLETED : Submission.SubmissionStatus.FAILED);
         submission.setTestExecutions(new HashSet<>(executionResults));
-        Submission savedSubmission = submissionRepository.save(submission);
+        Submission finalSubmission = submission;
+        if (!testCodeResponse.getCompilationErrors().isEmpty()) {
+            submission.setStatus(Submission.SubmissionStatus.FAILED);
+            submission.setManualFeedback("Compilation errors occurred during test execution.");
+        } else if (testCodeResponse.getTestSuites().isEmpty()) {
+            submission.setStatus(Submission.SubmissionStatus.FAILED);
+            submission.setManualFeedback("No test cases were executed.");
+            finalSubmission = submissionRepository.save(submission);
+        } else {
+            submission.setManualFeedback("All tests executed successfully.");
+            finalSubmission = submissionRepository.save(submission);
+        }
 
-        return SubmissionService.mapToDTO(savedSubmission, new SubmissionDTO());
+        finalSubmission.setSubmissionCodes(null);
+        finalSubmission.setTestExecutions(null);
+
+        return SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
     }
 
     private TestExecution mapToEntity(TestExecutionDTO dto) {

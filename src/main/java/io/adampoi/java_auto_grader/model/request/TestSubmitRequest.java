@@ -26,9 +26,7 @@ public class TestSubmitRequest {
     private List<CodeFile> testFiles;
     @NotBlank(message = "Main class name must not be blank", groups = CreateGroup.class)
     private String mainClassName;
-    // Optional: Only for updating, not required for creation
     private String submissionId;
-    // Optional: Set automatically from authentication context, not required for creation
     private String userId;
     @NotBlank(message = "Assignment ID must not be blank", groups = CreateGroup.class)
     private String assignmentId;
@@ -36,6 +34,8 @@ public class TestSubmitRequest {
     @Pattern(regexp = "gradle|maven", flags = Pattern.Flag.CASE_INSENSITIVE,
             message = "Build Tool must be one of: gradle, maven", groups = CreateGroup.class)
     private String buildTool;
+
+    private String type;
 
     public interface CreateGroup {
     }

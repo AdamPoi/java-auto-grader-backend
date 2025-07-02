@@ -3,12 +3,10 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
+import io.adampoi.java_auto_grader.model.dto.TestExecutionDTO;
 import io.adampoi.java_auto_grader.model.dto.TimedAssessmentAttempt;
 import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
-import io.adampoi.java_auto_grader.repository.AssignmentRepository;
-import io.adampoi.java_auto_grader.repository.RubricRepository;
-import io.adampoi.java_auto_grader.repository.SubmissionRepository;
-import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.adampoi.java_auto_grader.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
@@ -21,6 +19,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +35,8 @@ public class TimedAssessmentService {
     private final javax.cache.CacheManager jcacheManager;
     private final SubmissionService submissionService;
     private final RubricRepository rubricRepository;
+    private final TestExecutionRepository testExecutionRepository;
+    private final SubmissionCodeRepository submissionCodeRepository;
 
     public TimedAssessmentService(
             SubmissionRepository submissionRepository,
@@ -43,7 +44,7 @@ public class TimedAssessmentService {
             UserRepository userRepository,
             CacheManager springCacheManager,
             SubmissionService submissionService,
-            RubricRepository rubricRepository) {
+            RubricRepository rubricRepository, TestExecutionRepository testExecutionRepository, SubmissionCodeRepository submissionCodeRepository) {
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
@@ -54,6 +55,8 @@ public class TimedAssessmentService {
             throw new IllegalStateException("Expected a JCacheCacheManager!");
         }
         this.rubricRepository = rubricRepository;
+        this.testExecutionRepository = testExecutionRepository;
+        this.submissionCodeRepository = submissionCodeRepository;
     }
 
     private long getAssignmentTimeLimitMs(Assignment assignment) {
@@ -256,34 +259,68 @@ public class TimedAssessmentService {
 
 
         Set<TestExecution> newTestExecutions = processed.getTestExecutions().stream()
-                .map(exec -> {
-                    TestExecution copy = new TestExecution();
-                    RubricGrade rubricGrade = mapRubricGradeToEntity(exec.getRubricGrade(), new RubricGrade());
-                    copy.setRubricGrade(rubricGrade);
-                    copy.setSubmission(submission);
-                    copy.setMethodName(exec.getMethodName());
-                    copy.setExecutionTime(exec.getExecutionTime());
-                    copy.setOutput(exec.getOutput());
-                    copy.setError(exec.getError());
-                    copy.setStatus(TestExecution.ExecutionStatus.valueOf(exec.getStatus()));
-                    return copy;
-                })
+                .map(execDto -> createTestExecutionEntity(execDto, submission))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+
 
         submission.setStatus(Submission.SubmissionStatus.COMPLETED);
         submission.setCompletedAt(OffsetDateTime.now());
         submission.setExecutionTime(elapsedMs);
-        submission.setFeedback(processed.getFeedback());
+        submission.setManualFeedback(processed.getManualFeedback());
         submission.setTotalPoints(processed.getTotalPoints());
         submission.setTestExecutions(newTestExecutions);
+
         submissionRepository.save(submission);
+        if (!newTestExecutions.isEmpty()) {
+
+            testExecutionRepository.saveAll(newTestExecutions);
+        }
+        submissionCodeRepository.saveAll(request.getSourceFiles().stream()
+                .map(sourceFile -> {
+                    SubmissionCode submissionCode = new SubmissionCode();
+                    submissionCode.setFileName(sourceFile.getFileName());
+                    submissionCode.setSourceCode(sourceFile.getContent());
+                    submissionCode.setSubmission(submission);
+                    return submissionCode;
+                })
+                .collect(Collectors.toSet()));
 
         attempt.setSubmitted(true);
         cache.put(key, attempt);
-        cache.remove(key);
+        if (processed.getCompilationErrors().isEmpty()) {
+            cache.remove(key);
+        }
+
 
         return SubmissionService.mapToDTO(submission, new SubmissionDTO());
     }
+
+    private TestExecution createTestExecutionEntity(TestExecutionDTO execDto, Submission submission) {
+        RubricGrade rubricGrade = mapRubricGradeToEntity(execDto.getRubricGrade(), new RubricGrade());
+
+        if (rubricGrade == null) {
+            log.warn("Skipping TestExecution for method '{}' due to missing RubricGrade data.", execDto.getMethodName());
+            return null;
+        }
+
+        TestExecution execEntity = new TestExecution();
+        execEntity.setRubricGrade(rubricGrade);
+        execEntity.setSubmission(submission);
+        execEntity.setMethodName(execDto.getMethodName());
+        execEntity.setExecutionTime(execDto.getExecutionTime());
+        execEntity.setOutput(execDto.getOutput());
+        execEntity.setError(execDto.getError());
+
+        String statusStr = execDto.getStatus();
+        if ("PASSED".equals(statusStr)) {
+            execEntity.setStatus(TestExecution.ExecutionStatus.PASSED);
+        } else {
+            execEntity.setStatus(TestExecution.ExecutionStatus.FAILED);
+        }
+        return execEntity;
+    }
+
 
     private RubricGrade mapRubricGradeToEntity(final RubricGradeDTO rubricGradeDTO, final RubricGrade rubricGrade) {
         if (rubricGradeDTO.getId() != null) {
@@ -301,11 +338,11 @@ public class TimedAssessmentService {
                     .orElseThrow(() -> new EntityNotFoundException("Rubric not found"));
             rubricGrade.setRubric(rubric);
         }
-        if (rubricGradeDTO.getAssignmentId() != null) {
-            final Assignment assignment = assignmentRepository.findById(rubricGradeDTO.getAssignmentId())
-                    .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
-            rubricGrade.setAssignment(assignment);
-        }
+//        if (rubricGradeDTO.getAssignmentId() != null) {
+//            final Assignment assignment = assignmentRepository.findById(rubricGradeDTO.getAssignmentId())
+//                    .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
+//            rubricGrade.setAssignment(assignment);
+//        }
 
         return rubricGrade;
     }

@@ -26,7 +26,7 @@ public class TestExecution extends Auditable {
     private String methodName;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(nullable = true, length = 50)
     private ExecutionStatus status;
 
     @Lob

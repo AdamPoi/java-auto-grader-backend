@@ -9,7 +9,6 @@ import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +18,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class DashboardService {
 
     private final AssignmentRepository assignmentRepository;
-    private final CourseRepository courseRepository;
     private final SubmissionRepository submissionRepository;
     private final UserRepository userRepository;
+    private final CourseRepository courseRepository;
+
+    public DashboardService(AssignmentRepository assignmentRepository, SubmissionRepository submissionRepository, UserRepository userRepository, CourseRepository courseRepository) {
+        this.assignmentRepository = assignmentRepository;
+        this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
+    }
 
     public AdminDashboardDTO getAdminDashboardData(User user) {
         AdminDashboardDTO dashboard = new AdminDashboardDTO();
@@ -77,7 +82,6 @@ public class DashboardService {
         DashboardKpiDTO kpis = new DashboardKpiDTO();
         kpis.setActiveAssignments(assignmentRepository.count());
         kpis.setActiveCourses(courseRepository.count());
-        // Assuming you have a custom method in your repository for this
         kpis.setTotalStudents(userRepository.countUsersByRoleName("STUDENT"));
         return kpis;
     }
@@ -158,9 +162,10 @@ public class DashboardService {
         return dto;
     }
 
+    // Student Data
     private WelcomeBannerDTO createWelcomeBanner(User student, List<Assignment> assignments) {
         WelcomeBannerDTO banner = new WelcomeBannerDTO();
-        banner.setStudentName(student.getFirstName());
+        banner.setStudentName(student.getFirstName() + " " + student.getLastName());
 
         Optional<Assignment> nextAssignment = assignments.stream()
                 .filter(a -> a.getDueDate() != null && a.getDueDate().isAfter(OffsetDateTime.now()))

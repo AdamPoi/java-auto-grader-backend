@@ -6,8 +6,6 @@ import io.adampoi.java_auto_grader.model.dto.ClassroomDTO;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
-import io.adampoi.java_auto_grader.repository.CourseRepository;
-import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
@@ -27,17 +25,13 @@ import java.util.stream.Collectors;
 public class ClassroomService {
 
     private final ClassroomRepository classroomRepository;
-    private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-    private final SubmissionRepository submissionRepository;
 
     public ClassroomService(final ClassroomRepository classroomRepository,
-                            final CourseRepository courseRepository, final UserRepository userRepository,
-                            final SubmissionRepository submissionRepository) {
+                            final UserRepository userRepository
+    ) {
         this.classroomRepository = classroomRepository;
-        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     public PageResponse<ClassroomDTO> findAll(QueryFilter<Classroom> filter, Pageable pageable) {

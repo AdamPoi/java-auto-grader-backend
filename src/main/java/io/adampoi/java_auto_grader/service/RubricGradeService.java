@@ -3,7 +3,6 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Rubric;
 import io.adampoi.java_auto_grader.domain.RubricGrade;
-import io.adampoi.java_auto_grader.domain.TestExecution;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
@@ -19,7 +18,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,16 +47,16 @@ public class RubricGradeService {
         rubricGradeDTO.setRubricId(Optional.ofNullable(rubricGrade.getRubric())
                 .map(Rubric::getId)
                 .orElse(null));
-        rubricGradeDTO.setAssignmentId(Optional.ofNullable(rubricGrade.getRubric())
-                .map(Rubric::getId)
-                .orElse(null));
-        rubricGradeDTO.setTestExecutionIds(Optional.ofNullable(rubricGrade.getTestExecutions())
-                .map(executions -> executions.stream()
-                        .map(TestExecution::getId)
-                        .collect(Collectors.toSet()))
-                .orElse(Collections.emptySet()));
-        rubricGradeDTO.setCreatedAt(rubricGrade.getCreatedAt());
-        rubricGradeDTO.setUpdatedAt(rubricGrade.getUpdatedAt());
+//        rubricGradeDTO.setAssignmentId(Optional.ofNullable(rubricGrade.getRubric())
+//                .map(Rubric::getId)
+//                .orElse(null));
+//        rubricGradeDTO.setTestExecutionIds(Optional.ofNullable(rubricGrade.getTestExecutions())
+//                .map(executions -> executions.stream()
+//                        .map(TestExecution::getId)
+//                        .collect(Collectors.toSet()))
+//                .orElse(Collections.emptySet()));
+//        rubricGradeDTO.setCreatedAt(rubricGrade.getCreatedAt());
+//        rubricGradeDTO.setUpdatedAt(rubricGrade.getUpdatedAt());
         return rubricGradeDTO;
     }
 
@@ -96,7 +98,6 @@ public class RubricGradeService {
     }
 
     public List<RubricGradeDTO> saveManyByAssignment(UUID assignmentId, final List<RubricGradeDTO> rubricGradeDTOs) {
-        log.info("Saving {} rubric grades for assignment {}", rubricGradeDTOs.size(), assignmentId);
 
         // First, find existing grades and clear their test execution associations
         List<RubricGrade> existingGrades = rubricGradeRepository.findByAssignmentId(assignmentId);
@@ -137,7 +138,6 @@ public class RubricGradeService {
 
         return savedRubricGrades;
     }
-
 
 
     public RubricGradeDTO update(final UUID rubricGradeId, final RubricGradeDTO rubricGradeDTO) {

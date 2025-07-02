@@ -65,7 +65,7 @@ public class Assignment extends Auditable {
     private Set<Rubric> rubrics;
 
 
-    @OneToMany(mappedBy = "assignment", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "assignment", fetch = FetchType.LAZY)
     private Set<RubricGrade> rubricGrades;
 
     @OneToMany(mappedBy = "assignment")

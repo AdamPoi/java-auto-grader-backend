@@ -59,10 +59,10 @@ public class Submission extends Auditable {
     @JoinColumn(name = "student_id", referencedColumnName = "id", nullable = true)
     private User student;
 
-    @OneToMany(mappedBy = "submission", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY)
     private Set<TestExecution> testExecutions;
 
-    @OneToMany(mappedBy = "submission", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY)
     private Set<SubmissionCode> submissionCodes;
 
 

@@ -95,7 +95,7 @@ public class DockerContainerManager {
         String errors = ProcessUtils.readErrors(process);
         int exitCode = process.exitValue();
 
-        logExecutionResults(exitCode, output, errors);
+//        logExecutionResults(exitCode, output, errors);
 
         return new ProcessResult(process.exitValue(), output, errors, executionTime);
     }

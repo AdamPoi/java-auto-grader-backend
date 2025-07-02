@@ -4,7 +4,6 @@ import io.adampoi.java_auto_grader.domain.Assignment;
 import io.adampoi.java_auto_grader.domain.Rubric;
 import io.adampoi.java_auto_grader.model.dto.AssignmentDTO;
 import io.adampoi.java_auto_grader.model.dto.RubricDTO;
-import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.RubricRepository;
@@ -52,9 +51,9 @@ public class RubricService {
         rubricDTO.setAssignment(rubric.getAssignment() == null ? null :
                 AssignmentService.mapToDTO(rubric.getAssignment(), new AssignmentDTO()));
 
-        rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
-                .map(rubricGrade -> RubricGradeService.mapToDTO(rubricGrade, new RubricGradeDTO()))
-                .collect(Collectors.toList()));
+//        rubricDTO.setRubricGrades(rubric.getRubricGrades().stream()
+//                .map(rubricGrade -> RubricGradeService.mapToDTO(rubricGrade, new RubricGradeDTO()))
+//                .collect(Collectors.toList()));
         rubricDTO.setCreatedAt(rubric.getCreatedAt());
         rubricDTO.setUpdatedAt(rubric.getUpdatedAt());
         return rubricDTO;
@@ -72,6 +71,7 @@ public class RubricService {
                 page.getTotalElements());
         return PageResponse.from(dtoPage);
     }
+
 
     public RubricDTO get(final UUID rubricId) {
         return rubricRepository.findById(rubricId)

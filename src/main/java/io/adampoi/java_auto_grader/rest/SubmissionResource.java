@@ -2,9 +2,9 @@ package io.adampoi.java_auto_grader.rest;
 
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.filter.SubmissionFilterDef;
-import io.adampoi.java_auto_grader.model.dto.CodeFeedbackDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
+import io.adampoi.java_auto_grader.model.request.ChatCodeAnalyzerRequest;
 import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
@@ -142,8 +142,6 @@ public class SubmissionResource {
     }
 
 
-
-    // --- 1. Student submits their assignment ---
     @PostMapping
     @PreAuthorize("hasAuthority('SUBMISSION:CREATE')")
     @Operation(summary = "Create Submission", description = "Create a new student submission for an assignment")
@@ -159,9 +157,9 @@ public class SubmissionResource {
     }
 
     @PostMapping("/code-feedback")
-    public ApiSuccessResponse<CodeFeedbackDTO> submitCode(@RequestBody String code) {
-        CodeFeedbackDTO feedback = codeFeedbackService.generateFeedback(code);
-        return ApiSuccessResponse.<CodeFeedbackDTO>builder()
+    public ApiSuccessResponse<String> submitCode(@RequestBody @Valid ChatCodeAnalyzerRequest request) {
+        String feedback = codeFeedbackService.generateFeedback(request);
+        return ApiSuccessResponse.<String>builder()
                 .data(feedback)
                 .statusCode(HttpStatus.OK)
                 .build();
@@ -172,7 +170,7 @@ public class SubmissionResource {
         String response = chatService.generateCodeFeedback(javaCode);
         log.info("Generated code analysis: {}", response);
         Submission submission = submissionRepository.getById(UUID.fromString(submissionId));
-        submission.setFeedback(response);
+        submission.setAiFeedback(response);
 
         return ApiSuccessResponse.<String>builder()
                 .data(response)
@@ -180,7 +178,6 @@ public class SubmissionResource {
                 .build();
 
     }
-    // --- 2. Teacher bulk upload ---
 //    @PostMapping("/bulk")
 
     /// /    @PreAuthorize("hasAuthority('SUBMISSION:BULK_CREATE')")
@@ -204,8 +201,6 @@ public class SubmissionResource {
 //                .statusCode(HttpStatus.CREATED)
 //                .build();
 //    }
-
-    // --- 3. Tryout submission ---
     @PostMapping("/tryout")
 //    @PreAuthorize("hasAuthority('SUBMISSION:TRYOUT')")
     @Operation(summary = "Tryout Submission", description = "Try out code submission (not persisted, just returns results)")

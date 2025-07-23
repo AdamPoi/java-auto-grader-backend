@@ -15,8 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -33,6 +35,7 @@ public class UserService {
     private final AssignmentRepository assignmentRepository;
     private final SubmissionRepository submissionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+
 
     public UserService(final UserRepository userRepository, final RoleRepository roleRepository,
                        final CourseRepository courseRepository, final ClassroomRepository classroomRepository,
@@ -100,7 +103,6 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         mapToEntity(userDTO, user);
         User savedUser = userRepository.save(user);
-        mapToDTO(savedUser, new UserDTO());
         return mapToDTO(savedUser, new UserDTO());
 
     }
@@ -132,13 +134,23 @@ public class UserService {
             user.setIsActive(userDTO.getIsActive());
         }
 
-        if (!userDTO.getRoles().isEmpty()) {
-            user.setUserRoles(userDTO.getRoles().stream()
-                    .map(roleRepository::findByName)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet()));
+        if (userDTO.getRoles() != null && !userDTO.getRoles().isEmpty()) {
+            Map<String, Role> availableRoles = roleRepository.findAll().stream()
+                    .collect(Collectors.toMap(Role::getName, Function.identity()));
+
+            Set<Role> roles = userDTO.getRoles().stream()
+                    .map(roleName -> {
+                        Role role = availableRoles.get(roleName);
+                        if (role == null) {
+                            throw new IllegalArgumentException("Role not found: " + roleName);
+                        }
+                        return role;
+                    })
+                    .collect(Collectors.toSet());
+
+            user.setUserRoles(roles);
         }
+
         return user;
     }
 

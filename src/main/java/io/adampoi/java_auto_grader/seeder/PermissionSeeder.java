@@ -18,10 +18,8 @@ public class PermissionSeeder {
 
     public void seedPermissions() {
         List<String> domains = Arrays.asList(
-                "USER", "ROLE", "COURSE", "CLASSROOM",
-                "GRADE_EXECUTION", "RUBRIC", "RUBRIC_GRADE",
-                "STUDENT_CLASSROOM",
-                "ASSIGNMENT", "SUBMISSION", "SUBMISSION_CODE", "PERMISSION"
+                "USER", "ROLE", "PERMISSION", "COURSE", "CLASSROOM",
+                "RUBRIC", "SUBMISSION", "UNIT_TEST", "ASSIGNMENT"
         );
 
         List<String> actions = Arrays.asList("CREATE", "LIST", "READ", "UPDATE", "DELETE");
@@ -35,6 +33,27 @@ public class PermissionSeeder {
                     permission.setDescription(action + " permission for " + domain);
                     permissionRepository.save(permission);
                 }
+            }
+        }
+
+        // Custom permissions
+        List<String> customPermissions = Arrays.asList(
+                "SUBMISSION:GENERATE_FEEDBACK",
+                "SUBMISSION:ASSESSMENT",
+                "SUBMISSION:RUN_CODE",
+                "SUBMISSION:TEST",
+                "SUBMISSION:GRADE"
+        );
+
+        for (String name : customPermissions) {
+            if (!permissionRepository.existsByName(name)) {
+                Permission permission = new Permission();
+                permission.setName(name);
+                String[] parts = name.split(":");
+                String description = parts.length > 1 ? parts[1] + " permission for " + parts[0] : name;
+                permission.setDescription(description);
+                permission.setDescription(description);
+                permissionRepository.save(permission);
             }
         }
     }

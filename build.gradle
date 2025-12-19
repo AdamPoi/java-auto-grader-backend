@@ -80,7 +80,8 @@ dependencies {
     implementation 'javax.cache:cache-api'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
-
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
+    runtimeOnly 'org.glassfish.jaxb:jaxb-runtime:4.0.2'
     testImplementation "io.gatling.highcharts:gatling-charts-highcharts:3.10.5"
     testImplementation "io.gatling:gatling-app:3.10.5"
     testImplementation "io.gatling:gatling-recorder:3.10.5"

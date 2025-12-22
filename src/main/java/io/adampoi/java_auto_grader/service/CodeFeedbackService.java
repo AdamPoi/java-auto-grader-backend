@@ -41,7 +41,7 @@ public class CodeFeedbackService {
                 
                 **Kode Mahasiswa:**
                 ```java
-                {code}
+                {codes}
                 ```
                 
                 Feedback Anda:

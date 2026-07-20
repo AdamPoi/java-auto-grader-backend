@@ -109,7 +109,7 @@ public class SubmissionCodeResource {
 //    }
 
     @PostMapping("/run")
-//    @PreAuthorize("hasAuthority('SUBMISSION_CODE:CREATE')")
+    @PreAuthorize("hasAuthority('SUBMISSION:RUN_CODE')")
     @Operation(summary = "Run Code", description = "Run Code")
     public ApiSuccessResponse<RunCodeResponse> runCode(
             @RequestBody @Valid final RunCodeRequest submissionCodeDTO) {
@@ -122,7 +122,7 @@ public class SubmissionCodeResource {
 
 
     @PostMapping("/test")
-//    @PreAuthorize("hasAuthority('SUBMISSION_CODE:CREATE')")
+    @PreAuthorize("hasAuthority('SUBMISSION:TEST')")
     @Operation(summary = "Test Code", description = "Test Code")
     public ApiSuccessResponse<TestCodeResponse> testCodNew(
             @RequestBody @Valid final TestCodeRequest submissionCodeDTO) {

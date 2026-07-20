@@ -1,22 +1,17 @@
 package io.adampoi.java_auto_grader.service;
 
 import io.adampoi.java_auto_grader.model.enums.BuildTool;
+import io.adampoi.java_auto_grader.model.enums.CompilationStage;
 import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import io.adampoi.java_auto_grader.model.response.TestCodeResponse;
 import io.adampoi.java_auto_grader.model.type.CompilationError;
-import io.adampoi.java_auto_grader.model.type.MutationTestResult;
 import io.adampoi.java_auto_grader.model.type.ProcessResult;
 import io.adampoi.java_auto_grader.util.DockerContainerManager;
 import io.adampoi.java_auto_grader.util.TestReportParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +20,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -32,7 +29,8 @@ import java.util.concurrent.TimeUnit;
 public class TestCodeService {
 
     private static final int TIMEOUT_SECONDS = 300;
-    private static final int MUTATION_TIMEOUT_SECONDS = 600;
+    private static final Pattern MAVEN_COMPILATION_ERROR = Pattern.compile(
+            "^\\[ERROR] (.+\\.java):\\[(\\d+),(\\d+)] (.+)$");
     private final ConcurrentMap<BuildTool, ContainerInstance> containers = new ConcurrentHashMap<>();
 
     private final DockerContainerManager dockerManager;
@@ -81,26 +79,23 @@ public class TestCodeService {
 
 
             ProcessResult result = executeBuildCommand(container, workspace, buildTool);
-            ProcessResult mutationResult = null;
-            if (request.isMutationTestingEnabled() && result.isSuccess()) {
-                mutationResult = executeMutationCommand(container, workspace, buildTool, request);
-            }
             copyTestResults(container, workspace, tempDir);
-            copyMutationResults(container, workspace, tempDir);
 
             TestCodeResponse response = createResponse(result, tempDir);
-            if (request.isMutationTestingEnabled()) {
-                response.setMutationTestResult(createMutationResponse(mutationResult, tempDir));
-            }
 
-            if (!result.isSuccess() && result.getOutput().contains("error:")) {
-                List<CompilationError> compilationErrors = parseGradleCompilationErrors(result.getOutput());
+            String buildLog = combineBuildOutput(result);
+            if (!result.isSuccess()) {
+                List<CompilationError> compilationErrors = parseCompilationErrors(buildLog);
                 compilationErrors.stream().forEach(error ->
                         log.error("Compilation error in {} at line {}: {}. code snippet {} , pointer {}", error.getErrorFile(), error.getLine(), error.getErrorMessage(), error.getCodeSnippet(), error.getPointer())
                 );
                 response.setCompilationErrors(compilationErrors);
+                response.setCompilationStage(determineCompilationStage(buildLog));
             } else {
                 response.setCompilationErrors(new ArrayList<>());
+                response.setCompilationStage(result.isSuccess()
+                        ? CompilationStage.NONE
+                        : CompilationStage.UNKNOWN);
             }
 
             return response;
@@ -154,13 +149,6 @@ public class TestCodeService {
         return dockerManager.executeCommand(container.getName(), command, TIMEOUT_SECONDS);
     }
 
-    private ProcessResult executeMutationCommand(ContainerInstance container, String workspace, BuildTool buildTool, TestCodeRequest request)
-            throws IOException, InterruptedException {
-        String command = mutationCommand(buildTool, workspace, request);
-        log.info("Executing mutation command in container {}: {}", container.getName(), command);
-        return dockerManager.executeCommand(container.getName(), command, MUTATION_TIMEOUT_SECONDS);
-    }
-
     private String buildCommand(BuildTool buildTool, String workspace) {
         String baseCommand = String.format("cd %s && ", workspace);
         switch (buildTool) {
@@ -177,26 +165,6 @@ public class TestCodeService {
         }
     }
 
-    private String mutationCommand(BuildTool buildTool, String workspace, TestCodeRequest request) {
-        String baseCommand = String.format("cd %s && ", workspace);
-        switch (buildTool) {
-            case GRADLE:
-                return baseCommand + "gradle pitest " +
-                        "--rerun-tasks " +
-                        "--daemon --parallel --build-cache --configuration-cache " +
-                        "--console=plain " +
-                        "-PpitestTargetClasses=\"" + projectSetupService.submittedSourceTargetClasses(request) + "\"";
-            case MAVEN:
-                return baseCommand + "mvn org.pitest:pitest-maven:mutationCoverage " +
-                        "-Dmaven.repo.local=/workspace/.m2/repository " +
-                        "-DtargetClasses=\"" + projectSetupService.submittedSourceTargetClasses(request) + "\" " +
-                        "-DtargetTests=workspace.* " +
-                        "-DoutputFormats=XML";
-            default:
-                throw new IllegalArgumentException("Unsupported build tool: " + buildTool);
-        }
-    }
-
     private void copyTestResults(ContainerInstance container, String workspace, Path tempDir) {
         try {
             String testResultsGradle = workspace + "/build/test-results/test";
@@ -206,18 +174,6 @@ public class TestCodeService {
             dockerManager.copyFromContainer(container.getName(), testResultsMaven, tempDir.resolve("maven-results"));
         } catch (Exception e) {
             log.warn("Failed to copy test results", e);
-        }
-    }
-
-    private void copyMutationResults(ContainerInstance container, String workspace, Path tempDir) {
-        try {
-            String mutationResultsGradle = workspace + "/build/reports/pitest";
-            String mutationResultsMaven = workspace + "/target/pit-reports";
-
-            dockerManager.copyFromContainer(container.getName(), mutationResultsGradle, tempDir.resolve("gradle-pitest-results"));
-            dockerManager.copyFromContainer(container.getName(), mutationResultsMaven, tempDir.resolve("maven-pitest-results"));
-        } catch (Exception e) {
-            log.warn("Failed to copy mutation test results", e);
         }
     }
 
@@ -238,130 +194,14 @@ public class TestCodeService {
         return response;
     }
 
-    private MutationTestResult createMutationResponse(ProcessResult mutationResult, Path tempDir) {
-        if (mutationResult == null) {
-            return MutationTestResult.builder()
-                    .enabled(true)
-                    .success(false)
-                    .error("Mutation testing was not executed because regular tests failed")
-                    .mutations(new ArrayList<>())
-                    .build();
-        }
-
-        MutationTestResult parsedResult = parseMutationReports(tempDir.resolve("gradle-pitest-results"));
-        if (parsedResult.getMutations().isEmpty()) {
-            parsedResult = parseMutationReports(tempDir.resolve("maven-pitest-results"));
-        }
-
-        parsedResult.setEnabled(true);
-        parsedResult.setSuccess(mutationResult.isSuccess());
-        if (!mutationResult.isSuccess()) {
-            parsedResult.setError(firstNonBlank(mutationResult.getErrors(), mutationResult.getOutput()));
-        }
-
-        return parsedResult;
-    }
-
-    private MutationTestResult parseMutationReports(Path reportDir) {
-        MutationTestResult result = MutationTestResult.builder()
-                .enabled(true)
-                .success(false)
-                .mutations(new ArrayList<>())
-                .build();
-
-        if (!Files.exists(reportDir)) {
-            return result;
-        }
-
-        try {
-            Path mutationXml = Files.walk(reportDir)
-                    .filter(path -> path.getFileName().toString().equals("mutations.xml"))
-                    .findFirst()
-                    .orElse(null);
-
-            if (mutationXml == null) {
-                return result;
-            }
-
-            result.setReportPath(mutationXml.toString());
-            List<MutationTestResult.Mutation> mutations = parseMutationXml(mutationXml);
-            result.setMutations(mutations);
-            result.setTotalMutations(mutations.size());
-            result.setKilledMutations(countMutations(mutations, "KILLED"));
-            result.setSurvivedMutations(countMutations(mutations, "SURVIVED"));
-            result.setNoCoverageMutations(countMutations(mutations, "NO_COVERAGE"));
-            result.setTimedOutMutations(countMutations(mutations, "TIMED_OUT"));
-            result.setMemoryErrorMutations(countMutations(mutations, "MEMORY_ERROR"));
-            result.setNonViableMutations(countMutations(mutations, "NON_VIABLE"));
-            result.setRunErrorMutations(countMutations(mutations, "RUN_ERROR"));
-            result.setMutationScore(result.getTotalMutations() == 0
-                    ? 100.0
-                    : (result.getKilledMutations() * 100.0) / result.getTotalMutations());
-
-            return result;
-        } catch (Exception e) {
-            log.warn("Failed to parse mutation reports from {}", reportDir, e);
-            result.setError("Failed to parse mutation report: " + e.getMessage());
-            return result;
-        }
-    }
-
-    private List<MutationTestResult.Mutation> parseMutationXml(Path mutationXml) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(mutationXml.toFile());
-        NodeList mutationNodes = document.getElementsByTagName("mutation");
-        List<MutationTestResult.Mutation> mutations = new ArrayList<>();
-
-        for (int i = 0; i < mutationNodes.getLength(); i++) {
-            Element mutation = (Element) mutationNodes.item(i);
-            mutations.add(MutationTestResult.Mutation.builder()
-                    .sourceFile(childText(mutation, "sourceFile"))
-                    .mutatedClass(childText(mutation, "mutatedClass"))
-                    .mutatedMethod(childText(mutation, "mutatedMethod"))
-                    .lineNumber(parseInteger(childText(mutation, "lineNumber")))
-                    .mutator(childText(mutation, "mutator"))
-                    .description(childText(mutation, "description"))
-                    .status(mutation.getAttribute("status"))
-                    .killingTest(childText(mutation, "killingTest"))
-                    .build());
-        }
-
-        return mutations;
-    }
-
-    private String childText(Element parent, String tagName) {
-        NodeList nodes = parent.getElementsByTagName(tagName);
-        return nodes.getLength() == 0 ? null : nodes.item(0).getTextContent();
-    }
-
-    private Integer parseInteger(String value) {
-        try {
-            return value == null || value.isBlank() ? null : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private int countMutations(List<MutationTestResult.Mutation> mutations, String status) {
-        return (int) mutations.stream()
-                .filter(mutation -> status.equals(mutation.getStatus()))
-                .count();
-    }
-
-    private String firstNonBlank(String first, String second) {
-        return first != null && !first.isBlank() ? first : second;
-    }
-
     private TestCodeResponse createErrorResponse(String errorMessage) {
         TestCodeResponse response = new TestCodeResponse();
         response.setSuccess(false);
         response.setError(errorMessage);
         response.setExitCode(-1);
+        response.setTestSuites(new ArrayList<>());
+        response.setCompilationErrors(new ArrayList<>());
+        response.setCompilationStage(CompilationStage.UNKNOWN);
         return response;
     }
 
@@ -387,31 +227,67 @@ public class TestCodeService {
         );
     }
 
-    private List<CompilationError> parseGradleCompilationErrors(String buildOutput) {
+    String combineBuildOutput(ProcessResult result) {
+        return String.join("\n",
+                result.getOutput() == null ? "" : result.getOutput(),
+                result.getErrors() == null ? "" : result.getErrors());
+    }
+
+    CompilationStage determineCompilationStage(String buildOutput) {
+        if (buildOutput == null) {
+            return CompilationStage.UNKNOWN;
+        }
+        if (buildOutput.contains("> Task :compileTestJava FAILED") ||
+                (buildOutput.contains("maven-compiler-plugin") && buildOutput.contains(":testCompile")) ||
+                buildOutput.contains("test compilation failure")) {
+            return CompilationStage.INSTRUCTOR_TEST;
+        }
+        if (buildOutput.contains("> Task :compileJava FAILED") ||
+                (buildOutput.contains("maven-compiler-plugin") && buildOutput.contains(":compile")) ||
+                buildOutput.contains("compilation failure")) {
+            return CompilationStage.STUDENT_SOURCE;
+        }
+        return CompilationStage.UNKNOWN;
+    }
+
+    List<CompilationError> parseCompilationErrors(String buildOutput) {
+        if (buildOutput == null || buildOutput.isBlank()) {
+            return new ArrayList<>();
+        }
         String[] lines = buildOutput.split("\n");
         List<CompilationError> errors = new ArrayList<>();
 
-        boolean inCompileJavaSection = false;
+        boolean inCompilationSection = false;
 
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
 
-            // Start processing when we hit the compileJava FAILED task
-            if (line.contains("> Task :compileJava FAILED")) {
-                inCompileJavaSection = true;
+            Matcher mavenError = MAVEN_COMPILATION_ERROR.matcher(line);
+            if (mavenError.matches()) {
+                String filePath = mavenError.group(1);
+                errors.add(CompilationError.builder()
+                        .errorFile(Path.of(filePath).getFileName().toString())
+                        .line(Integer.parseInt(mavenError.group(2)) - 1)
+                        .errorMessage(mavenError.group(4))
+                        .build());
+                continue;
+            }
+
+            if (line.contains("> Task :compileJava FAILED") ||
+                    line.contains("> Task :compileTestJava FAILED")) {
+                inCompilationSection = true;
                 continue;
             }
 
             // Stop processing when we hit certain sections that mark the end of the error list
-            if (inCompileJavaSection && (line.startsWith("FAILURE:") ||
+            if (inCompilationSection && (line.startsWith("FAILURE:") ||
                     line.startsWith("* What went wrong:") ||
                     line.startsWith("[Incubating]") ||
                     line.matches("\\d+ errors?"))) {
                 break;
             }
 
-            // Only process errors in the compileJava section
-            if (inCompileJavaSection && line.contains(".java:") && line.contains(": error:")) {
+            if (inCompilationSection && line.contains(".java:") && line.contains(": error:")) {
                 String fileName = extractFileNameFromGradleError(line);
                 int lineNumber = extractLineNumberFromGradleError(line);
                 String errorMessage = extractErrorMessageFromGradleError(line);

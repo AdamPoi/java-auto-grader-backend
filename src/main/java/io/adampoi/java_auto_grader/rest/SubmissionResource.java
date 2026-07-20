@@ -75,6 +75,7 @@ public class SubmissionResource {
     }
 
     @PostMapping("/compile")
+    @PreAuthorize("hasAuthority('SUBMISSION:RUN_CODE')")
     @ApiResponse(responseCode = "200")
     @Operation(summary = "Compile Submission", description = "Compile a submission")
     public ApiSuccessResponse<String> compile(@Valid @RequestBody SubmissionCompileDTO submissionDTO)
@@ -157,6 +158,7 @@ public class SubmissionResource {
     }
 
     @PostMapping("/code-feedback")
+    @PreAuthorize("hasAuthority('SUBMISSION:GENERATE_FEEDBACK')")
     public ApiSuccessResponse<String> submitCode(@RequestBody @Valid ChatCodeAnalyzerRequest request) {
         String feedback = codeFeedbackService.generateFeedback(request);
         return ApiSuccessResponse.<String>builder()
@@ -165,7 +167,8 @@ public class SubmissionResource {
                 .build();
     }
 
-    @GetMapping("/{userId}/analyze-code")
+    @PostMapping("/{submissionId}/analyze-code")
+    @PreAuthorize("hasAuthority('SUBMISSION:GENERATE_FEEDBACK')")
     public ApiSuccessResponse<String> generateCodeAnalysis(@PathVariable String submissionId, @RequestBody String javaCode) {
         String response = chatService.generateCodeFeedback(javaCode);
         log.info("Generated code analysis: {}", response);
@@ -202,7 +205,7 @@ public class SubmissionResource {
 //                .build();
 //    }
     @PostMapping("/tryout")
-//    @PreAuthorize("hasAuthority('SUBMISSION:TRYOUT')")
+    @PreAuthorize("hasAuthority('SUBMISSION:TEST')")
     @Operation(summary = "Tryout Submission", description = "Try out code submission (not persisted, just returns results)")
     @ApiResponse(responseCode = "200", description = "Tryout results returned")
     public ApiSuccessResponse<SubmissionDTO> tryoutSubmission(

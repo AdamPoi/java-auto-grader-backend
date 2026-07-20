@@ -359,14 +359,12 @@ public class SubmissionService {
             boolean persist
     ) {
         // 1. Run Tests
-        List<CodeFile> rubricTestFiles = resolveRubricTestFiles(assignment, testFiles);
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(
                 TestCodeRequest.builder()
                         .sourceFiles(sourceFiles)
-                        .testFiles(rubricTestFiles)
+                        .testFiles(testFiles != null ? testFiles : Collections.emptyList())
                         .mainClassName(mainClassName)
                         .buildTool(buildTool)
-                        .mutationTestingEnabled(type != Submission.SubmissionType.TRYOUT)
                         .build()
         );
         // 2. Build SubmissionCodes
@@ -407,7 +405,7 @@ public class SubmissionService {
         codes.forEach(code -> code.setSubmission(submission));
         testExecutions.forEach(exec -> exec.setSubmission(submission));
         if (persist) {
-            if (testCodeResponse.getCompilationErrors().isEmpty()) {
+            if (testCodeResponse.getCompilationErrors() == null || testCodeResponse.getCompilationErrors().isEmpty()) {
 
                 finalSubmission = submissionRepository.save(submission);
                 testExecutionRepository.saveAll(testExecutions);
@@ -420,36 +418,33 @@ public class SubmissionService {
         SubmissionDTO submittedSubmission = SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
 
         submittedSubmission.setCompilationErrors(testCodeResponse.getCompilationErrors());
-        submittedSubmission.setMutationTestResult(testCodeResponse.getMutationTestResult());
         return submittedSubmission;
     }
 
-    private List<CodeFile> resolveRubricTestFiles(Assignment assignment, List<CodeFile> requestTestFiles) {
-        if (requestTestFiles != null && !requestTestFiles.isEmpty()) {
-            return requestTestFiles;
-        }
 
-        if (assignment != null && assignment.getTestCode() != null && !assignment.getTestCode().isBlank()) {
-            return List.of(CodeFile.builder()
-                    .fileName("MainTest.java")
-                    .content(assignment.getTestCode())
-                    .build());
-        }
-
-        return Collections.emptyList();
-    }
-
-
-    private TestExecution mapRubricToTestExecution(
+    TestExecution mapRubricToTestExecution(
             RubricGrade rubricGrade,
             TestCodeResponse testCodeResponse,
             Submission submission
     ) {
-        String expectedMethodName = rubricGrade.getName() + "()";
-
         if (testCodeResponse == null || testCodeResponse.getTestSuites() == null) {
             log.warn("TestCodeResponse or test suites is null for rubric: {}", rubricGrade.getName());
-            return createFailedTestExecution(rubricGrade, submission, "Test execution failed - no test results available");
+            return createNotExecutedTestExecution(rubricGrade, submission,
+                    "Test execution did not produce test results");
+        }
+
+        boolean hasAnyTestCases = testCodeResponse.getTestSuites().stream()
+                .filter(Objects::nonNull)
+                .map(suite -> suite.getTestCases())
+                .filter(Objects::nonNull)
+                .anyMatch(testCases -> !testCases.isEmpty());
+
+        if (!hasAnyTestCases) {
+            String stage = testCodeResponse.getCompilationStage() == null
+                    ? "unknown build stage"
+                    : testCodeResponse.getCompilationStage().name();
+            return createNotExecutedTestExecution(rubricGrade, submission,
+                    "Test was not executed because the build failed during " + stage);
         }
 
         Optional<TestCaseResult> maybeCase = testCodeResponse.getTestSuites().stream()
@@ -471,7 +466,8 @@ public class SubmissionService {
                     .build();
         } else {
             log.warn("No matching test case found for rubric grade: {}", rubricGrade.getName());
-            return createFailedTestExecution(rubricGrade, submission, "No matching test case found for rubric grade: " + rubricGrade.getName());
+            return createNotExecutedTestExecution(rubricGrade, submission,
+                    "No executed test case matched rubric grade: " + rubricGrade.getName());
         }
     }
 
@@ -480,27 +476,20 @@ public class SubmissionService {
             return false;
         }
 
-        String methodName = testCase.getMethodName();
-        String expectedName = rubricName + "()";
+        String normalizedMethod = normalizeTestIdentifier(testCase.getMethodName());
+        String normalizedRubric = normalizeTestIdentifier(rubricName);
 
-        // Exact match
-        if (methodName.equals(expectedName)) {
-            return true;
-        }
+        return normalizedMethod.equals(normalizedRubric) ||
+                (normalizedMethod.startsWith("test") &&
+                        normalizedMethod.substring(4).equals(normalizedRubric));
+    }
 
-        // Case-insensitive match
-        if (methodName.equalsIgnoreCase(expectedName)) {
-            return true;
-        }
-
-        // Match without parentheses
-        if (methodName.equals(rubricName)) {
-            return true;
-        }
-
-        // Match with test prefix (e.g., "testMethodName" matches "methodName")
-        return methodName.toLowerCase().startsWith("test") &&
-                methodName.substring(4).equalsIgnoreCase(rubricName);
+    private String normalizeTestIdentifier(String value) {
+        return value
+                .replaceAll("\\[[^]]*]$", "")
+                .replaceAll("\\([^)]*\\)", "")
+                .replaceAll("[^A-Za-z0-9]", "")
+                .toLowerCase(Locale.ROOT);
     }
 
     private TestExecution.ExecutionStatus parseExecutionStatus(String status) {
@@ -516,7 +505,7 @@ public class SubmissionService {
         }
     }
 
-    private TestExecution createFailedTestExecution(RubricGrade rubricGrade, Submission submission, String errorMessage) {
+    private TestExecution createNotExecutedTestExecution(RubricGrade rubricGrade, Submission submission, String errorMessage) {
         return TestExecution.builder()
                 .rubricGrade(rubricGrade)
                 .submission(submission)
@@ -524,7 +513,7 @@ public class SubmissionService {
                 .executionTime(0L)
                 .output("")
                 .error(errorMessage)
-                .status(TestExecution.ExecutionStatus.FAILED)
+                .status(TestExecution.ExecutionStatus.NOT_EXECUTED)
                 .build();
     }
 

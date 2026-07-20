@@ -51,6 +51,7 @@ public class TestExecution extends Auditable {
         RUNNING,
         PASSED,
         FAILED,
+        NOT_EXECUTED,
         TIMEOUT,
         SKIPPED
     }

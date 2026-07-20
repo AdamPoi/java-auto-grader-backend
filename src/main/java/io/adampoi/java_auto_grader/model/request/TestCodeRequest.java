@@ -17,6 +17,7 @@ public class TestCodeRequest {
     private List<CodeFile> sourceFiles;
     private List<CodeFile> testFiles;
     private String mainClassName;
+    private boolean mutationTestingEnabled;
 
     @Pattern(regexp = "gradle|maven",
             message = "Build Tool must be one of: gradle, maven")

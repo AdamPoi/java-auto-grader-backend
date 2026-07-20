@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class DockerContainerManager {
 
-    private static final int DEFAULT_TIMEOUT_SECONDS = 60;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 180;
     private static final String GRADLE_USER_HOME = "/workspace/.gradle";
     private static final String MAVEN_USER_HOME = "/workspace/.m2";
 

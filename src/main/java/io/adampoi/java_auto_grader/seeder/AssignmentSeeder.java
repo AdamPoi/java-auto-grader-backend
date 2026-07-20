@@ -1,19 +1,18 @@
 package io.adampoi.java_auto_grader.seeder;
 
 import io.adampoi.java_auto_grader.domain.*;
-import io.adampoi.java_auto_grader.repository.AssignmentRepository;
-import io.adampoi.java_auto_grader.repository.CourseRepository;
-import io.adampoi.java_auto_grader.repository.RoleRepository;
-import io.adampoi.java_auto_grader.repository.UserRepository;
+import io.adampoi.java_auto_grader.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class AssignmentSeeder {
@@ -22,20 +21,40 @@ public class AssignmentSeeder {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final RubricRepository rubricRepository;
+    private final RubricGradeRepository rubricGradeRepository;
 
     public AssignmentSeeder(AssignmentRepository assignmentRepository,
-                            CourseRepository courseRepository, UserRepository userRepository, RoleRepository roleRepository) {
+                            CourseRepository courseRepository,
+                            UserRepository userRepository,
+                            RoleRepository roleRepository,
+                            RubricRepository rubricRepository,
+                            RubricGradeRepository rubricGradeRepository) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.rubricRepository = rubricRepository;
+        this.rubricGradeRepository = rubricGradeRepository;
     }
 
+    @Transactional
     public void seedAssignments() {
-        Role teacherRole = roleRepository.findByName("teacher").orElse(null);
-        List<User> teachers = userRepository.findByUserRolesContaining(Collections.singleton(teacherRole));
         if (assignmentRepository.count() > 0) {
-            System.out.println("Assignments already exist, skipping assignment seeding...");
+            List<Assignment> existingAssignments = assignmentRepository.findAll();
+            seedAssessmentDefinitions(existingAssignments);
+            System.out.println("Assignments already exist; ensured rubric, rubric-grade, and block-test seed data.");
+            return;
+        }
+
+        Role teacherRole = roleRepository.findByName("teacher").orElse(null);
+        if (teacherRole == null) {
+            System.out.println("Teacher role not found, skipping assignment seeding...");
+            return;
+        }
+        List<User> teachers = userRepository.findByUserRolesContaining(Collections.singleton(teacherRole));
+        if (teachers.isEmpty()) {
+            System.out.println("No teacher user found, skipping assignment seeding...");
             return;
         }
 
@@ -58,7 +77,7 @@ public class AssignmentSeeder {
                 Assignment assignment = new Assignment();
                 assignment.setTitle(data.getTitle());
                 assignment.setDescription(data.getDescription());
-                assignment.setDueDate(OffsetDateTime.now().plusDays(7 + (i * 7)));//weekly
+                assignment.setDueDate(OffsetDateTime.now().plusDays(7 + (i * 7L)));//weekly
 
                 AssignmentOptions options = new AssignmentOptions();
                 options.setIsTimed(true);          // or false, as needed
@@ -82,16 +101,268 @@ public class AssignmentSeeder {
                 totalAssignments++;
             }
 
-            System.out.println(String.format("Created %d assignments for course: %s - %s",
+            System.out.printf("Created %d assignments for course: %s - %s%n",
                     assignmentDataList.size(),
                     course.getCode(),
-                    course.getName()));
+                    course.getName());
         }
 
         List<Assignment> savedAssignments = assignmentRepository.saveAll(assignmentsToSave);
+        seedAssessmentDefinitions(savedAssignments);
         System.out.println("Successfully seeded " + savedAssignments.size() + " assignments across " + courses.size() + " courses");
     }
 
+    /**
+     * Creates the same relationship produced by the frontend test builder:
+     * Assignment.testCode @Test method name -> RubricGrade.name -> Rubric.
+     */
+    private void seedAssessmentDefinitions(List<Assignment> assignments) {
+        int createdRubrics = 0;
+        int createdRubricGrades = 0;
+
+        for (Assignment assignment : assignments) {
+            EvaluationSpec evaluationSpec = getEvaluationSpec(assignment.getTitle());
+            assignment.setTestCode(buildBlockCompatibleTestCode(evaluationSpec));
+            assignment.setTotalPoints(100);
+            assignmentRepository.save(assignment);
+
+            Map<String, Rubric> rubricsByName = rubricRepository.findByAssignmentId(assignment.getId()).stream()
+                    .collect(Collectors.toMap(
+                            Rubric::getName,
+                            Function.identity(),
+                            (first, ignored) -> first,
+                            LinkedHashMap::new
+                    ));
+
+            Map<String, RubricGrade> gradesByName = rubricGradeRepository.findByAssignmentId(assignment.getId()).stream()
+                    .collect(Collectors.toMap(
+                            RubricGrade::getName,
+                            Function.identity(),
+                            (first, ignored) -> first,
+                            LinkedHashMap::new
+                    ));
+
+            for (SeedCriterion criterion : buildCriteria(evaluationSpec)) {
+                Rubric rubric = rubricsByName.get(criterion.rubricName());
+                if (rubric == null) {
+                    rubric = Rubric.builder()
+                            .name(criterion.rubricName())
+                            .description(criterion.description())
+                            .points(criterion.points())
+                            .assignment(assignment)
+                            .build();
+                    rubric = rubricRepository.save(rubric);
+                    rubricsByName.put(rubric.getName(), rubric);
+                    createdRubrics++;
+                } else {
+                    rubric.setDescription(criterion.description());
+                    rubric.setPoints(criterion.points());
+                    rubric.setAssignment(assignment);
+                    rubric = rubricRepository.save(rubric);
+                }
+
+                RubricGrade rubricGrade = gradesByName.get(criterion.testMethodName());
+                if (rubricGrade == null) {
+                    rubricGrade = RubricGrade.builder()
+                            .id(stableRubricGradeId(assignment.getId(), criterion.testMethodName()))
+                            .name(criterion.testMethodName())
+                            .gradeType(RubricGrade.GradeType.AUTOMATIC)
+                            .rubric(rubric)
+                            .assignment(assignment)
+                            .build();
+                    createdRubricGrades++;
+                } else {
+                    rubricGrade.setGradeType(RubricGrade.GradeType.AUTOMATIC);
+                    rubricGrade.setRubric(rubric);
+                    rubricGrade.setAssignment(assignment);
+                }
+                rubricGradeRepository.save(rubricGrade);
+            }
+        }
+
+        System.out.printf(
+                "Assessment definitions ready for %d assignment variations (%d rubrics and %d rubric grades created).%n",
+                assignments.size(), createdRubrics, createdRubricGrades
+        );
+    }
+
+    private UUID stableRubricGradeId(UUID assignmentId, String testMethodName) {
+        String source = assignmentId + ":" + testMethodName;
+        return UUID.nameUUIDFromBytes(source.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private List<SeedCriterion> buildCriteria(EvaluationSpec spec) {
+        return List.of(
+                new SeedCriterion(
+                        "Program Structure",
+                        "Checks that class " + spec.className() + " exists and can be parsed by the block-test JavaParser setup.",
+                        25,
+                        "testClassStructure"
+                ),
+                new SeedCriterion(
+                        "Required Members",
+                        "Checks the required fields or methods: " + String.join(", ", spec.requiredMembers()) + ".",
+                        35,
+                        "testRequiredMembers"
+                ),
+                new SeedCriterion(
+                        "Logic and Specification",
+                        "Checks assignment-specific constructs and expected specification markers: "
+                                + String.join(", ", spec.requiredTokens()) + ".",
+                        40,
+                        "testRequiredLogic"
+                )
+        );
+    }
+
+    private String buildBlockCompatibleTestCode(EvaluationSpec spec) {
+        String requiredMembers = spec.requiredMembers().stream()
+                .map(this::quoteJavaString)
+                .collect(Collectors.joining(", "));
+        String requiredTokens = spec.requiredTokens().stream()
+                .map(this::quoteJavaString)
+                .collect(Collectors.joining(", "));
+
+        return """
+                package workspace;
+                
+                import com.github.javaparser.ast.CompilationUnit;
+                import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+                import com.github.javaparser.utils.SourceRoot;
+                import org.assertj.core.api.Assertions;
+                import org.junit.jupiter.api.BeforeAll;
+                import org.junit.jupiter.api.Test;
+                
+                import java.io.IOException;
+                import java.nio.file.Paths;
+                import java.util.List;
+                import java.util.stream.Stream;
+                
+                public class MainTest {
+                    private static final String SOURCE_PATH = "src/main/java/workspace";
+                    private static List<CompilationUnit> allCompilationUnits;
+                
+                    @BeforeAll
+                    static void setup() throws IOException {
+                        SourceRoot sourceRoot = new SourceRoot(Paths.get(SOURCE_PATH));
+                        allCompilationUnits = sourceRoot.tryToParse("").stream()
+                                .filter(result -> result.isSuccessful() && result.getResult().isPresent())
+                                .map(result -> result.getResult().orElseThrow())
+                                .toList();
+                        Assertions.assertThat(allCompilationUnits).isNotEmpty();
+                    }
+                
+                    private static ClassOrInterfaceDeclaration targetClass() {
+                        return allCompilationUnits.stream()
+                                .flatMap(unit -> unit.findAll(ClassOrInterfaceDeclaration.class).stream())
+                                .filter(type -> type.getNameAsString().equals("%s"))
+                                .findFirst()
+                                .orElse(null);
+                    }
+                
+                    @Test
+                    void testClassStructure() {
+                        Assertions.assertThat(targetClass())
+                                .as("Static test: Expect class named '%s' to exist in some file")
+                                .isNotNull();
+                    }
+                
+                    @Test
+                    void testRequiredMembers() {
+                        ClassOrInterfaceDeclaration target = targetClass();
+                        Assertions.assertThat(target).isNotNull();
+                
+                        List<String> declaredMembers = Stream.concat(
+                                        target.getFields().stream()
+                                                .flatMap(field -> field.getVariables().stream())
+                                                .map(variable -> variable.getNameAsString()),
+                                        target.getMethods().stream().map(method -> method.getNameAsString())
+                                )
+                                .toList();
+                
+                        Assertions.assertThat(declaredMembers)
+                                .as("Required members for %s")
+                                .contains(%s);
+                    }
+                
+                    @Test
+                    void testRequiredLogic() {
+                        ClassOrInterfaceDeclaration target = targetClass();
+                        Assertions.assertThat(target).isNotNull();
+                        Assertions.assertThat(target.toString())
+                                .as("Required logic and specification markers for %s")
+                                .contains(%s);
+                    }
+                }
+                """.formatted(
+                spec.className(),
+                spec.className(),
+                spec.className(),
+                requiredMembers,
+                spec.className(),
+                requiredTokens
+        );
+    }
+
+    private String quoteJavaString(String value) {
+        return "\"" + value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n") + "\"";
+    }
+
+    private EvaluationSpec getEvaluationSpec(String assignmentTitle) {
+        return switch (assignmentTitle) {
+            case "Hello World & Basic Syntax" -> new EvaluationSpec(
+                    "HelloWorld", List.of("main"),
+                    List.of("System.out.println", "Hello, Java Learner!"));
+            case "Variables and Primitive Data Types" -> new EvaluationSpec(
+                    "DataTypeFun", List.of("main"),
+                    List.of("age", "height", "isStudent", "initial", "firstName"));
+            case "Basic Arithmetic Operations" -> new EvaluationSpec(
+                    "SimpleMath", List.of("main"),
+                    List.of("num1", "num2", "+", "-", "*", "/", "%"));
+            case "Conditional Statements (If-Else)" -> new EvaluationSpec(
+                    "NumberChecker", List.of("main"),
+                    List.of("if", "else", "positive", "negative", "zero"));
+            case "Grade Calculator with Switch" -> new EvaluationSpec(
+                    "GradeMessage", List.of("main"),
+                    List.of("switch", "case", "default", "break"));
+            case "Loops: Sum of N Numbers" -> new EvaluationSpec(
+                    "Summation", List.of("main"),
+                    List.of("for", "while", "5050"));
+            case "Simple Calculator Methods" -> new EvaluationSpec(
+                    "Calculator", List.of("add", "subtract", "multiply", "divide"),
+                    List.of("return a + b", "return a - b", "return a * b", "double"));
+            case "Greeting Method with Parameters" -> new EvaluationSpec(
+                    "Greeter", List.of("greetUser", "main"),
+                    List.of("String name", "Hello,", "Welcome to Java exercises"));
+            case "Method Overloading - Area Calculator" -> new EvaluationSpec(
+                    "AreaCalculator", List.of("calculateArea", "main"),
+                    List.of("Math.PI", "radius", "length", "width", "isTriangle"));
+            case "Basic Array Declaration and Access" -> new EvaluationSpec(
+                    "ArrayBasics", List.of("main"),
+                    List.of("int[]", "numbers[0]", "numbers[2]", "length - 1"));
+            case "Array Iteration and Sum" -> new EvaluationSpec(
+                    "ArraySum", List.of("main"),
+                    List.of("double[]", "for", "sum", "average"));
+            case "Finding Max/Min in Array" -> new EvaluationSpec(
+                    "ArrayMinMax", List.of("main"),
+                    List.of("int[]", "for", "if", "max", "min"));
+            case "Basic Class and Object Creation" -> new EvaluationSpec(
+                    "Dog", List.of("name", "breed", "speak"),
+                    List.of("Dog(String name, String breed)", "says Woof"));
+            case "Encapsulation with Getters and Setters" -> new EvaluationSpec(
+                    "Dog", List.of("name", "breed", "getName", "setName", "getBreed", "setBreed"),
+                    List.of("private String name", "private String breed", "this.name", "this.breed"));
+            case "Static Members and Methods" -> new EvaluationSpec(
+                    "Circle", List.of("radius", "PI", "numberOfCircles", "getArea", "getTotalCircles"),
+                    List.of("static final double PI", "numberOfCircles++", "PI * radius * radius"));
+            default -> new EvaluationSpec(
+                    "Main", List.of("main"),
+                    List.of("public class Main", "public static void main"));
+        };
+    }
 
     private List<AssignmentData> getAssignmentsForCourse(String courseCode) {
         List<AssignmentData> assignments = new ArrayList<>();
@@ -552,6 +823,12 @@ public class AssignmentSeeder {
         return assignments;
     }
 
+    private record EvaluationSpec(String className, List<String> requiredMembers, List<String> requiredTokens) {
+    }
+
+    private record SeedCriterion(String rubricName, String description, int points, String testMethodName) {
+    }
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -561,4 +838,3 @@ public class AssignmentSeeder {
         private String resources;
     }
 }
-

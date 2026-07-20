@@ -37,6 +37,8 @@ public class TestSubmitRequest {
 
     private String type;
 
+    private boolean mutationTestingEnabled;
+
     public interface CreateGroup {
     }
 
@@ -45,4 +47,3 @@ public class TestSubmitRequest {
 
 
 }
-

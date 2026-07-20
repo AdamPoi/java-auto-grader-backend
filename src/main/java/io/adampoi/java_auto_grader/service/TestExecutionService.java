@@ -66,11 +66,11 @@ public class TestExecutionService {
                 .testFiles(request.getTestFiles())
                 .mainClassName("Main.java")
                 .buildTool(request.getBuildTool())
+                .mutationTestingEnabled(request.isMutationTestingEnabled())
                 .build();
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(testCodeRequest);
 
         List<RubricGrade> rubricGrades = rubricGradeRepository.findByAssignmentId(UUID.fromString(request.getAssignmentId()));
-        List<TestExecutionDTO> executionResultDTOs = new ArrayList<>();
         List<TestExecution> executionResults = new ArrayList<>();
         Submission submission = new Submission();
         submission.setAssignment(assignmentRepository.getById(UUID.fromString(request.getAssignmentId())));
@@ -91,6 +91,7 @@ public class TestExecutionService {
 
         submission.setSubmissionCodes(new HashSet<>(submissionCodes));
 
+        int earnedPoints = 0;
         for (RubricGrade rubricGrade : rubricGrades) {
 
             TestCaseResult matchingTestCase = testCodeResponse.getTestSuites().stream()
@@ -109,15 +110,19 @@ public class TestExecutionService {
                 testExecution.setOutput(testCodeResponse.getError());
                 testExecution.setError(matchingTestCase.getFailureMessage());
                 testExecution.setStatus(TestExecution.ExecutionStatus.valueOf(matchingTestCase.getStatus()));
+                if (testExecution.getStatus() == TestExecution.ExecutionStatus.PASSED
+                        && rubricGrade.getRubric() != null) {
+                    earnedPoints += rubricGrade.getRubric().getPoints();
+                }
 
             } else {
                 testExecution.setStatus(TestExecution.ExecutionStatus.FAILED);
                 log.warn("No matching test case found for rubric grade: {}", rubricGrade.getName());
             }
-            executionResultDTOs.add(mapToDTO(testExecution, new TestExecutionDTO()));
             executionResults.add(testExecution);
         }
 
+        submission.setTotalPoints(earnedPoints);
         submission.setStatus(testCodeResponse.isSuccess() ? Submission.SubmissionStatus.COMPLETED : Submission.SubmissionStatus.FAILED);
         submission.setTestExecutions(new HashSet<>(executionResults));
         Submission finalSubmission = submission;
@@ -132,9 +137,6 @@ public class TestExecutionService {
             submission.setManualFeedback("All tests executed successfully.");
             finalSubmission = submissionRepository.save(submission);
         }
-
-        finalSubmission.setSubmissionCodes(null);
-        finalSubmission.setTestExecutions(null);
 
         return SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
     }

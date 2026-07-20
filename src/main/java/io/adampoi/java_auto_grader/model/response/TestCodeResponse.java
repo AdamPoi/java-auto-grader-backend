@@ -1,6 +1,7 @@
 package io.adampoi.java_auto_grader.model.response;
 
 import io.adampoi.java_auto_grader.model.type.CompilationError;
+import io.adampoi.java_auto_grader.model.type.MutationTestResult;
 import io.adampoi.java_auto_grader.model.type.TestSuiteResult;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,4 +22,5 @@ public class TestCodeResponse {
     private long executionTime;
     private List<TestSuiteResult> testSuites;
     private List<CompilationError> compilationErrors;
+    private MutationTestResult mutationTestResult;
 }

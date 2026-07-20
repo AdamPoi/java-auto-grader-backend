@@ -359,12 +359,14 @@ public class SubmissionService {
             boolean persist
     ) {
         // 1. Run Tests
+        List<CodeFile> rubricTestFiles = resolveRubricTestFiles(assignment, testFiles);
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(
                 TestCodeRequest.builder()
                         .sourceFiles(sourceFiles)
-                        .testFiles(testFiles != null ? testFiles : Collections.emptyList())
+                        .testFiles(rubricTestFiles)
                         .mainClassName(mainClassName)
                         .buildTool(buildTool)
+                        .mutationTestingEnabled(type != Submission.SubmissionType.TRYOUT)
                         .build()
         );
         // 2. Build SubmissionCodes
@@ -418,7 +420,23 @@ public class SubmissionService {
         SubmissionDTO submittedSubmission = SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
 
         submittedSubmission.setCompilationErrors(testCodeResponse.getCompilationErrors());
+        submittedSubmission.setMutationTestResult(testCodeResponse.getMutationTestResult());
         return submittedSubmission;
+    }
+
+    private List<CodeFile> resolveRubricTestFiles(Assignment assignment, List<CodeFile> requestTestFiles) {
+        if (requestTestFiles != null && !requestTestFiles.isEmpty()) {
+            return requestTestFiles;
+        }
+
+        if (assignment != null && assignment.getTestCode() != null && !assignment.getTestCode().isBlank()) {
+            return List.of(CodeFile.builder()
+                    .fileName("MainTest.java")
+                    .content(assignment.getTestCode())
+                    .build());
+        }
+
+        return Collections.emptyList();
     }
 
 

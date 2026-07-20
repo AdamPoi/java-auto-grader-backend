@@ -4,13 +4,19 @@ import io.adampoi.java_auto_grader.model.enums.BuildTool;
 import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import io.adampoi.java_auto_grader.model.response.TestCodeResponse;
 import io.adampoi.java_auto_grader.model.type.CompilationError;
+import io.adampoi.java_auto_grader.model.type.MutationTestResult;
 import io.adampoi.java_auto_grader.model.type.ProcessResult;
 import io.adampoi.java_auto_grader.util.DockerContainerManager;
 import io.adampoi.java_auto_grader.util.TestReportParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class TestCodeService {
 
     private static final int TIMEOUT_SECONDS = 300;
+    private static final int MUTATION_TIMEOUT_SECONDS = 600;
     private final ConcurrentMap<BuildTool, ContainerInstance> containers = new ConcurrentHashMap<>();
 
     private final DockerContainerManager dockerManager;
@@ -74,9 +81,17 @@ public class TestCodeService {
 
 
             ProcessResult result = executeBuildCommand(container, workspace, buildTool);
+            ProcessResult mutationResult = null;
+            if (request.isMutationTestingEnabled() && result.isSuccess()) {
+                mutationResult = executeMutationCommand(container, workspace, buildTool, request);
+            }
             copyTestResults(container, workspace, tempDir);
+            copyMutationResults(container, workspace, tempDir);
 
             TestCodeResponse response = createResponse(result, tempDir);
+            if (request.isMutationTestingEnabled()) {
+                response.setMutationTestResult(createMutationResponse(mutationResult, tempDir));
+            }
 
             if (!result.isSuccess() && result.getOutput().contains("error:")) {
                 List<CompilationError> compilationErrors = parseGradleCompilationErrors(result.getOutput());
@@ -139,6 +154,13 @@ public class TestCodeService {
         return dockerManager.executeCommand(container.getName(), command, TIMEOUT_SECONDS);
     }
 
+    private ProcessResult executeMutationCommand(ContainerInstance container, String workspace, BuildTool buildTool, TestCodeRequest request)
+            throws IOException, InterruptedException {
+        String command = mutationCommand(buildTool, workspace, request);
+        log.info("Executing mutation command in container {}: {}", container.getName(), command);
+        return dockerManager.executeCommand(container.getName(), command, MUTATION_TIMEOUT_SECONDS);
+    }
+
     private String buildCommand(BuildTool buildTool, String workspace) {
         String baseCommand = String.format("cd %s && ", workspace);
         switch (buildTool) {
@@ -155,6 +177,26 @@ public class TestCodeService {
         }
     }
 
+    private String mutationCommand(BuildTool buildTool, String workspace, TestCodeRequest request) {
+        String baseCommand = String.format("cd %s && ", workspace);
+        switch (buildTool) {
+            case GRADLE:
+                return baseCommand + "gradle pitest " +
+                        "--rerun-tasks " +
+                        "--daemon --parallel --build-cache --configuration-cache " +
+                        "--console=plain " +
+                        "-PpitestTargetClasses=\"" + projectSetupService.submittedSourceTargetClasses(request) + "\"";
+            case MAVEN:
+                return baseCommand + "mvn org.pitest:pitest-maven:mutationCoverage " +
+                        "-Dmaven.repo.local=/workspace/.m2/repository " +
+                        "-DtargetClasses=\"" + projectSetupService.submittedSourceTargetClasses(request) + "\" " +
+                        "-DtargetTests=workspace.* " +
+                        "-DoutputFormats=XML";
+            default:
+                throw new IllegalArgumentException("Unsupported build tool: " + buildTool);
+        }
+    }
+
     private void copyTestResults(ContainerInstance container, String workspace, Path tempDir) {
         try {
             String testResultsGradle = workspace + "/build/test-results/test";
@@ -164,6 +206,18 @@ public class TestCodeService {
             dockerManager.copyFromContainer(container.getName(), testResultsMaven, tempDir.resolve("maven-results"));
         } catch (Exception e) {
             log.warn("Failed to copy test results", e);
+        }
+    }
+
+    private void copyMutationResults(ContainerInstance container, String workspace, Path tempDir) {
+        try {
+            String mutationResultsGradle = workspace + "/build/reports/pitest";
+            String mutationResultsMaven = workspace + "/target/pit-reports";
+
+            dockerManager.copyFromContainer(container.getName(), mutationResultsGradle, tempDir.resolve("gradle-pitest-results"));
+            dockerManager.copyFromContainer(container.getName(), mutationResultsMaven, tempDir.resolve("maven-pitest-results"));
+        } catch (Exception e) {
+            log.warn("Failed to copy mutation test results", e);
         }
     }
 
@@ -182,6 +236,125 @@ public class TestCodeService {
         response.setTestSuites(testSuites);
 
         return response;
+    }
+
+    private MutationTestResult createMutationResponse(ProcessResult mutationResult, Path tempDir) {
+        if (mutationResult == null) {
+            return MutationTestResult.builder()
+                    .enabled(true)
+                    .success(false)
+                    .error("Mutation testing was not executed because regular tests failed")
+                    .mutations(new ArrayList<>())
+                    .build();
+        }
+
+        MutationTestResult parsedResult = parseMutationReports(tempDir.resolve("gradle-pitest-results"));
+        if (parsedResult.getMutations().isEmpty()) {
+            parsedResult = parseMutationReports(tempDir.resolve("maven-pitest-results"));
+        }
+
+        parsedResult.setEnabled(true);
+        parsedResult.setSuccess(mutationResult.isSuccess());
+        if (!mutationResult.isSuccess()) {
+            parsedResult.setError(firstNonBlank(mutationResult.getErrors(), mutationResult.getOutput()));
+        }
+
+        return parsedResult;
+    }
+
+    private MutationTestResult parseMutationReports(Path reportDir) {
+        MutationTestResult result = MutationTestResult.builder()
+                .enabled(true)
+                .success(false)
+                .mutations(new ArrayList<>())
+                .build();
+
+        if (!Files.exists(reportDir)) {
+            return result;
+        }
+
+        try {
+            Path mutationXml = Files.walk(reportDir)
+                    .filter(path -> path.getFileName().toString().equals("mutations.xml"))
+                    .findFirst()
+                    .orElse(null);
+
+            if (mutationXml == null) {
+                return result;
+            }
+
+            result.setReportPath(mutationXml.toString());
+            List<MutationTestResult.Mutation> mutations = parseMutationXml(mutationXml);
+            result.setMutations(mutations);
+            result.setTotalMutations(mutations.size());
+            result.setKilledMutations(countMutations(mutations, "KILLED"));
+            result.setSurvivedMutations(countMutations(mutations, "SURVIVED"));
+            result.setNoCoverageMutations(countMutations(mutations, "NO_COVERAGE"));
+            result.setTimedOutMutations(countMutations(mutations, "TIMED_OUT"));
+            result.setMemoryErrorMutations(countMutations(mutations, "MEMORY_ERROR"));
+            result.setNonViableMutations(countMutations(mutations, "NON_VIABLE"));
+            result.setRunErrorMutations(countMutations(mutations, "RUN_ERROR"));
+            result.setMutationScore(result.getTotalMutations() == 0
+                    ? 100.0
+                    : (result.getKilledMutations() * 100.0) / result.getTotalMutations());
+
+            return result;
+        } catch (Exception e) {
+            log.warn("Failed to parse mutation reports from {}", reportDir, e);
+            result.setError("Failed to parse mutation report: " + e.getMessage());
+            return result;
+        }
+    }
+
+    private List<MutationTestResult.Mutation> parseMutationXml(Path mutationXml) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.parse(mutationXml.toFile());
+        NodeList mutationNodes = document.getElementsByTagName("mutation");
+        List<MutationTestResult.Mutation> mutations = new ArrayList<>();
+
+        for (int i = 0; i < mutationNodes.getLength(); i++) {
+            Element mutation = (Element) mutationNodes.item(i);
+            mutations.add(MutationTestResult.Mutation.builder()
+                    .sourceFile(childText(mutation, "sourceFile"))
+                    .mutatedClass(childText(mutation, "mutatedClass"))
+                    .mutatedMethod(childText(mutation, "mutatedMethod"))
+                    .lineNumber(parseInteger(childText(mutation, "lineNumber")))
+                    .mutator(childText(mutation, "mutator"))
+                    .description(childText(mutation, "description"))
+                    .status(mutation.getAttribute("status"))
+                    .killingTest(childText(mutation, "killingTest"))
+                    .build());
+        }
+
+        return mutations;
+    }
+
+    private String childText(Element parent, String tagName) {
+        NodeList nodes = parent.getElementsByTagName(tagName);
+        return nodes.getLength() == 0 ? null : nodes.item(0).getTextContent();
+    }
+
+    private Integer parseInteger(String value) {
+        try {
+            return value == null || value.isBlank() ? null : Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private int countMutations(List<MutationTestResult.Mutation> mutations, String status) {
+        return (int) mutations.stream()
+                .filter(mutation -> status.equals(mutation.getStatus()))
+                .count();
+    }
+
+    private String firstNonBlank(String first, String second) {
+        return first != null && !first.isBlank() ? first : second;
     }
 
     private TestCodeResponse createErrorResponse(String errorMessage) {

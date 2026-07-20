@@ -1,11 +1,12 @@
-package io.adampoi.java_auto_grader.rest;
+package io.adampoi.java_auto_grader.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.adampoi.java_auto_grader.model.dto.BulkSubmissionDTO;
+import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
+import io.adampoi.java_auto_grader.model.dto.TestExecutionDTO;
 import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
 import io.adampoi.java_auto_grader.model.type.CodeFile;
-import io.adampoi.java_auto_grader.service.SubmissionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,14 +52,84 @@ class SubmissionResourceTest {
     private CodeFile codeFile(String name, String content) {
         return CodeFile.builder().fileName(name).content(content).build();
     }
+
     private List<CodeFile> mockSourceFiles() {
         return List.of(codeFile("Main.java", "public class Main {}"));
     }
+
     private List<CodeFile> mockTestFiles() {
         return List.of(codeFile("MainTest.java", "public class MainTest {}"));
     }
+
     private UUID randomId() {
         return UUID.randomUUID();
+    }
+
+    private TestExecutionDTO passedExecution(String methodName, UUID rubricGradeId) {
+        return TestExecutionDTO.builder()
+                .methodName(methodName)
+                .status("PASSED")
+                .executionTime(1L)
+                .rubricGradeId(rubricGradeId)
+                .rubricGrade(RubricGradeDTO.builder()
+                        .id(rubricGradeId.toString())
+                        .name(methodName.replace("()", ""))
+                        .build())
+                .build();
+    }
+
+    private String calculatorSolutionCode() {
+        return """
+                public class Calculator {
+                    public static int add(int a, int b) {
+                        return a + b;
+                    }
+                
+                    public static int subtract(int a, int b) {
+                        return a - b;
+                    }
+                
+                    public static int multiply(int a, int b) {
+                        return a * b;
+                    }
+                
+                    public static double divide(int a, int b) {
+                        return (double) a / b;
+                    }
+                
+                    public static void main(String[] args) {
+                        int a = 10;
+                        int b = 4;
+                
+                        System.out.println("Sum: " + add(a, b));
+                        System.out.println("Difference: " + subtract(a, b));
+                        System.out.println("Product: " + multiply(a, b));
+                        System.out.println("Quotient: " + divide(a, b));
+                    }
+                }
+                """;
+    }
+
+    private String calculatorGeneratedTestCode() {
+        return """
+                package workspace;
+                
+                import org.junit.jupiter.api.Test;
+                
+                public class MainTest {
+                    @Test
+                    void testClassStructure() {
+                    }
+                
+                    @Test
+                    void testRequiredMembers() {
+                    }
+                
+                    @Test
+                    void testRequiredLogic() {
+                    }
+                }
+                """;
     }
 
     @Nested
@@ -114,6 +187,74 @@ class SubmissionResourceTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.error.message").value("Validation failed"));
+        }
+
+        @Test
+        @WithMockUser(authorities = {AUTHORITY_SUBMIT})
+        @DisplayName("Should submit assignment solution code and return all fulfilled rubric results")
+        void submitStudent_WithAssignmentSolutionCode_ReturnsFullRubricResults() throws Exception {
+            UUID assignmentId = randomId();
+            UUID studentId = randomId();
+            String solutionCode = calculatorSolutionCode();
+            TestSubmitRequest request = TestSubmitRequest.builder()
+                    .sourceFiles(List.of(codeFile("Calculator.java", solutionCode)))
+                    .testFiles(List.of(codeFile("MainTest.java", calculatorGeneratedTestCode())))
+                    .mainClassName("Calculator")
+                    .assignmentId(assignmentId.toString())
+                    .userId(studentId.toString())
+                    .buildTool("gradle")
+                    .build();
+
+            UUID classStructureGradeId = randomId();
+            UUID requiredMembersGradeId = randomId();
+            UUID requiredLogicGradeId = randomId();
+            SubmissionDTO responseDTO = SubmissionDTO.builder()
+                    .id(randomId())
+                    .assignmentId(assignmentId)
+                    .studentId(studentId)
+                    .status("COMPLETED")
+                    .type("FINAL")
+                    .totalPoints(100)
+                    .testExecutions(List.of(
+                            passedExecution("testClassStructure()", classStructureGradeId),
+                            passedExecution("testRequiredMembers()", requiredMembersGradeId),
+                            passedExecution("testRequiredLogic()", requiredLogicGradeId)
+                    ))
+                    .build();
+
+            when(submissionService.submitStudentSubmission(eq(studentId), any(TestSubmitRequest.class)))
+                    .thenReturn(responseDTO);
+
+            mockMvc.perform(post(BASE_API_PATH)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.assignmentId").value(assignmentId.toString()))
+                    .andExpect(jsonPath("$.data.studentId").value(studentId.toString()))
+                    .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+                    .andExpect(jsonPath("$.data.totalPoints").value(100))
+                    .andExpect(jsonPath("$.data.testExecutions.length()").value(3))
+                    .andExpect(jsonPath("$.data.testExecutions[*].status",
+                            containsInAnyOrder("PASSED", "PASSED", "PASSED")))
+                    .andExpect(jsonPath("$.data.testExecutions[*].methodName", containsInAnyOrder(
+                            "testClassStructure()",
+                            "testRequiredMembers()",
+                            "testRequiredLogic()"
+                    )))
+                    .andExpect(jsonPath("$.data.testExecutions[*].rubricGradeId", containsInAnyOrder(
+                            classStructureGradeId.toString(),
+                            requiredMembersGradeId.toString(),
+                            requiredLogicGradeId.toString()
+                    )));
+
+            verify(submissionService).submitStudentSubmission(eq(studentId), argThat(submissionRequest ->
+                    submissionRequest.getAssignmentId().equals(assignmentId.toString())
+                            && submissionRequest.getSourceFiles().size() == 1
+                            && submissionRequest.getSourceFiles().get(0).getFileName().equals("Calculator.java")
+                            && submissionRequest.getSourceFiles().get(0).getContent().equals(solutionCode)
+                            && submissionRequest.getTestFiles().size() == 1
+                            && submissionRequest.getTestFiles().get(0).getContent().contains("testRequiredLogic")
+            ));
         }
     }
 

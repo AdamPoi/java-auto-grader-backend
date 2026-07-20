@@ -3,6 +3,7 @@ package io.adampoi.java_auto_grader.service;
 import io.adampoi.java_auto_grader.model.enums.BuildTool;
 import io.adampoi.java_auto_grader.model.request.TestCodeRequest;
 import io.adampoi.java_auto_grader.model.type.CodeFile;
+import io.adampoi.java_auto_grader.util.TestFileFolderConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -54,9 +57,10 @@ public class ProjectSetupService {
 
     private void writeTestFiles(Path projectDir, TestCodeRequest request) throws IOException {
         Path srcTestJava = projectDir.resolve("src/test/java/workspace");
-        log.info("Writing {} test files to {}", request.getTestFiles().size(), srcTestJava);
+        List<CodeFile> testFiles = TestFileFolderConverter.toSeparateTestFolders(request.getTestFiles());
+        log.info("Writing {} test files to separate folders under {}", testFiles.size(), srcTestJava);
 
-        for (CodeFile testFile : request.getTestFiles()) {
+        for (CodeFile testFile : testFiles) {
             Path filePath = srcTestJava.resolve(testFile.getFileName());
             // Create parent directories if they don't exist
             Files.createDirectories(filePath.getParent());
@@ -78,6 +82,7 @@ public class ProjectSetupService {
                     id 'java'
                     id 'application'
                     id 'com.adarshr.test-logger' version '4.0.0'
+                    id 'info.solidsoft.pitest' version '1.15.0'
                 }
                 
                 group = 'com.test'
@@ -98,6 +103,23 @@ public class ProjectSetupService {
                      testImplementation 'org.mockito:mockito-core:5.5.0'
                      testImplementation 'org.assertj:assertj-core:3.27.2'
                 
+                }
+                
+                pitest {
+                    junit5PluginVersion = '1.2.1'
+                    targetClasses = (findProperty('pitestTargetClasses') ?: 'workspace.*')
+                            .toString()
+                            .split(',')
+                            .collect { it.trim() }
+                            .findAll { !it.isBlank() }
+                    targetTests = ['workspace.*']
+                    threads = Math.max(1, Runtime.runtime.availableProcessors().intdiv(2))
+                    outputFormats = ['XML']
+                    timestampedReports = false
+                    failWhenNoMutations = false
+                    mutationThreshold = 0
+                    coverageThreshold = 0
+                    avoidCallsTo = []
                 }
                 
                 java {
@@ -153,6 +175,23 @@ public class ProjectSetupService {
                 """;
 
         writeFile(projectDir.resolve("build.gradle"), buildGradle);
+    }
+
+    public String submittedSourceTargetClasses(TestCodeRequest request) {
+        if (request.getSourceFiles() == null || request.getSourceFiles().isEmpty()) {
+            return "workspace.*";
+        }
+
+        String targetClasses = request.getSourceFiles().stream()
+                .map(CodeFile::getFileName)
+                .filter(fileName -> fileName != null && fileName.endsWith(".java"))
+                .map(fileName -> fileName.substring(0, fileName.length() - ".java".length()))
+                .filter(className -> !className.isBlank())
+                .map(className -> "workspace." + className)
+                .distinct()
+                .collect(Collectors.joining(","));
+
+        return targetClasses.isBlank() ? "workspace.*" : targetClasses;
     }
 
     private void writeGradleProperties(Path projectDir) throws IOException {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.adampoi.java_auto_grader.model.type.CompilationError;
+import io.adampoi.java_auto_grader.model.type.MutationTestResult;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.groups.Default;
@@ -73,6 +74,8 @@ public class SubmissionDTO extends AuditableDTO {
     private List<SubmissionCodeDTO> submissionCodes;
 
     private List<CompilationError> compilationErrors;
+
+    private MutationTestResult mutationTestResult;
 
 
     public interface CreateGroup extends Default {

@@ -75,7 +75,7 @@ public class TestExecutionService {
         List<RubricGrade> rubricGrades = rubricGradeRepository.findByAssignmentId(UUID.fromString(request.getAssignmentId()));
         List<TestExecution> executionResults = new ArrayList<>();
         Submission submission = new Submission();
-        submission.setAssignment(assignmentRepository.getById(UUID.fromString(request.getAssignmentId())));
+        submission.setAssignment(assignmentRepository.findById(UUID.fromString(request.getAssignmentId())));
         submission.setStartedAt(OffsetDateTime.now());
         submission.setCompletedAt(OffsetDateTime.now());
         submission.setExecutionTime(testCodeResponse.getExecutionTime());

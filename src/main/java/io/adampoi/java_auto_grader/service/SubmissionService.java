@@ -231,10 +231,10 @@ public class SubmissionService {
 
 
     public SubmissionDTO tryoutSubmission(TestSubmitRequest request) {
-        Assignment assignment = assignmentRepository.getById(UUID.fromString(request.getAssignmentId()));
+        Optional<Assignment> assignment = assignmentRepository.findById(UUID.fromString(request.getAssignmentId()));
 
         SubmissionDTO simulatedSubmission = processSubmissionWithTestResults(
-                assignment,
+                assignment.orElse(null),
                 null,
                 request.getSourceFiles(),
                 request.getTestFiles(),
@@ -258,7 +258,7 @@ public class SubmissionService {
             String buildTool
     ) {
         BulkSubmissionDTO result = new BulkSubmissionDTO();
-        Assignment assignment = assignmentRepository.getById(assignmentId);
+        Optional<Assignment> assignment = assignmentRepository.findById(assignmentId);
 
         for (Map.Entry<String, List<CodeFile>> entry : nimToCodeFiles.entrySet()) {
             String nim = entry.getKey();
@@ -270,7 +270,7 @@ public class SubmissionService {
                         .orElseThrow(() -> new EntityNotFoundException("Student with NIM " + nim + " not found"));
 
                 SubmissionDTO savedSubmission = processSubmissionWithTestResults(
-                        assignment,
+                        assignment.orElse(null),
                         student,
                         entry.getValue(),
                         testFiles,
@@ -319,7 +319,7 @@ public class SubmissionService {
         if (submissionDTO.getAssignmentId() != null) {
             final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignmentId())
                     .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
-            submission.setAssignment(assignment);
+            submission.setAssignment(Optional.of(assignment));
         }
         if (submissionDTO.getStudentId() != null) {
             final User student = userRepository.findById(submissionDTO.getStudentId())

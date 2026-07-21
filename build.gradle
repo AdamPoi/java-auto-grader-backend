@@ -130,11 +130,98 @@ tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'mutation', 'tryout-mutation'
     }
-    finalizedBy jacocoTestReport
+    finalizedBy 'jacocoTestReport', 'jacocoCoreReport'
 }
 
 jacocoTestReport {
     dependsOn test // tests are required to run before generating the report
+    reports {
+        html.required = true
+        xml.required = true
+        csv.required = true
+    }
+}
+
+def jacocoCoreIncludes = [
+        'io/adampoi/java_auto_grader/service/**',
+        'io/adampoi/java_auto_grader/rest/**',
+        'io/adampoi/java_auto_grader/util/**',
+        'io/adampoi/java_auto_grader/exceptions/**',
+        'io/adampoi/java_auto_grader/advice/**',
+        'io/adampoi/java_auto_grader/resolvers/**',
+        'io/adampoi/java_auto_grader/cache/**',
+        'io/adampoi/java_auto_grader/config/JwtAuthenticationFilter*'
+]
+
+def fullLineMinimum = (findProperty('jacocoFullLineMinimum') ?: '0.30') as BigDecimal
+def fullBranchMinimum = (findProperty('jacocoFullBranchMinimum') ?: '0.20') as BigDecimal
+def coreLineMinimum = (findProperty('jacocoCoreLineMinimum') ?: '0.30') as BigDecimal
+def coreBranchMinimum = (findProperty('jacocoCoreBranchMinimum') ?: '0.20') as BigDecimal
+
+tasks.register('jacocoCoreReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates coverage for hand-written core application logic.'
+    dependsOn tasks.named('test')
+    executionData.from(layout.buildDirectory.file('jacoco/test.exec'))
+    sourceDirectories.setFrom(files(sourceSets.main.allSource.srcDirs))
+    classDirectories.setFrom(files(sourceSets.main.output.classesDirs.files.collect { directory ->
+        fileTree(dir: directory, includes: jacocoCoreIncludes)
+    }))
+    reports {
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/core/html')
+        xml.required = true
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/core/jacocoCoreReport.xml')
+        csv.required = true
+        csv.outputLocation = layout.buildDirectory.file('reports/jacoco/core/jacocoCoreReport.csv')
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn tasks.named('test')
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = fullLineMinimum
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = fullBranchMinimum
+            }
+        }
+    }
+}
+
+tasks.register('jacocoCoreCoverageVerification', JacocoCoverageVerification) {
+    group = 'verification'
+    description = 'Enforces the staged coverage floor for core application logic.'
+    dependsOn tasks.named('test')
+    executionData.from(layout.buildDirectory.file('jacoco/test.exec'))
+    classDirectories.setFrom(files(sourceSets.main.output.classesDirs.files.collect { directory ->
+        fileTree(dir: directory, includes: jacocoCoreIncludes)
+    }))
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = coreLineMinimum
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = coreBranchMinimum
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+    dependsOn tasks.named('jacocoCoreCoverageVerification')
 }
 
 // PIT is slow, so run the benchmark explicitly instead of during every unit-test run.

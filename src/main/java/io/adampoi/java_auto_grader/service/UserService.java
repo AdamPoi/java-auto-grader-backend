@@ -90,8 +90,6 @@ public class UserService {
 
     public UserDTO create(final UserDTO userDTO) {
         final User user = new User();
-
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         mapToEntity(userDTO, user);
         User savedUser = userRepository.save(user);
         return mapToDTO(savedUser, new UserDTO());

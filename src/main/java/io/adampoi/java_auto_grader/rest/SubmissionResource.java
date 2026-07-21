@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.reflections.Reflections.log;
@@ -174,8 +175,8 @@ public class SubmissionResource {
     public ApiSuccessResponse<String> generateCodeAnalysis(@PathVariable String submissionId, @RequestBody String javaCode) {
         String response = chatService.generateCodeFeedback(javaCode);
         log.info("Generated code analysis: {}", response);
-        Submission submission = submissionRepository.getById(UUID.fromString(submissionId));
-        submission.setAiFeedback(response);
+        Optional<Submission> submission = submissionRepository.findById(UUID.fromString(submissionId));
+        submission.get().setAiFeedback(response);
 
         return ApiSuccessResponse.<String>builder()
                 .data(response)

@@ -153,6 +153,30 @@ tasks.register('tryoutMutationBenchmark', Test) {
     shouldRunAfter tasks.named('test')
 }
 
+def rawTryoutMutationDetails = layout.buildDirectory.file(
+        'reports/tryout-mutation/tryout-mutation-details.csv'
+)
+def validTryoutMutationReportDirectory = layout.buildDirectory.dir(
+        'reports/tryout-mutation-valid'
+)
+
+tasks.register('validMutationReport', JavaExec) {
+    group = 'verification'
+    description = 'Reclassifies non-compiling mutants and writes a journal-valid mutation score.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'io.adampoi.java_auto_grader.mutation.report.ValidMutationReportCli'
+    args rawTryoutMutationDetails.get().asFile.absolutePath,
+            validTryoutMutationReportDirectory.get().asFile.absolutePath
+    onlyIf {
+        rawTryoutMutationDetails.get().asFile.exists()
+    }
+}
+
+tasks.named('tryoutMutationBenchmark') {
+    finalizedBy tasks.named('validMutationReport')
+}
+
 // PIT is slow, so run the benchmark explicitly instead of during every unit-test run.
 tasks.register('mutationBenchmark', Test) {
     group = 'verification'

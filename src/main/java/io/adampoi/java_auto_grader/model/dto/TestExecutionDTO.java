@@ -27,8 +27,8 @@ public class TestExecutionDTO extends AuditableDTO {
     private String methodName;
 
     @Size(min = 1, max = 255)
-    @Pattern(regexp = "PENDING|RUNNING|PASSED|FAILED|ERROR|TIMEOUT|SKIPPED",
-            message = "Status must be one of: PENDING, RUNNING, PASSED, FAILED, ERROR, TIMEOUT, SKIPPED")
+    @Pattern(regexp = "PENDING|RUNNING|PASSED|FAILED|ERROR|NOT_EXECUTED|TIMEOUT|SKIPPED",
+            message = "Status must be one of: PENDING, RUNNING, PASSED, FAILED, ERROR, NOT_EXECUTED, TIMEOUT, SKIPPED")
     private String status;
 
     private String output;

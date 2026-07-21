@@ -122,7 +122,7 @@ public class AssignmentSeeder {
 
         for (Assignment assignment : assignments) {
             EvaluationSpec evaluationSpec = getEvaluationSpec(assignment.getTitle());
-            assignment.setTestCode(buildBlockCompatibleTestCode(evaluationSpec));
+            assignment.setTestCode(buildTestCodeForAssignment(assignment.getTitle()));
             String canonicalSolution = buildSolutionCode(assignment.getTitle());
             if (!canonicalSolution.isBlank()) {
                 assignment.setSolutionCode(canonicalSolution);
@@ -378,6 +378,10 @@ public class AssignmentSeeder {
         );
     }
 
+    String buildTestCodeForAssignment(String assignmentTitle) {
+        return buildBlockCompatibleTestCode(getEvaluationSpec(assignmentTitle));
+    }
+
     private String buildBehaviorAssertions(String className) {
         return switch (className) {
             case "HelloWorld" -> """
@@ -433,6 +437,10 @@ public class AssignmentSeeder {
                                     "calculateArea", new Class<?>[]{double.class, double.class, boolean.class},
                                     3.0, 4.0, true))
                             .isCloseTo(6.0, Assertions.within(0.000001));
+                    Assertions.assertThat((Double) invokeStatic(
+                                    "calculateArea", new Class<?>[]{double.class, double.class, boolean.class},
+                                    3.0, 4.0, false))
+                            .isCloseTo(12.0, Assertions.within(0.000001));
                     """;
             case "ArrayBasics" -> """
                     Assertions.assertThat(runMain())
@@ -440,7 +448,7 @@ public class AssignmentSeeder {
                     """;
             case "ArraySum" -> """
                     Assertions.assertThat(runMain())
-                            .contains("Sum:", "Average:");
+                            .contains("Sum: 63.8", "Average: 12.76");
                     """;
             case "ArrayMinMax" -> """
                     Assertions.assertThat(runMain())
@@ -450,6 +458,9 @@ public class AssignmentSeeder {
                     Object dog = newInstance(new Class<?>[]{String.class, String.class}, "Rex", "Collie");
                     Assertions.assertThat(fieldValue(dog, "name")).isEqualTo("Rex");
                     Assertions.assertThat(fieldValue(dog, "breed")).isEqualTo("Collie");
+                    String speech = captureOutput(() -> invokeInstance(
+                            dog, "speak", new Class<?>[0]));
+                    Assertions.assertThat(speech).contains("Rex", "Woof");
                     
                     if (Stream.of(runtimeTargetClass().getDeclaredMethods())
                             .anyMatch(method -> method.getName().equals("setName"))) {
@@ -459,10 +470,11 @@ public class AssignmentSeeder {
                                 .isEqualTo("Max");
                         Assertions.assertThat(invokeInstance(dog, "getBreed", new Class<?>[0]))
                                 .isEqualTo("Labrador");
+                        Assertions.assertThat(runMain())
+                                .contains("Name: Charlie", "Breed: Labrador");
                     } else {
-                        String speech = captureOutput(() -> invokeInstance(
-                                dog, "speak", new Class<?>[0]));
-                        Assertions.assertThat(speech).contains("Rex", "Woof");
+                        Assertions.assertThat(runMain())
+                                .contains("Buddy", "Golden Retriever", "Rex", "Collie");
                     }
                     """;
             case "Circle" -> """
@@ -792,7 +804,9 @@ public class AssignmentSeeder {
                     List.of("number > 0", "number < 0", "positive", "negative", "zero"));
             case "Grade Calculator with Switch" -> new EvaluationSpec(
                     "GradeMessage", List.of("main"),
-                    List.of("switch", "case 'A'", "case 'B'", "case 'C'", "case 'D'", "case 'F'", "default"));
+                    List.of("switch", "case 'A'", "case 'B'", "case 'C'", "case 'D'", "case 'F'", "default",
+                            "Excellent work!", "Good job!", "You passed.", "You can do better.",
+                            "Unfortunately, you failed.", "Invalid grade entered."));
             case "Loops: Sum of N Numbers" -> new EvaluationSpec(
                     "Summation", List.of("main"),
                     List.of("for", "while", "i <= 100", "sumFor += i", "sumWhile += i"));
@@ -810,7 +824,7 @@ public class AssignmentSeeder {
                     List.of("int[]", "numbers[0]", "numbers[2]", "length - 1"));
             case "Array Iteration and Sum" -> new EvaluationSpec(
                     "ArraySum", List.of("main"),
-                    List.of("double[]", "for", "sum += values[i]", "sum / values.length"));
+                    List.of("double[]", "for", "i < values.length", "sum += values[i]", "sum / values.length"));
             case "Finding Max/Min in Array" -> new EvaluationSpec(
                     "ArrayMinMax", List.of("main"),
                     List.of("int[]", "for", "numbers[i] > max", "numbers[i] < min"));
@@ -819,7 +833,8 @@ public class AssignmentSeeder {
                     List.of("Dog(String name, String breed)", "says Woof"));
             case "Encapsulation with Getters and Setters" -> new EvaluationSpec(
                     "Dog", List.of("name", "breed", "getName", "setName", "getBreed", "setBreed"),
-                    List.of("private String name", "private String breed", "this.name", "this.breed"));
+                    List.of("private String name", "private String breed", "this.name", "this.breed",
+                            "says Woof!", "Name:", "Breed:"));
             case "Static Members and Methods" -> new EvaluationSpec(
                     "Circle", List.of("radius", "PI", "numberOfCircles", "getArea", "getTotalCircles"),
                     List.of("static final double PI", "numberOfCircles++", "PI * radius * radius"));

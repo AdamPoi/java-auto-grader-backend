@@ -69,6 +69,8 @@ public class TestExecutionService {
                 .mutationTestingEnabled(request.isMutationTestingEnabled())
                 .build();
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(testCodeRequest);
+        boolean compilationFailed = hasCompilationErrors(testCodeResponse);
+        boolean hasExecutedTestCases = hasExecutedTestCases(testCodeResponse);
 
         List<RubricGrade> rubricGrades = rubricGradeRepository.findByAssignmentId(UUID.fromString(request.getAssignmentId()));
         List<TestExecution> executionResults = new ArrayList<>();
@@ -93,18 +95,25 @@ public class TestExecutionService {
 
         int earnedPoints = 0;
         for (RubricGrade rubricGrade : rubricGrades) {
-
-            TestCaseResult matchingTestCase = testCodeResponse.getTestSuites().stream()
-                    .flatMap(suite -> suite.getTestCases().stream())
-                    .filter(testCase -> testCase.getMethodName().equals(rubricGrade.getName() + "()"))
-                    .findFirst()
-                    .orElse(null);
-
             TestExecution testExecution = new TestExecution();
             testExecution.setRubricGrade(rubricGrade);
             testExecution.setSubmission(submission);
 
-            if (matchingTestCase != null) {
+            if (compilationFailed) {
+                markNotExecuted(testExecution,
+                        "Rubric test was not executed because compilation failed during "
+                                + compilationStage(testCodeResponse));
+            } else if (!hasExecutedTestCases) {
+                markNotExecuted(testExecution, "Rubric test did not produce an executable test result");
+            } else {
+                TestCaseResult matchingTestCase = findMatchingTestCase(testCodeResponse, rubricGrade.getName());
+                if (matchingTestCase == null) {
+                    markNotExecuted(testExecution,
+                            "No executed test case matched rubric grade: " + rubricGrade.getName());
+                    executionResults.add(testExecution);
+                    continue;
+                }
+
                 testExecution.setExecutionTime((long) matchingTestCase.getExecutionTime());
                 testExecution.setMethodName(matchingTestCase.getMethodName());
                 testExecution.setOutput(testCodeResponse.getError());
@@ -114,10 +123,6 @@ public class TestExecutionService {
                         && rubricGrade.getRubric() != null) {
                     earnedPoints += rubricGrade.getRubric().getPoints();
                 }
-
-            } else {
-                testExecution.setStatus(TestExecution.ExecutionStatus.FAILED);
-                log.warn("No matching test case found for rubric grade: {}", rubricGrade.getName());
             }
             executionResults.add(testExecution);
         }
@@ -126,10 +131,10 @@ public class TestExecutionService {
         submission.setStatus(testCodeResponse.isSuccess() ? Submission.SubmissionStatus.COMPLETED : Submission.SubmissionStatus.FAILED);
         submission.setTestExecutions(new HashSet<>(executionResults));
         Submission finalSubmission = submission;
-        if (!testCodeResponse.getCompilationErrors().isEmpty()) {
+        if (compilationFailed) {
             submission.setStatus(Submission.SubmissionStatus.FAILED);
-            submission.setManualFeedback("Compilation errors occurred during test execution.");
-        } else if (testCodeResponse.getTestSuites().isEmpty()) {
+            submission.setManualFeedback("Compilation failed; rubric tests were not executed.");
+        } else if (!hasExecutedTestCases) {
             submission.setStatus(Submission.SubmissionStatus.FAILED);
             submission.setManualFeedback("No test cases were executed.");
             finalSubmission = submissionRepository.save(submission);
@@ -139,6 +144,49 @@ public class TestExecutionService {
         }
 
         return SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
+    }
+
+    private boolean hasCompilationErrors(TestCodeResponse response) {
+        return response != null
+                && response.getCompilationErrors() != null
+                && !response.getCompilationErrors().isEmpty();
+    }
+
+    private boolean hasExecutedTestCases(TestCodeResponse response) {
+        return response != null
+                && response.getTestSuites() != null
+                && response.getTestSuites().stream()
+                .filter(java.util.Objects::nonNull)
+                .map(suite -> suite.getTestCases())
+                .filter(java.util.Objects::nonNull)
+                .anyMatch(testCases -> !testCases.isEmpty());
+    }
+
+    private TestCaseResult findMatchingTestCase(TestCodeResponse response, String rubricName) {
+        return response.getTestSuites().stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(suite -> suite.getTestCases() != null)
+                .flatMap(suite -> suite.getTestCases().stream())
+                .filter(java.util.Objects::nonNull)
+                .filter(testCase -> testCase.getMethodName() != null)
+                .filter(testCase -> testCase.getMethodName().equals(rubricName)
+                        || testCase.getMethodName().equals(rubricName + "()"))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String compilationStage(TestCodeResponse response) {
+        return response == null || response.getCompilationStage() == null
+                ? "unknown build stage"
+                : response.getCompilationStage().name();
+    }
+
+    private void markNotExecuted(TestExecution execution, String reason) {
+        execution.setMethodName(execution.getRubricGrade().getName());
+        execution.setExecutionTime(0L);
+        execution.setOutput("");
+        execution.setError(reason);
+        execution.setStatus(TestExecution.ExecutionStatus.NOT_EXECUTED);
     }
 
     private TestExecution mapToEntity(TestExecutionDTO dto) {

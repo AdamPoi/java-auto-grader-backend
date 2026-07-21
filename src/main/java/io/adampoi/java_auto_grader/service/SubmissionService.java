@@ -371,6 +371,7 @@ public class SubmissionService {
                         .mutationTestingEnabled(type != Submission.SubmissionType.TRYOUT)
                         .build()
         );
+        boolean compilationFailed = hasCompilationErrors(testCodeResponse);
         // 2. Build SubmissionCodes
         Set<SubmissionCode> codes = sourceFiles.stream()
                 .map(sf -> SubmissionCode.builder()
@@ -398,7 +399,9 @@ public class SubmissionService {
                 .completedAt(OffsetDateTime.now())
                 .executionTime(testCodeResponse.getExecutionTime())
                 .totalPoints(totalPoints)
-                .manualFeedback(testCodeResponse.isSuccess() ? "All tests passed" : "Some of tests are failed")
+                .manualFeedback(compilationFailed
+                        ? "Compilation failed; rubric tests were not executed"
+                        : testCodeResponse.isSuccess() ? "All tests passed" : "Some tests failed")
                 .type(type)
                 .status(testCodeResponse.isSuccess()
                         ? Submission.SubmissionStatus.COMPLETED
@@ -409,14 +412,14 @@ public class SubmissionService {
         codes.forEach(code -> code.setSubmission(submission));
         testExecutions.forEach(exec -> exec.setSubmission(submission));
         if (persist) {
-            if (testCodeResponse.getCompilationErrors() == null || testCodeResponse.getCompilationErrors().isEmpty()) {
+            if (!compilationFailed) {
 
                 finalSubmission = submissionRepository.save(submission);
                 testExecutionRepository.saveAll(testExecutions);
                 submissionCodeRepository.saveAll(codes);
             } else {
                 finalSubmission.setStatus(Submission.SubmissionStatus.FAILED);
-                finalSubmission.setManualFeedback("Compilation errors occurred");
+                finalSubmission.setManualFeedback("Compilation failed; rubric tests were not executed");
             }
         }
         SubmissionDTO submittedSubmission = SubmissionService.mapToDTO(finalSubmission, new SubmissionDTO());
@@ -446,6 +449,14 @@ public class SubmissionService {
             TestCodeResponse testCodeResponse,
             Submission submission
     ) {
+        if (hasCompilationErrors(testCodeResponse)) {
+            String stage = testCodeResponse.getCompilationStage() == null
+                    ? "unknown build stage"
+                    : testCodeResponse.getCompilationStage().name();
+            return createNotExecutedTestExecution(rubricGrade, submission,
+                    "Rubric test was not executed because compilation failed during " + stage);
+        }
+
         if (testCodeResponse == null || testCodeResponse.getTestSuites() == null) {
             log.warn("TestCodeResponse or test suites is null for rubric: {}", rubricGrade.getName());
             return createNotExecutedTestExecution(rubricGrade, submission,
@@ -534,6 +545,12 @@ public class SubmissionService {
                 .error(errorMessage)
                 .status(TestExecution.ExecutionStatus.NOT_EXECUTED)
                 .build();
+    }
+
+    private boolean hasCompilationErrors(TestCodeResponse testCodeResponse) {
+        return testCodeResponse != null
+                && testCodeResponse.getCompilationErrors() != null
+                && !testCodeResponse.getCompilationErrors().isEmpty();
     }
 
     private int calculateTotalPoints(Set<TestExecution> testExecutions) {

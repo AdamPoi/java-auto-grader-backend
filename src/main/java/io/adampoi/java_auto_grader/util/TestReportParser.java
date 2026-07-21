@@ -8,6 +8,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -30,8 +32,8 @@ public class TestReportParser {
 
         List<TestSuiteResult> testSuites = new ArrayList<>();
 
-        try {
-            Files.walk(testResultsDir)
+        try (Stream<Path> resultFiles = Files.walk(testResultsDir)) {
+            resultFiles
                     .filter(path -> path.toString().endsWith(".xml"))
                     .forEach(xmlPath -> parseXmlReport(xmlPath).ifPresent(testSuites::add));
         } catch (IOException e) {
@@ -44,9 +46,14 @@ public class TestReportParser {
     private Optional<TestSuiteResult> parseXmlReport(Path xmlPath) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
             factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
 
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.parse(xmlPath.toFile());

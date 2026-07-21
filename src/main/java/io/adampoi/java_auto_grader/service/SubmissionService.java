@@ -368,6 +368,7 @@ public class SubmissionService {
                         .testFiles(rubricTestFiles)
                         .mainClassName(mainClassName)
                         .buildTool(buildTool)
+                        .mutationTestingEnabled(type != Submission.SubmissionType.TRYOUT)
                         .build()
         );
         // 2. Build SubmissionCodes

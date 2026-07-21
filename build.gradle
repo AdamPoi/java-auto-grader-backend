@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'org.springframework.boot' version '3.5.0'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.adarshr.test-logger' version '4.0.0'
@@ -129,6 +130,11 @@ tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'mutation', 'tryout-mutation'
     }
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
 }
 
 // PIT is slow, so run the benchmark explicitly instead of during every unit-test run.

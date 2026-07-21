@@ -123,6 +123,10 @@ public class AssignmentSeeder {
         for (Assignment assignment : assignments) {
             EvaluationSpec evaluationSpec = getEvaluationSpec(assignment.getTitle());
             assignment.setTestCode(buildBlockCompatibleTestCode(evaluationSpec));
+            String canonicalSolution = buildSolutionCode(assignment.getTitle());
+            if (!canonicalSolution.isBlank()) {
+                assignment.setSolutionCode(canonicalSolution);
+            }
             assignment.setTotalPoints(100);
             assignmentRepository.save(assignment);
 
@@ -222,6 +226,7 @@ public class AssignmentSeeder {
         String requiredTokens = spec.requiredTokens().stream()
                 .map(this::quoteJavaString)
                 .collect(Collectors.joining(", "));
+        String behaviorAssertions = buildBehaviorAssertions(spec.className());
 
         return """
                 package workspace;
@@ -233,7 +238,13 @@ public class AssignmentSeeder {
                 import org.junit.jupiter.api.BeforeAll;
                 import org.junit.jupiter.api.Test;
                 
+                import java.io.ByteArrayOutputStream;
                 import java.io.IOException;
+                import java.io.PrintStream;
+                import java.lang.reflect.Constructor;
+                import java.lang.reflect.Field;
+                import java.lang.reflect.Method;
+                import java.nio.charset.StandardCharsets;
                 import java.nio.file.Paths;
                 import java.util.List;
                 import java.util.stream.Stream;
@@ -258,6 +269,65 @@ public class AssignmentSeeder {
                                 .filter(type -> type.getNameAsString().equals("%s"))
                                 .findFirst()
                                 .orElse(null);
+                    }
+                
+                    private static Class<?> runtimeTargetClass() throws ClassNotFoundException {
+                        return Class.forName("workspace.%s");
+                    }
+                
+                    private static Object invokeStatic(String methodName, Class<?>[] parameterTypes, Object... arguments)
+                            throws Exception {
+                        Method method = runtimeTargetClass().getDeclaredMethod(methodName, parameterTypes);
+                        method.setAccessible(true);
+                        return method.invoke(null, arguments);
+                    }
+                
+                    private static Object invokeInstance(Object target, String methodName,
+                                                         Class<?>[] parameterTypes, Object... arguments)
+                            throws Exception {
+                        Method method = target.getClass().getDeclaredMethod(methodName, parameterTypes);
+                        method.setAccessible(true);
+                        return method.invoke(target, arguments);
+                    }
+                
+                    private static Object newInstance(Class<?>[] parameterTypes, Object... arguments)
+                            throws Exception {
+                        Constructor<?> constructor = runtimeTargetClass().getDeclaredConstructor(parameterTypes);
+                        constructor.setAccessible(true);
+                        return constructor.newInstance(arguments);
+                    }
+                
+                    private static Object fieldValue(Object target, String fieldName) throws Exception {
+                        Field field = target.getClass().getDeclaredField(fieldName);
+                        field.setAccessible(true);
+                        return field.get(target);
+                    }
+                
+                    private static String captureOutput(CheckedAction action) throws Exception {
+                        PrintStream originalOut = System.out;
+                        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                        try (PrintStream capture = new PrintStream(buffer, true, StandardCharsets.UTF_8)) {
+                            System.setOut(capture);
+                            action.run();
+                        } finally {
+                            System.setOut(originalOut);
+                        }
+                        return buffer.toString(StandardCharsets.UTF_8)
+                                .replace("\\r\\n", "\\n")
+                                .trim();
+                    }
+                
+                    private static String runMain() throws Exception {
+                        return captureOutput(() -> {
+                            Method main = runtimeTargetClass().getDeclaredMethod("main", String[].class);
+                            main.setAccessible(true);
+                            main.invoke(null, (Object) new String[0]);
+                        });
+                    }
+                
+                    @FunctionalInterface
+                    private interface CheckedAction {
+                        void run() throws Exception;
                     }
                 
                     @Test
@@ -286,22 +356,128 @@ public class AssignmentSeeder {
                     }
                 
                     @Test
-                    void testRequiredLogic() {
+                    void testRequiredLogic() throws Exception {
                         ClassOrInterfaceDeclaration target = targetClass();
                         Assertions.assertThat(target).isNotNull();
                         Assertions.assertThat(target.toString())
                                 .as("Required logic and specification markers for %s")
                                 .contains(%s);
+                
+                        %s
                     }
                 }
                 """.formatted(
                 spec.className(),
                 spec.className(),
                 spec.className(),
+                spec.className(),
                 requiredMembers,
                 spec.className(),
-                requiredTokens
+                requiredTokens,
+                behaviorAssertions
         );
+    }
+
+    private String buildBehaviorAssertions(String className) {
+        return switch (className) {
+            case "HelloWorld" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("Hello, Java Learner!");
+                    """;
+            case "DataTypeFun" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("Age:", "Height:", "Is student:", "Initial:", "First name:");
+                    """;
+            case "SimpleMath" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("Sum: 32", "Difference: 18", "Product: 175", "Quotient: 3", "Remainder: 4");
+                    """;
+            case "NumberChecker" -> """
+                    Assertions.assertThat(runMain())
+                            .containsAnyOf("The number is positive.", "The number is negative.", "The number is zero.");
+                    """;
+            case "GradeMessage" -> """
+                    Assertions.assertThat(runMain())
+                            .containsAnyOf("Excellent work!", "Good job!", "You passed.",
+                                    "You can do better.", "Unfortunately, you failed.", "Invalid grade entered.");
+                    """;
+            case "Summation" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("Sum using for loop: 5050", "Sum using while loop: 5050");
+                    """;
+            case "Calculator" -> """
+                    Assertions.assertThat(invokeStatic("add", new Class<?>[]{int.class, int.class}, -2, 3))
+                            .isEqualTo(1);
+                    Assertions.assertThat(invokeStatic("subtract", new Class<?>[]{int.class, int.class}, -2, 3))
+                            .isEqualTo(-5);
+                    Assertions.assertThat(invokeStatic("multiply", new Class<?>[]{int.class, int.class}, -2, 3))
+                            .isEqualTo(-6);
+                    Assertions.assertThat((Double) invokeStatic(
+                                    "divide", new Class<?>[]{int.class, int.class}, 7, 2))
+                            .isCloseTo(3.5, Assertions.within(0.000001));
+                    """;
+            case "Greeter" -> """
+                    String greeting = captureOutput(() -> invokeStatic(
+                            "greetUser", new Class<?>[]{String.class}, "Mutation"));
+                    Assertions.assertThat(greeting)
+                            .contains("Hello, Mutation!", "Welcome to Java exercises");
+                    """;
+            case "AreaCalculator" -> """
+                    Assertions.assertThat((Double) invokeStatic(
+                                    "calculateArea", new Class<?>[]{double.class}, 2.0))
+                            .isCloseTo(Math.PI * 4.0, Assertions.within(0.000001));
+                    Assertions.assertThat((Double) invokeStatic(
+                                    "calculateArea", new Class<?>[]{double.class, double.class}, 3.0, 4.0))
+                            .isCloseTo(12.0, Assertions.within(0.000001));
+                    Assertions.assertThat((Double) invokeStatic(
+                                    "calculateArea", new Class<?>[]{double.class, double.class, boolean.class},
+                                    3.0, 4.0, true))
+                            .isCloseTo(6.0, Assertions.within(0.000001));
+                    """;
+            case "ArrayBasics" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("First element:", "Third element:", "Last element:");
+                    """;
+            case "ArraySum" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("Sum:", "Average:");
+                    """;
+            case "ArrayMinMax" -> """
+                    Assertions.assertThat(runMain())
+                            .contains("Maximum value: 9", "Minimum value: 1");
+                    """;
+            case "Dog" -> """
+                    Object dog = newInstance(new Class<?>[]{String.class, String.class}, "Rex", "Collie");
+                    Assertions.assertThat(fieldValue(dog, "name")).isEqualTo("Rex");
+                    Assertions.assertThat(fieldValue(dog, "breed")).isEqualTo("Collie");
+                    
+                    if (Stream.of(runtimeTargetClass().getDeclaredMethods())
+                            .anyMatch(method -> method.getName().equals("setName"))) {
+                        invokeInstance(dog, "setName", new Class<?>[]{String.class}, "Max");
+                        invokeInstance(dog, "setBreed", new Class<?>[]{String.class}, "Labrador");
+                        Assertions.assertThat(invokeInstance(dog, "getName", new Class<?>[0]))
+                                .isEqualTo("Max");
+                        Assertions.assertThat(invokeInstance(dog, "getBreed", new Class<?>[0]))
+                                .isEqualTo("Labrador");
+                    } else {
+                        String speech = captureOutput(() -> invokeInstance(
+                                dog, "speak", new Class<?>[0]));
+                        Assertions.assertThat(speech).contains("Rex", "Woof");
+                    }
+                    """;
+            case "Circle" -> """
+                    Object first = newInstance(new Class<?>[]{double.class}, 2.0);
+                    Object second = newInstance(new Class<?>[]{double.class}, 3.0);
+                    Assertions.assertThat((Double) invokeInstance(
+                                    first, "getArea", new Class<?>[0]))
+                            .isCloseTo(Math.PI * 4.0, Assertions.within(0.000001));
+                    Assertions.assertThat(invokeStatic(
+                                    "getTotalCircles", new Class<?>[0]))
+                            .isEqualTo(2);
+                    Assertions.assertThat(second).isNotNull();
+                    """;
+            default -> "Assertions.assertThat(runMain()).isNotNull();";
+        };
     }
 
     private String quoteJavaString(String value) {
@@ -309,6 +485,295 @@ public class AssignmentSeeder {
                 .replace("\\", "\\\\")
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n") + "\"";
+    }
+
+    String buildSolutionCode(String assignmentTitle) {
+        return switch (assignmentTitle) {
+            case "Hello World & Basic Syntax" -> """
+                    public class HelloWorld {
+                        public static void main(String[] args) {
+                            // Print the required greeting.
+                            /* This is the first Java exercise. */
+                            System.out.println("Hello, Java Learner!");
+                        }
+                    }
+                    """;
+            case "Variables and Primitive Data Types" -> """
+                    public class DataTypeFun {
+                        public static void main(String[] args) {
+                            int age = 20;
+                            double height = 1.75;
+                            boolean isStudent = true;
+                            char initial = 'A';
+                            String firstName = "Adam";
+                    
+                            System.out.println("Age: " + age);
+                            System.out.println("Height: " + height);
+                            System.out.println("Is student: " + isStudent);
+                            System.out.println("Initial: " + initial);
+                            System.out.println("First name: " + firstName);
+                        }
+                    }
+                    """;
+            case "Basic Arithmetic Operations" -> """
+                    public class SimpleMath {
+                        public static void main(String[] args) {
+                            int num1 = 25;
+                            int num2 = 7;
+                            System.out.println("Sum: " + (num1 + num2));
+                            System.out.println("Difference: " + (num1 - num2));
+                            System.out.println("Product: " + (num1 * num2));
+                            System.out.println("Quotient: " + (num1 / num2));
+                            System.out.println("Remainder: " + (num1 % num2));
+                            // Integer division discards the fractional part.
+                        }
+                    }
+                    """;
+            case "Conditional Statements (If-Else)" -> """
+                    public class NumberChecker {
+                        public static void main(String[] args) {
+                            int number = 10;
+                            if (number > 0) {
+                                System.out.println("The number is positive.");
+                            } else if (number < 0) {
+                                System.out.println("The number is negative.");
+                            } else {
+                                System.out.println("The number is zero.");
+                            }
+                        }
+                    }
+                    """;
+            case "Grade Calculator with Switch" -> """
+                    public class GradeMessage {
+                        public static void main(String[] args) {
+                            char grade = 'A';
+                            switch (grade) {
+                                case 'A': System.out.println("Excellent work!"); break;
+                                case 'B': System.out.println("Good job!"); break;
+                                case 'C': System.out.println("You passed."); break;
+                                case 'D': System.out.println("You can do better."); break;
+                                case 'F': System.out.println("Unfortunately, you failed."); break;
+                                default: System.out.println("Invalid grade entered.");
+                            }
+                        }
+                    }
+                    """;
+            case "Loops: Sum of N Numbers" -> """
+                    public class Summation {
+                        public static void main(String[] args) {
+                            int sumFor = 0;
+                            for (int i = 1; i <= 100; i++) {
+                                sumFor += i;
+                            }
+                    
+                            int sumWhile = 0;
+                            int i = 1;
+                            while (i <= 100) {
+                                sumWhile += i;
+                                i++;
+                            }
+                    
+                            System.out.println("Sum using for loop: " + sumFor);
+                            System.out.println("Sum using while loop: " + sumWhile);
+                        }
+                    }
+                    """;
+            case "Simple Calculator Methods" -> """
+                    public class Calculator {
+                        public static int add(int a, int b) {
+                            return a + b;
+                        }
+                    
+                        public static int subtract(int a, int b) {
+                            return a - b;
+                        }
+                    
+                        public static int multiply(int a, int b) {
+                            return a * b;
+                        }
+                    
+                        public static double divide(int a, int b) {
+                            return (double) a / b;
+                        }
+                    
+                        public static void main(String[] args) {
+                            System.out.println("Sum: " + add(10, 4));
+                            System.out.println("Difference: " + subtract(10, 4));
+                            System.out.println("Product: " + multiply(10, 4));
+                            System.out.println("Quotient: " + divide(10, 4));
+                        }
+                    }
+                    """;
+            case "Greeting Method with Parameters" -> """
+                    public class Greeter {
+                        public static void greetUser(String name) {
+                            System.out.println("Hello, " + name + "!");
+                            System.out.println("Welcome to Java exercises");
+                        }
+                    
+                        public static void main(String[] args) {
+                            greetUser("Learner");
+                        }
+                    }
+                    """;
+            case "Method Overloading - Area Calculator" -> """
+                    public class AreaCalculator {
+                        public static double calculateArea(double radius) {
+                            return Math.PI * radius * radius;
+                        }
+                    
+                        public static double calculateArea(double length, double width) {
+                            return length * width;
+                        }
+                    
+                        public static double calculateArea(double base, double height, boolean isTriangle) {
+                            return isTriangle ? 0.5 * base * height : base * height;
+                        }
+                    
+                        public static void main(String[] args) {
+                            System.out.println("Circle Area: " + calculateArea(2.0));
+                            System.out.println("Rectangle Area: " + calculateArea(3.0, 4.0));
+                            System.out.println("Triangle Area: " + calculateArea(3.0, 4.0, true));
+                        }
+                    }
+                    """;
+            case "Basic Array Declaration and Access" -> """
+                    public class ArrayBasics {
+                        public static void main(String[] args) {
+                            int[] numbers = {10, 20, 30, 40, 50};
+                            System.out.println("First element: " + numbers[0]);
+                            System.out.println("Third element: " + numbers[2]);
+                            System.out.println("Last element: " + numbers[numbers.length - 1]);
+                        }
+                    }
+                    """;
+            case "Array Iteration and Sum" -> """
+                    public class ArraySum {
+                        public static void main(String[] args) {
+                            double[] values = {15.5, 20.0, 10.2, 5.8, 12.3};
+                            double sum = 0;
+                            for (int i = 0; i < values.length; i++) {
+                                sum += values[i];
+                            }
+                            double average = sum / values.length;
+                            System.out.println("Sum: " + sum);
+                            System.out.println("Average: " + average);
+                        }
+                    }
+                    """;
+            case "Finding Max/Min in Array" -> """
+                    public class ArrayMinMax {
+                        public static void main(String[] args) {
+                            int[] numbers = {4, 9, 1, 7, 5, 2, 8};
+                            int max = numbers[0];
+                            int min = numbers[0];
+                            for (int i = 1; i < numbers.length; i++) {
+                                if (numbers[i] > max) {
+                                    max = numbers[i];
+                                }
+                                if (numbers[i] < min) {
+                                    min = numbers[i];
+                                }
+                            }
+                            System.out.println("Maximum value: " + max);
+                            System.out.println("Minimum value: " + min);
+                        }
+                    }
+                    """;
+            case "Basic Class and Object Creation" -> """
+                    public class Dog {
+                        String name;
+                        String breed;
+                    
+                        public Dog(String name, String breed) {
+                            this.name = name;
+                            this.breed = breed;
+                        }
+                    
+                        public void speak() {
+                            System.out.println(name + " says Woof!");
+                        }
+                    
+                        public static void main(String[] args) {
+                            Dog firstDog = new Dog("Buddy", "Golden Retriever");
+                            Dog secondDog = new Dog("Rex", "Collie");
+                            firstDog.speak();
+                            secondDog.speak();
+                            System.out.println(firstDog.name + " is a " + firstDog.breed);
+                            System.out.println(secondDog.name + " is a " + secondDog.breed);
+                        }
+                    }
+                    """;
+            case "Encapsulation with Getters and Setters" -> """
+                    public class Dog {
+                        private String name;
+                        private String breed;
+                    
+                        public Dog(String name, String breed) {
+                            this.name = name;
+                            this.breed = breed;
+                        }
+                    
+                        public String getName() {
+                            return name;
+                        }
+                    
+                        public void setName(String name) {
+                            this.name = name;
+                        }
+                    
+                        public String getBreed() {
+                            return breed;
+                        }
+                    
+                        public void setBreed(String breed) {
+                            this.breed = breed;
+                        }
+                    
+                        public void speak() {
+                            System.out.println(name + " says Woof!");
+                        }
+                    
+                        public static void main(String[] args) {
+                            Dog dog = new Dog("Max", "Labrador");
+                            dog.setName("Charlie");
+                            System.out.println("Name: " + dog.getName());
+                            System.out.println("Breed: " + dog.getBreed());
+                        }
+                    }
+                    """;
+            case "Static Members and Methods" -> """
+                    public class Circle {
+                        private double radius;
+                        private static final double PI = Math.PI;
+                        private static int numberOfCircles = 0;
+                    
+                        public Circle(double radius) {
+                            this.radius = radius;
+                            numberOfCircles++;
+                        }
+                    
+                        public double getArea() {
+                            return PI * radius * radius;
+                        }
+                    
+                        public static int getTotalCircles() {
+                            return numberOfCircles;
+                        }
+                    
+                        public static void main(String[] args) {
+                            Circle c1 = new Circle(2.0);
+                            Circle c2 = new Circle(3.0);
+                            Circle c3 = new Circle(4.0);
+                            System.out.println("Area of c1: " + c1.getArea());
+                            System.out.println("Area of c2: " + c2.getArea());
+                            System.out.println("Area of c3: " + c3.getArea());
+                            System.out.println("Total Circles: " + Circle.getTotalCircles());
+                        }
+                    }
+                    """;
+            default -> "";
+        };
     }
 
     private EvaluationSpec getEvaluationSpec(String assignmentTitle) {
@@ -324,13 +789,13 @@ public class AssignmentSeeder {
                     List.of("num1", "num2", "+", "-", "*", "/", "%"));
             case "Conditional Statements (If-Else)" -> new EvaluationSpec(
                     "NumberChecker", List.of("main"),
-                    List.of("if", "else", "positive", "negative", "zero"));
+                    List.of("number > 0", "number < 0", "positive", "negative", "zero"));
             case "Grade Calculator with Switch" -> new EvaluationSpec(
                     "GradeMessage", List.of("main"),
-                    List.of("switch", "case", "default", "break"));
+                    List.of("switch", "case 'A'", "case 'B'", "case 'C'", "case 'D'", "case 'F'", "default"));
             case "Loops: Sum of N Numbers" -> new EvaluationSpec(
                     "Summation", List.of("main"),
-                    List.of("for", "while", "5050"));
+                    List.of("for", "while", "i <= 100", "sumFor += i", "sumWhile += i"));
             case "Simple Calculator Methods" -> new EvaluationSpec(
                     "Calculator", List.of("add", "subtract", "multiply", "divide"),
                     List.of("return a + b", "return a - b", "return a * b", "double"));
@@ -345,10 +810,10 @@ public class AssignmentSeeder {
                     List.of("int[]", "numbers[0]", "numbers[2]", "length - 1"));
             case "Array Iteration and Sum" -> new EvaluationSpec(
                     "ArraySum", List.of("main"),
-                    List.of("double[]", "for", "sum", "average"));
+                    List.of("double[]", "for", "sum += values[i]", "sum / values.length"));
             case "Finding Max/Min in Array" -> new EvaluationSpec(
                     "ArrayMinMax", List.of("main"),
-                    List.of("int[]", "for", "if", "max", "min"));
+                    List.of("int[]", "for", "numbers[i] > max", "numbers[i] < min"));
             case "Basic Class and Object Creation" -> new EvaluationSpec(
                     "Dog", List.of("name", "breed", "speak"),
                     List.of("Dog(String name, String breed)", "says Woof"));

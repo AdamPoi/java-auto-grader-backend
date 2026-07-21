@@ -2,8 +2,10 @@ package io.adampoi.java_auto_grader.rest;
 
 import io.adampoi.java_auto_grader.domain.Submission;
 import io.adampoi.java_auto_grader.filter.SubmissionFilterDef;
+import io.adampoi.java_auto_grader.model.dto.BulkSubmissionDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionCompileDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
+import io.adampoi.java_auto_grader.model.request.BulkUploadSubmissionRequest;
 import io.adampoi.java_auto_grader.model.request.ChatCodeAnalyzerRequest;
 import io.adampoi.java_auto_grader.model.request.TestSubmitRequest;
 import io.adampoi.java_auto_grader.model.response.ApiSuccessResponse;
@@ -181,29 +183,28 @@ public class SubmissionResource {
                 .build();
 
     }
-//    @PostMapping("/bulk")
 
-    /// /    @PreAuthorize("hasAuthority('SUBMISSION:BULK_CREATE')")
-//    @Operation(summary = "Bulk Submission Upload", description = "Teacher bulk upload student submissions")
-//    @ApiResponse(responseCode = "201", description = "Bulk submissions processed")
-//    public ApiSuccessResponse<BulkSubmissionDTO> createBulkSubmission(
-//            @RequestBody @Validated(BulkUploadSubmissionRequest.CreateGroup.class) final BulkUploadSubmissionRequest bulkUploadRequest
-//    ) {
-//        // Set teacherId from principal
-//
-//        BulkSubmissionDTO result = submissionService.uploadBulkSubmission(
-//                UUID.fromString(bulkUploadRequest.getTeacherId()),
-//                bulkUploadRequest.getAssignmentId(),
-//                bulkUploadRequest.getNimToCodeFiles(),
-//                bulkUploadRequest.getTestFiles(),
-//                bulkUploadRequest.getMainClassName(),
-//                bulkUploadRequest.getBuildTool()
-//        );
-//        return ApiSuccessResponse.<BulkSubmissionDTO>builder()
-//                .data(result)
-//                .statusCode(HttpStatus.CREATED)
-//                .build();
-//    }
+    @PostMapping("/bulk")
+    @PreAuthorize("hasAuthority('SUBMISSION:BULK_CREATE')")
+    @Operation(summary = "Bulk Submission Upload", description = "Teacher bulk upload student submissions")
+    @ApiResponse(responseCode = "201", description = "Bulk submissions processed")
+    public ApiSuccessResponse<BulkSubmissionDTO> createBulkSubmission(
+            @RequestBody @Validated(BulkUploadSubmissionRequest.CreateGroup.class) final BulkUploadSubmissionRequest bulkUploadRequest
+    ) {
+        BulkSubmissionDTO result = submissionService.uploadBulkSubmissionByNim(
+                UUID.fromString(bulkUploadRequest.getTeacherId()),
+                bulkUploadRequest.getAssignmentId(),
+                bulkUploadRequest.getNimToCodeFiles(),
+                bulkUploadRequest.getTestFiles(),
+                bulkUploadRequest.getMainClassName(),
+                bulkUploadRequest.getBuildTool()
+        );
+        return ApiSuccessResponse.<BulkSubmissionDTO>builder()
+                .data(result)
+                .statusCode(HttpStatus.CREATED)
+                .build();
+    }
+
     @PostMapping("/tryout")
     @PreAuthorize("hasAuthority('SUBMISSION:TEST')")
     @Operation(summary = "Tryout Submission", description = "Try out code submission (not persisted, just returns results)")

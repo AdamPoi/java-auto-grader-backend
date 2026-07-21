@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -12,7 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BulkSubmissionDTO {
-    private List<Item> results;
+    @Builder.Default
+    private List<Item> results = new ArrayList<>();
 
 
     @Data

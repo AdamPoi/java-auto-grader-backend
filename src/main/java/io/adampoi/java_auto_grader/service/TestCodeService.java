@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,30 +36,6 @@ public class TestCodeService {
     private final TestReportParser reportParser;
     private final ProjectSetupService projectSetupService;
 
-    private void initializeGradleDaemon() throws IOException, InterruptedException {
-        log.info("Pre-initializing Gradle daemon in container");
-
-        ProcessBuilder warmupCommand = new ProcessBuilder(
-                "docker", "exec", "gradle-sandbox",
-                "sh", "-c",
-                "mkdir -p /workspace/warmup && " +
-                        "cd /workspace/warmup && " +
-                        "echo 'plugins { id \"java\" }' > build.gradle && " +
-                        "gradle --version --daemon --parallel --build-cache --configuration-cache --quiet && " +
-                        "rm -rf /workspace/warmup"
-        );
-
-        Process warmupProcess = warmupCommand.start();
-        boolean finished = warmupProcess.waitFor(30, TimeUnit.SECONDS);
-
-        if (!finished) {
-            warmupProcess.destroyForcibly();
-            log.warn("Gradle daemon warmup timed out");
-        } else {
-            log.info("Gradle daemon warmed up, exit code: {}", warmupProcess.exitValue());
-        }
-    }
-
     public TestCodeResponse runTestCode(TestCodeRequest request) {
         String uuid = java.util.UUID.randomUUID().toString();
         Path tempDir = null;
@@ -68,7 +43,6 @@ public class TestCodeService {
         try {
             BuildTool buildTool = determineBuildTool(request);
             ContainerInstance container = ensureContainerReady(buildTool);
-            initializeGradleDaemon();
 
             tempDir = createTempDirectory(uuid);
             String workspace = "/workspace/" + uuid;
@@ -128,7 +102,12 @@ public class TestCodeService {
             return new ContainerInstance(containerName, bt);
         });
 
-        if (!dockerManager.isContainerRunning(container.getName())) {
+        boolean running = dockerManager.isContainerRunning(container.getName());
+        boolean usable = running && dockerManager.isContainerUsable(container.getName(), buildTool);
+        if (!usable) {
+            if (running) {
+                log.warn("Recreating incompatible or unhealthy {} container: {}", buildTool, container.getName());
+            }
             log.info("Starting {} container: {}", buildTool, container.getName());
             dockerManager.startContainer(container.getName(), buildTool);
         }

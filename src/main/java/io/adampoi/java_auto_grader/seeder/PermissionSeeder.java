@@ -43,6 +43,7 @@ public class PermissionSeeder {
                 "SUBMISSION:ASSESSMENT",
                 "SUBMISSION:RUN_CODE",
                 "SUBMISSION:TEST",
+                "SUBMISSION:BULK_CREATE",
                 "SUBMISSION:GRADE"
         );
 

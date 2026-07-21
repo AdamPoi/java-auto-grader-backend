@@ -18,21 +18,22 @@ import java.util.List;
 @AllArgsConstructor
 public class TestSubmitRequest {
 
-    @NotNull(groups = CreateGroup.class)
-    @Size(min = 1, message = "At least one source file must be provided", groups = CreateGroup.class)
+    @NotNull(groups = {CreateGroup.class, TryoutGroup.class})
+    @Size(min = 1, message = "At least one source file must be provided", groups = {CreateGroup.class, TryoutGroup.class})
     private List<CodeFile> sourceFiles;
-    @NotNull(groups = CreateGroup.class)
-    @Size(min = 1, message = "At least one test file must be provided", groups = CreateGroup.class)
+    @NotNull(groups = {CreateGroup.class, TryoutGroup.class})
+    @Size(min = 1, message = "At least one test file must be provided", groups = {CreateGroup.class, TryoutGroup.class})
     private List<CodeFile> testFiles;
-    @NotBlank(message = "Main class name must not be blank", groups = CreateGroup.class)
+    @NotBlank(message = "Main class name must not be blank", groups = {CreateGroup.class, TryoutGroup.class})
     private String mainClassName;
     private String submissionId;
+    @NotBlank(message = "User ID must not be blank", groups = CreateGroup.class)
     private String userId;
-    @NotBlank(message = "Assignment ID must not be blank", groups = CreateGroup.class)
+    @NotBlank(message = "Assignment ID must not be blank", groups = {CreateGroup.class, TryoutGroup.class})
     private String assignmentId;
-    @NotBlank(message = "Build tool must be specified", groups = CreateGroup.class)
+    @NotBlank(message = "Build tool must be specified", groups = {CreateGroup.class, TryoutGroup.class})
     @Pattern(regexp = "gradle|maven", flags = Pattern.Flag.CASE_INSENSITIVE,
-            message = "Build Tool must be one of: gradle, maven", groups = CreateGroup.class)
+            message = "Build Tool must be one of: gradle, maven", groups = {CreateGroup.class, TryoutGroup.class})
     private String buildTool;
 
     private String type;

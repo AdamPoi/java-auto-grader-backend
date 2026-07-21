@@ -38,7 +38,7 @@ class SubmissionResourceTest {
     private static final String BASE_API_PATH = "/api/submissions";
     private static final String AUTHORITY_SUBMIT = "SUBMISSION:CREATE";
     private static final String AUTHORITY_BULK = "SUBMISSION:BULK_CREATE";
-    private static final String AUTHORITY_TRYOUT = "SUBMISSION:TRYOUT";
+    private static final String AUTHORITY_TRYOUT = "SUBMISSION:TEST";
 
     @Autowired
     private MockMvc mockMvc;
@@ -140,10 +140,12 @@ class SubmissionResourceTest {
         @WithMockUser(authorities = {AUTHORITY_SUBMIT})
         @DisplayName("Should return 201 Created for valid submission")
         void submitStudent_ReturnsCreated() throws Exception {
+            UUID studentId = randomId();
             TestSubmitRequest request = TestSubmitRequest.builder()
                     .sourceFiles(mockSourceFiles())
                     .testFiles(mockTestFiles())
                     .mainClassName("Main")
+                    .userId(studentId.toString())
                     .assignmentId(String.valueOf(UUID.randomUUID()))
                     .buildTool("gradle")
                     .build();
@@ -154,7 +156,7 @@ class SubmissionResourceTest {
                     .status("PASSED")
                     .build();
 
-            when(submissionService.submitStudentSubmission(any(), any())).thenReturn(responseDTO);
+            when(submissionService.submitStudentSubmission(eq(studentId), any())).thenReturn(responseDTO);
 
             mockMvc.perform(post(BASE_API_PATH)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -168,7 +170,14 @@ class SubmissionResourceTest {
         @WithMockUser(authorities = {})
         @DisplayName("Should return 401 Unauthorized when missing authority")
         void submitStudent_Unauthorized() throws Exception {
-            TestSubmitRequest request = TestSubmitRequest.builder().build();
+            TestSubmitRequest request = TestSubmitRequest.builder()
+                    .sourceFiles(mockSourceFiles())
+                    .testFiles(mockTestFiles())
+                    .mainClassName("Main")
+                    .userId(randomId().toString())
+                    .assignmentId(randomId().toString())
+                    .buildTool("gradle")
+                    .build();
 
             mockMvc.perform(post(BASE_API_PATH)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -278,14 +287,15 @@ class SubmissionResourceTest {
                     .build();
 
             Map<String, Object> request = new HashMap<>();
+            request.put("teacherId", randomId().toString());
             request.put("assignmentId", randomId());
             request.put("nimToCodeFiles", nimToCodeFiles);
             request.put("testFiles", mockTestFiles());
             request.put("mainClassName", "Main");
             request.put("buildTool", "gradle");
 
-//            when(submissionService.uploadBulkSubmission(any(), any(), any(), any(), any(), any()))
-//                    .thenReturn(bulkResponse);
+            when(submissionService.uploadBulkSubmissionByNim(any(), any(), any(), any(), any(), any()))
+                    .thenReturn(bulkResponse);
 
             mockMvc.perform(post(BASE_API_PATH + "/bulk")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -299,6 +309,7 @@ class SubmissionResourceTest {
         @DisplayName("Should return 401 Unauthorized when missing authority")
         void bulkUpload_Unauthorized() throws Exception {
             Map<String, Object> request = new HashMap<>();
+            request.put("teacherId", randomId().toString());
             request.put("assignmentId", randomId());
             request.put("nimToCodeFiles", Map.of("2141720001", mockSourceFiles()));
             request.put("testFiles", mockTestFiles());
@@ -379,13 +390,7 @@ class SubmissionResourceTest {
         @WithMockUser(authorities = {AUTHORITY_TRYOUT})
         @DisplayName("Should return 400 Bad Request for invalid input")
         void tryout_InvalidInput_ReturnsBadRequest() throws Exception {
-            TestSubmitRequest request = TestSubmitRequest.builder()
-                    .sourceFiles(mockSourceFiles())
-                    .testFiles(mockTestFiles())
-                    .mainClassName("Main")
-                    .assignmentId(String.valueOf(UUID.randomUUID()))
-                    .buildTool("gradle")
-                    .build();
+            TestSubmitRequest request = TestSubmitRequest.builder().build();
 
             mockMvc.perform(post(BASE_API_PATH + "/tryout")
                             .contentType(MediaType.APPLICATION_JSON)

@@ -127,7 +127,7 @@ pitest {
 // Merge excludeTags into the existing tasks.named('test') block.
 tasks.named('test') {
     useJUnitPlatform {
-        excludeTags 'mutation'
+        excludeTags 'mutation', 'tryout-mutation'
     }
 }
 

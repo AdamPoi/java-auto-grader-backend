@@ -56,14 +56,27 @@ public class DockerContainerManager {
 
     public void copyToContainer(String containerName, Path source, String destination)
             throws IOException, InterruptedException {
+        ProcessResult prepareResult = executeCommand(
+                containerName,
+                "mkdir -p " + shellQuote(destination) + " && test -w " + shellQuote(destination),
+                15
+        );
+        if (!prepareResult.isSuccess()) {
+            throw new RuntimeException("Container workspace is not writable: "
+                    + firstNonBlank(prepareResult.getErrors(), prepareResult.getOutput()));
+        }
+
         ProcessBuilder copyCommand = new ProcessBuilder(
                 "docker", "cp", source.toString() + "/.",
                 containerName + ":" + destination
         );
+        copyCommand.redirectErrorStream(true);
         Process copyProcess = copyCommand.start();
+        String commandOutput = ProcessUtils.readOutput(copyProcess);
         int exitCode = copyProcess.waitFor();
         if (exitCode != 0) {
-            throw new RuntimeException("Failed to copy files to container");
+            throw new RuntimeException("Failed to copy files to container " + containerName
+                    + " at " + destination + ": " + commandOutput.strip());
         }
     }
 
@@ -72,8 +85,29 @@ public class DockerContainerManager {
         ProcessBuilder copyCommand = new ProcessBuilder(
                 "docker", "cp", containerName + ":" + source, destination.toString()
         );
+        copyCommand.redirectErrorStream(true);
         Process copyProcess = copyCommand.start();
-        copyProcess.waitFor();
+        String commandOutput = ProcessUtils.readOutput(copyProcess);
+        int exitCode = copyProcess.waitFor();
+        if (exitCode != 0) {
+            throw new RuntimeException("Failed to copy files from container " + containerName
+                    + " at " + source + ": " + commandOutput.strip());
+        }
+    }
+
+    public boolean isContainerUsable(String containerName, BuildTool buildTool)
+            throws IOException, InterruptedException {
+        String requiredCommand = buildTool == BuildTool.GRADLE ? "gradle" : "mvn";
+        ProcessResult result = executeCommand(
+                containerName,
+                "test -d /workspace && test -w /workspace && command -v " + requiredCommand + " >/dev/null 2>&1",
+                15
+        );
+        if (!result.isSuccess()) {
+            log.warn("Container {} failed readiness check: {}", containerName,
+                    firstNonBlank(result.getErrors(), result.getOutput()));
+        }
+        return result.isSuccess();
     }
 
     public ProcessResult executeCommand(String containerName, String command, int timeoutSeconds)
@@ -150,5 +184,13 @@ public class DockerContainerManager {
                 "sh", "-c", "mkdir -p " + userHome + " && chmod 755 " + userHome
         );
         createHome.start().waitFor();
+    }
+
+    private String shellQuote(String value) {
+        return "'" + value.replace("'", "'\\''") + "'";
+    }
+
+    private String firstNonBlank(String first, String second) {
+        return first != null && !first.isBlank() ? first : second == null ? "" : second;
     }
 }

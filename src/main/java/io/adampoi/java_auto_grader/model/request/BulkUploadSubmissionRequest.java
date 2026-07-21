@@ -3,12 +3,12 @@ package io.adampoi.java_auto_grader.model.request;
 import io.adampoi.java_auto_grader.model.type.CodeFile;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,6 +30,7 @@ public class BulkUploadSubmissionRequest {
     @NotBlank(groups = CreateGroup.class)
     private String buildTool;
 
+    @NotBlank(groups = CreateGroup.class)
     private String teacherId;
 
     public interface CreateGroup {

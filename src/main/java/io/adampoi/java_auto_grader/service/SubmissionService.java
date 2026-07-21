@@ -197,11 +197,13 @@ public class SubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
 
 
-        Submission.SubmissionType submissionType;
-        try {
-            submissionType = Submission.SubmissionType.valueOf(request.getType());
-        } catch (IllegalArgumentException e) {
-            submissionType = Submission.SubmissionType.ATTEMPT;
+        Submission.SubmissionType submissionType = Submission.SubmissionType.ATTEMPT;
+        if (request.getType() != null && !request.getType().isBlank()) {
+            try {
+                submissionType = Submission.SubmissionType.valueOf(request.getType().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                log.warn("Unknown submission type '{}', defaulting to ATTEMPT", request.getType());
+            }
         }
 
         if (submissionType.equals(Submission.SubmissionType.ATTEMPT)) {
@@ -247,7 +249,7 @@ public class SubmissionService {
 
 
     @Transactional
-    public BulkSubmissionDTO uploadBulkSubmissionByNime(
+    public BulkSubmissionDTO uploadBulkSubmissionByNim(
             UUID teacherId,
             UUID assignmentId,
             Map<String, List<CodeFile>> nimToCodeFiles,
@@ -359,10 +361,11 @@ public class SubmissionService {
             boolean persist
     ) {
         // 1. Run Tests
+        List<CodeFile> rubricTestFiles = resolveRubricTestFiles(assignment, testFiles);
         TestCodeResponse testCodeResponse = testCodeService.runTestCode(
                 TestCodeRequest.builder()
                         .sourceFiles(sourceFiles)
-                        .testFiles(testFiles != null ? testFiles : Collections.emptyList())
+                        .testFiles(rubricTestFiles)
                         .mainClassName(mainClassName)
                         .buildTool(buildTool)
                         .build()
@@ -419,6 +422,21 @@ public class SubmissionService {
 
         submittedSubmission.setCompilationErrors(testCodeResponse.getCompilationErrors());
         return submittedSubmission;
+    }
+
+    private List<CodeFile> resolveRubricTestFiles(Assignment assignment, List<CodeFile> requestTestFiles) {
+        if (requestTestFiles != null && !requestTestFiles.isEmpty()) {
+            return requestTestFiles;
+        }
+
+        if (assignment != null && assignment.getTestCode() != null && !assignment.getTestCode().isBlank()) {
+            return List.of(CodeFile.builder()
+                    .fileName("MainTest.java")
+                    .content(assignment.getTestCode())
+                    .build());
+        }
+
+        return Collections.emptyList();
     }
 
 

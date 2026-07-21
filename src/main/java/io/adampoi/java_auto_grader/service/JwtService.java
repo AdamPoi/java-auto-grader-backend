@@ -2,6 +2,7 @@ package io.adampoi.java_auto_grader.service;
 
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -32,7 +33,7 @@ public class JwtService {
     public void init() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKeyBase64);
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
-        this.jwtParser = Jwts.parser().setSigningKey(secretKey).build();
+        this.jwtParser = Jwts.parser().verifyWith(secretKey).build();
     }
 
     public String extractUsername(String token) {
@@ -53,11 +54,13 @@ public class JwtService {
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
-        return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+        JwtBuilder builder = Jwts.builder();
+        extraClaims.forEach(builder::claim);
+
+        return builder
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(secretKey)
                 .compact();
     }
@@ -76,12 +79,11 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String token) {
-        // ✅ Strip Bearer prefix if needed
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
 
-        return jwtParser.parseClaimsJws(token).getBody();
+        return jwtParser.parseSignedClaims(token).getPayload();
     }
 
     public long getExpirationTime() {

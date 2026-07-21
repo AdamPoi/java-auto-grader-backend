@@ -1,10 +1,7 @@
 package io.adampoi.java_auto_grader.service;
 
 
-import io.adampoi.java_auto_grader.domain.RubricGrade;
-import io.adampoi.java_auto_grader.domain.Submission;
-import io.adampoi.java_auto_grader.domain.SubmissionCode;
-import io.adampoi.java_auto_grader.domain.TestExecution;
+import io.adampoi.java_auto_grader.domain.*;
 import io.adampoi.java_auto_grader.model.dto.RubricGradeDTO;
 import io.adampoi.java_auto_grader.model.dto.SubmissionDTO;
 import io.adampoi.java_auto_grader.model.dto.TestExecutionDTO;
@@ -17,6 +14,7 @@ import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.RubricGradeRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.TestExecutionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,10 +70,13 @@ public class TestExecutionService {
         boolean compilationFailed = hasCompilationErrors(testCodeResponse);
         boolean hasExecutedTestCases = hasExecutedTestCases(testCodeResponse);
 
-        List<RubricGrade> rubricGrades = rubricGradeRepository.findByAssignmentId(UUID.fromString(request.getAssignmentId()));
+        UUID assignmentId = UUID.fromString(request.getAssignmentId());
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found: " + assignmentId));
+        List<RubricGrade> rubricGrades = rubricGradeRepository.findByAssignmentId(assignmentId);
         List<TestExecution> executionResults = new ArrayList<>();
         Submission submission = new Submission();
-        submission.setAssignment(assignmentRepository.findById(UUID.fromString(request.getAssignmentId())));
+        submission.setAssignment(assignment);
         submission.setStartedAt(OffsetDateTime.now());
         submission.setCompletedAt(OffsetDateTime.now());
         submission.setExecutionTime(testCodeResponse.getExecutionTime());

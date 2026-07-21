@@ -319,7 +319,7 @@ public class SubmissionService {
         if (submissionDTO.getAssignmentId() != null) {
             final Assignment assignment = assignmentRepository.findById(submissionDTO.getAssignmentId())
                     .orElseThrow(() -> new EntityNotFoundException("assignment not found"));
-            submission.setAssignment(Optional.of(assignment));
+            submission.setAssignment(assignment);
         }
         if (submissionDTO.getStudentId() != null) {
             final User student = userRepository.findById(submissionDTO.getStudentId())

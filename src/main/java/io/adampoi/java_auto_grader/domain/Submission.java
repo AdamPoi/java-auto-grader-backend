@@ -6,7 +6,6 @@ import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -65,10 +64,6 @@ public class Submission extends Auditable {
 
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY)
     private Set<SubmissionCode> submissionCodes;
-
-    public void setAssignment(Optional<Assignment> byId) {
-    }
-
 
     public enum SubmissionType {
         TRYOUT,    // practice or test run

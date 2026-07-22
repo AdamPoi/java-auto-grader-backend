@@ -26,6 +26,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import static io.adampoi.java_auto_grader.util.ExceptionUtil.extractFieldName;
@@ -37,7 +38,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorResponse.ErrorWrapper> handleAccessDeniedException(
             AccessDeniedException exception, HttpServletRequest request) {
-        String message = exception.getMessage().isBlank() || exception.getMessage().equals("Access Denied") ? "You are not authorized to access this resource" : exception.getMessage();
+        String message = exception.getMessage().isBlank() || "Access Denied".equals(exception.getMessage())
+                ? "You are not authorized to access this resource"
+                : exception.getMessage();
         ApiErrorResponse errorResponse = ApiErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .message(message)
@@ -279,7 +282,7 @@ public class GlobalExceptionHandler {
         List<FieldErrorDetail> fieldErrors = new ArrayList<>();
 
         if (exception.getCause() != null) {
-            String causeMessage = exception.getCause().getMessage().toLowerCase();
+            String causeMessage = exception.getCause().getMessage().toLowerCase(Locale.ROOT);
             String fieldName = extractFieldName(exception.getCause().getMessage());
             String rejectedValue = extractRejectedValue(exception.getCause().getMessage());
             String errorMessage;

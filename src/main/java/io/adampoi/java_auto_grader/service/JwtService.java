@@ -53,6 +53,7 @@ public class JwtService {
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
+    @SuppressWarnings("PMD.ReplaceJavaUtilDate") // JJWT 0.12 requires Date for issuedAt and expiration.
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         JwtBuilder builder = Jwts.builder();
         extraClaims.forEach(builder::claim);
@@ -70,6 +71,7 @@ public class JwtService {
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
+    @SuppressWarnings("PMD.ReplaceJavaUtilDate") // JJWT exposes the expiration as Date.
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -79,11 +81,12 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
+        String normalizedToken = token;
+        if (normalizedToken != null && normalizedToken.startsWith("Bearer ")) {
+            normalizedToken = normalizedToken.substring(7);
         }
 
-        return jwtParser.parseSignedClaims(token).getPayload();
+        return jwtParser.parseSignedClaims(normalizedToken).getPayload();
     }
 
     public long getExpirationTime() {

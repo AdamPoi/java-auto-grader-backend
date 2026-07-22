@@ -44,6 +44,8 @@ import static org.reflections.Reflections.log;
         produces = MediaType.APPLICATION_JSON_VALUE)
 public class SubmissionResource {
 
+    private static final String HTTP_OK = "200";
+
     private final SubmissionService submissionService;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
@@ -65,7 +67,7 @@ public class SubmissionResource {
     }
 
     @GetMapping
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('SUBMISSION:LIST')")
     @Operation(summary = "Get Submissions", description = "Get all submissions with pagination and filtering capabilities")
     public ApiSuccessResponse<PageResponse<SubmissionDTO>> getAllSubmissions(
@@ -79,7 +81,7 @@ public class SubmissionResource {
 
     @PostMapping("/compile")
     @PreAuthorize("hasAuthority('SUBMISSION:RUN_CODE')")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @Operation(summary = "Compile Submission", description = "Compile a submission")
     public ApiSuccessResponse<String> compile(@Valid @RequestBody SubmissionCompileDTO submissionDTO)
             throws IOException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException,
@@ -91,7 +93,7 @@ public class SubmissionResource {
     }
 
     @GetMapping(value = "/{submissionId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('SUBMISSION:READ')")
     @Operation(summary = "Get Submission", description = "Get a submission by id")
     public ApiSuccessResponse<SubmissionDTO> getSubmission(
@@ -116,7 +118,7 @@ public class SubmissionResource {
 //    }
 
     @PatchMapping("/{submissionId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('SUBMISSION:UPDATE')")
     @Operation(summary = "Update Submission", description = "Update an existing submission")
     public ApiSuccessResponse<SubmissionDTO> updateSubmission(
@@ -209,7 +211,7 @@ public class SubmissionResource {
     @PostMapping("/tryout")
     @PreAuthorize("hasAuthority('SUBMISSION:TEST')")
     @Operation(summary = "Tryout Submission", description = "Try out code submission (not persisted, just returns results)")
-    @ApiResponse(responseCode = "200", description = "Tryout results returned")
+    @ApiResponse(responseCode = HTTP_OK, description = "Tryout results returned")
     public ApiSuccessResponse<SubmissionDTO> tryoutSubmission(
             @RequestBody @Validated(TestSubmitRequest.TryoutGroup.class) final TestSubmitRequest request
     ) {

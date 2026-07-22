@@ -33,6 +33,8 @@ import java.util.UUID;
 @RequestMapping(value = "/api/classrooms", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ClassroomResource {
 
+    private static final String HTTP_OK = "200";
+
     private final ClassroomService classroomService;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
@@ -45,7 +47,7 @@ public class ClassroomResource {
     }
 
     @GetMapping
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('CLASSROOM:LIST')")
     @Operation(summary = "Get Classrooms", description = "Get all classrooms with pagination and filtering capabilities")
     public ApiSuccessResponse<PageResponse<ClassroomDTO>> getAllClassrooms(
@@ -58,7 +60,7 @@ public class ClassroomResource {
     }
 
     @GetMapping("/{classroomId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('CLASSROOM:READ')")
     @Operation(summary = "Get Classroom", description = "Get a classroom by id")
     public ApiSuccessResponse<ClassroomDTO> getClassroom(
@@ -83,7 +85,7 @@ public class ClassroomResource {
     }
 
     @PatchMapping("/{classroomId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('CLASSROOM:UPDATE')")
     @Operation(summary = "Update Classroom", description = "Update an existing classroom")
     public ApiSuccessResponse<ClassroomDTO> updateClassroom(
@@ -114,7 +116,7 @@ public class ClassroomResource {
 
 
     @GetMapping("/courseValues")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @Operation(summary = "Get Course Values", description = "Get course values for dropdowns")
     public ApiSuccessResponse<Map<UUID, String>> getCourseValues() {
         Map<UUID, String> courses = courseRepository.findAll(Sort.by("courseId"))
@@ -127,7 +129,7 @@ public class ClassroomResource {
     }
 
     @GetMapping("/teacherValues")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @Operation(summary = "Get Teacher Values", description = "Get teacher values for dropdowns")
     public ApiSuccessResponse<Map<UUID, String>> getTeacherValues() {
         Map<UUID, String> teachers = userRepository.findAll(Sort.by("userId"))

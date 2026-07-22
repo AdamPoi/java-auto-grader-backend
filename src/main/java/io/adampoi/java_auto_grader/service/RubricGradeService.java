@@ -128,7 +128,7 @@ public class RubricGradeService {
             if (rubricGrade.getAssignment() == null || !rubricGrade.getAssignment().getId().equals(assignmentId)) {
                 // You might need to fetch the assignment entity here if not properly set in mapToEntityWithoutId
                 Assignment assignment = assignmentRepository.findById(assignmentId)
-                        .orElseThrow(() -> new RuntimeException("Assignment not found"));
+                        .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
                 rubricGrade.setAssignment(assignment);
             }
 

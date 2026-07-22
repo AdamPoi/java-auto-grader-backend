@@ -8,7 +8,6 @@ import io.adampoi.java_auto_grader.model.dto.CourseDTO;
 import io.adampoi.java_auto_grader.model.dto.UserDTO;
 import io.adampoi.java_auto_grader.model.response.PageResponse;
 import io.adampoi.java_auto_grader.repository.AssignmentRepository;
-import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
@@ -30,15 +29,12 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-    private final ClassroomRepository classroomRepository;
     private final AssignmentRepository assignmentRepository;
 
     public CourseService(final CourseRepository courseRepository, final UserRepository userRepository,
-                         final ClassroomRepository classroomRepository,
                          final AssignmentRepository assignmentRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.classroomRepository = classroomRepository;
         this.assignmentRepository = assignmentRepository;
     }
 
@@ -99,7 +95,9 @@ public class CourseService {
         courseDTO.setIsActive(course.getIsActive());
         courseDTO.setCreatedAt(course.getCreatedAt());
         courseDTO.setUpdatedAt(course.getUpdatedAt());
-        courseDTO.setEnrolledStudents(course.getEnrolledUsers().stream()
+        courseDTO.setEnrolledStudents(Optional.ofNullable(course.getEnrolledUsers())
+                .orElse(Collections.emptySet())
+                .stream()
                 .map(user -> UserService.mapToDTO(user, new UserDTO()))
                 .collect(Collectors.toList()));
         courseDTO.setCreatedByTeacher(course.getCreatedByTeacher() == null ? null :
@@ -135,7 +133,7 @@ public class CourseService {
                     .orElseThrow(() -> new EntityNotFoundException("Teacher not found"));
             course.setCreatedByTeacher(teacher);
         }
-        if (!courseDTO.getStudentIds().isEmpty()) {
+        if (courseDTO.getStudentIds() != null && !courseDTO.getStudentIds().isEmpty()) {
             Set<User> users = courseDTO.getStudentIds().stream()
                     .map(userId -> userRepository.findById(userId)
                             .orElseThrow(() -> new EntityNotFoundException("Student not found: " + userId)))

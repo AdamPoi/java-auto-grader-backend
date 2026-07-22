@@ -154,6 +154,7 @@ public class SubmissionService {
         submissionRepository.deleteById(submissionId);
     }
 
+    @SuppressWarnings("PMD.CloseResource") // System.out is process-owned and must remain open.
     public String compile(SubmissionCompileDTO code) throws IOException, NoSuchMethodException, ClassNotFoundException,
             InvocationTargetException, InstantiationException, IllegalAccessException {
         File root = Files.createTempDirectory("java").toFile();
@@ -163,30 +164,30 @@ public class SubmissionService {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
-        ByteArrayOutputStream compileErrors = new ByteArrayOutputStream();
-        int compilationResult = compiler.run(null, null, compileErrors, sourceFile.getPath());
-
-        if (compilationResult != 0) {
-            throw new RuntimeException("Compilation failed: " + compileErrors);
+        try (ByteArrayOutputStream compileErrors = new ByteArrayOutputStream()) {
+            int compilationResult = compiler.run(null, null, compileErrors, sourceFile.getPath());
+            if (compilationResult != 0) {
+                throw new IllegalStateException(
+                        "Compilation failed: " + compileErrors.toString(StandardCharsets.UTF_8)
+                );
+            }
         }
 
-        URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{root.toURI().toURL()});
-        Class<?> cls = Class.forName("HelloWorld", true, classLoader);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream ps = new PrintStream(baos);
-        PrintStream old = System.out;
-        System.setOut(ps);
-
-        try {
-            cls.getDeclaredMethod("main", String[].class).invoke(null, (Object) new String[0]);
-        } finally {
-            System.out.flush();
-            System.setOut(old);
-            classLoader.close();
+        try (URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{root.toURI().toURL()});
+             ByteArrayOutputStream output = new ByteArrayOutputStream();
+             PrintStream capturedOutput = new PrintStream(output, true, StandardCharsets.UTF_8)) {
+            Class<?> compiledClass = Class.forName("HelloWorld", true, classLoader);
+            PrintStream originalOutput = System.out;
+            System.setOut(capturedOutput);
+            try {
+                compiledClass.getDeclaredMethod("main", String[].class)
+                        .invoke(null, (Object) new String[0]);
+            } finally {
+                capturedOutput.flush();
+                System.setOut(originalOutput);
+            }
+            return output.toString(StandardCharsets.UTF_8);
         }
-
-        return baos.toString();
     }
 
     @Transactional
@@ -206,7 +207,7 @@ public class SubmissionService {
             }
         }
 
-        if (submissionType.equals(Submission.SubmissionType.ATTEMPT)) {
+        if (submissionType == Submission.SubmissionType.ATTEMPT) {
             Integer maxAttempts = assignment.getOptions() != null ? assignment.getOptions().getMaxAttempts() : null;
             long attemptCount = submissionRepository.countByAssignmentAndStudentAndType(
                     assignment, student, Submission.SubmissionType.ATTEMPT);
@@ -282,7 +283,7 @@ public class SubmissionService {
 
                 item.setSuccess(true);
                 item.setMessage("Submission processed, ID: " + savedSubmission.getId());
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 item.setSuccess(false);
                 item.setMessage(e.getMessage());
             }
@@ -343,10 +344,8 @@ public class SubmissionService {
 
 
     public ReferencedWarning getReferencedWarning(final UUID submissionId) {
-        final ReferencedWarning referencedWarning = new ReferencedWarning();
-        final Submission submission = submissionRepository.findById(submissionId)
+        submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Submission not found"));
-
         return null;
     }
 
@@ -528,7 +527,7 @@ public class SubmissionService {
         }
 
         try {
-            return TestExecution.ExecutionStatus.valueOf(status.toUpperCase());
+            return TestExecution.ExecutionStatus.valueOf(status.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             log.warn("Unknown test execution status: {}, defaulting to FAILED", status);
             return TestExecution.ExecutionStatus.FAILED;

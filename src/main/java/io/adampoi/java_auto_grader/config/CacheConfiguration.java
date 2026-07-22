@@ -21,6 +21,7 @@ import java.time.Duration;
 public class CacheConfiguration {
 
     @Bean
+    @SuppressWarnings("PMD.CloseResource") // Spring owns and closes the returned JCache manager/provider.
     public org.springframework.cache.CacheManager cacheManager() {
         CachingProvider provider = Caching.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider");
         CacheManager cacheManager = provider.getCacheManager();

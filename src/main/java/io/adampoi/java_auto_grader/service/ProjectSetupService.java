@@ -21,10 +21,10 @@ public class ProjectSetupService {
     public void setupProject(Path projectDir, TestCodeRequest request, BuildTool buildTool) throws IOException {
         switch (buildTool) {
             case GRADLE:
-                setupGradleProject(projectDir, request);
+                setupGradleProject(projectDir);
                 break;
             case MAVEN:
-                setupMavenProject(projectDir, request);
+                setupMavenProject(projectDir);
                 break;
         }
         createSourceDirectories(projectDir);
@@ -32,13 +32,12 @@ public class ProjectSetupService {
         writeTestFiles(projectDir, request);
     }
 
-    private void setupGradleProject(Path projectDir, TestCodeRequest request) throws IOException {
+    private void setupGradleProject(Path projectDir) throws IOException {
         writeGradleBuildFile(projectDir);
         writeGradleProperties(projectDir);
-//        writeGradleSettings(projectDir);
     }
 
-    private void setupMavenProject(Path projectDir, TestCodeRequest request) throws IOException {
+    private void setupMavenProject(Path projectDir) throws IOException {
         writeMavenPomFile(projectDir);
         createMavenDirectoryStructure(projectDir);
     }
@@ -208,10 +207,6 @@ public class ProjectSetupService {
                 org.gradle.logging.level=lifecycle
                 """;
         Files.writeString(projectDir.resolve("gradle.properties"), gradleProps);
-    }
-
-    private void writeGradleSettings(Path projectDir) throws IOException {
-        writeFile(projectDir.resolve("settings.gradle"), "rootProject.name = 'auto-grader-project'");
     }
 
     private void writeMavenPomFile(Path projectDir) throws IOException {

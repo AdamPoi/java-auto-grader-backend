@@ -190,21 +190,4 @@ public class TestExecutionService {
         execution.setStatus(TestExecution.ExecutionStatus.NOT_EXECUTED);
     }
 
-    private TestExecution mapToEntity(TestExecutionDTO dto) {
-        TestExecution entity = new TestExecution();
-        entity.setId(dto.getId());
-        entity.setMethodName(dto.getMethodName());
-        entity.setOutput(dto.getOutput());
-        entity.setError(dto.getError());
-        entity.setExecutionTime(dto.getExecutionTime());
-        entity.setStatus(TestExecution.ExecutionStatus.valueOf(dto.getStatus()));
-
-//    if (dto.getRubricGradeId() != null) {
-//        RubricGrade rubricGrade = rubricGradeRepository.findById(dto.getRubricGradeId())
-//                .orElseThrow(() -> new RuntimeException("RubricGrade not found with id: " + dto.getRubricGradeId()));
-//        entity.setRubricGrade(rubricGrade);
-//    }
-
-        return entity;
-    }
 }

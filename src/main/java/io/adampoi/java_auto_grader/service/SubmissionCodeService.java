@@ -12,7 +12,6 @@ import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -23,6 +22,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 @Transactional
 @Slf4j
 public class SubmissionCodeService {
+
+    private static final String JAVA_ERROR_MARKER = ".java:";
 
     private final SubmissionCodeRepository submissionCodeRepository;
     private final SubmissionRepository submissionRepository;
@@ -111,7 +113,7 @@ public class SubmissionCodeService {
         submissionCodeRepository.deleteById(submissionCodeId);
     }
 
-    @SneakyThrows
+    @SuppressWarnings("PMD.CloseResource") // System.out is process-owned and must remain open.
     public RunCodeResponse runCode(RunCodeRequest code) {
         long startTime = System.currentTimeMillis();
 
@@ -128,72 +130,69 @@ public class SubmissionCodeService {
 
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
-            ByteArrayOutputStream compileErrors = new ByteArrayOutputStream();
+            try (ByteArrayOutputStream compileErrors = new ByteArrayOutputStream()) {
+                String[] sourceFilePaths = sourceFiles.stream()
+                        .map(File::getPath)
+                        .toArray(String[]::new);
+                List<String> options = List.of("-proc:none", "-Xlint:-options");
+                List<String> compilerArgs = new ArrayList<>(options);
+                compilerArgs.addAll(Arrays.asList(sourceFilePaths));
 
-            String[] sourceFilePaths = sourceFiles.stream()
-                    .map(File::getPath)
-                    .toArray(String[]::new);
-            List<String> options = List.of("-proc:none", "-Xlint:-options");
-            List<String> compilerArgs = new ArrayList<>(options);
-            compilerArgs.addAll(Arrays.asList(sourceFilePaths));
+                int compilationResult = compiler.run(null, null, compileErrors,
+                        compilerArgs.toArray(String[]::new));
 
-            int compilationResult = compiler.run(null, null, compileErrors,
-                    compilerArgs.toArray(String[]::new));
+                if (compilationResult != 0) {
+                    long executionTime = System.currentTimeMillis() - startTime;
+                    String errorOutput = compileErrors.toString(StandardCharsets.UTF_8);
+                    String filteredError = filterCompilationErrors(errorOutput);
+                    List<CompilationError> compilationErrors = parseCompilationErrors(errorOutput);
 
-
-            if (compilationResult != 0) {
-                long executionTime = System.currentTimeMillis() - startTime;
-                String errorOutput = compileErrors.toString();
-
-                String filteredError = filterCompilationErrors(errorOutput);
-                List<CompilationError> compilationErrors = parseCompilationErrors(errorOutput);
-
-                return RunCodeResponse.builder()
-                        .success(false)
-                        .output(null)
-                        .error(filteredError)
-                        .exception(null)
-                        .executionTime(executionTime)
-                        .compilationErrors(compilationErrors)
-                        .build();
+                    return RunCodeResponse.builder()
+                            .success(false)
+                            .output(null)
+                            .error(filteredError)
+                            .exception(null)
+                            .executionTime(executionTime)
+                            .compilationErrors(compilationErrors)
+                            .build();
+                }
             }
 
-            URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{root.toURI().toURL()});
-            Class<?> cls = Class.forName(code.getMainClassName(), true, classLoader);
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PrintStream ps = new PrintStream(baos);
-            PrintStream old = System.out;
-            System.setOut(ps);
-
-            try {
-                cls.getDeclaredMethod("main", String[].class).invoke(null, (Object) new String[0]);
-
-                long executionTime = System.currentTimeMillis() - startTime;
-                return RunCodeResponse.builder()
-                        .success(true)
-                        .output(baos.toString())
-                        .error(null)
-                        .exception(null)
-                        .executionTime(executionTime)
-                        .build();
-
-            } catch (Exception e) {
-                long executionTime = System.currentTimeMillis() - startTime;
-                return RunCodeResponse.builder()
-                        .success(false)
-                        .output(baos.toString())
-                        .error(null)
-                        .exception(e.getMessage())
-                        .executionTime(executionTime)
-                        .build();
-            } finally {
-                System.out.flush();
-                System.setOut(old);
-                classLoader.close();
+            try (URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{root.toURI().toURL()});
+                 ByteArrayOutputStream output = new ByteArrayOutputStream();
+                 PrintStream capturedOutput = new PrintStream(output, true, StandardCharsets.UTF_8)) {
+                Class<?> studentClass = Class.forName(code.getMainClassName(), true, classLoader);
+                PrintStream originalOutput = System.out;
+                System.setOut(capturedOutput);
+                try {
+                    studentClass.getDeclaredMethod("main", String[].class)
+                            .invoke(null, (Object) new String[0]);
+                    long executionTime = System.currentTimeMillis() - startTime;
+                    return RunCodeResponse.builder()
+                            .success(true)
+                            .output(output.toString(StandardCharsets.UTF_8))
+                            .error(null)
+                            .exception(null)
+                            .executionTime(executionTime)
+                            .build();
+                } catch (ReflectiveOperationException exception) {
+                    long executionTime = System.currentTimeMillis() - startTime;
+                    return RunCodeResponse.builder()
+                            .success(false)
+                            .output(output.toString(StandardCharsets.UTF_8))
+                            .error(null)
+                            .exception(exception.getMessage())
+                            .executionTime(executionTime)
+                            .build();
+                } finally {
+                    capturedOutput.flush();
+                    System.setOut(originalOutput);
+                }
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
             }
 
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException | LinkageError e) {
             long executionTime = System.currentTimeMillis() - startTime;
             return RunCodeResponse.builder()
                     .success(false)
@@ -220,16 +219,16 @@ public class SubmissionCodeService {
             }
 
             // Skip empty lines only if they're at the beginning or end
-            if (line.trim().isEmpty()) {
+            if (line.isBlank()) {
                 continue;
             }
 
             // Remove file path from error lines but keep all error content
             String processedLine = line;
-            if (line.contains("/tmp/") && line.contains(".java:")) {
+            if (line.contains("/tmp/") && line.contains(JAVA_ERROR_MARKER)) {
                 // Extract just the filename and error details
-                int fileNameStart = line.lastIndexOf("/") + 1;
-                int colonIndex = line.indexOf(":", fileNameStart);
+                int fileNameStart = line.lastIndexOf('/') + 1;
+                int colonIndex = line.indexOf(':', fileNameStart);
                 if (colonIndex != -1 && fileNameStart < colonIndex) {
                     String fileName = line.substring(fileNameStart, colonIndex);
                     String errorDetails = line.substring(colonIndex);
@@ -239,7 +238,7 @@ public class SubmissionCodeService {
 
             // Add line to output
             if (filteredErrors.length() > 0) {
-                filteredErrors.append("\n");
+                filteredErrors.append('\n');
             }
             filteredErrors.append(processedLine);
         }
@@ -251,8 +250,9 @@ public class SubmissionCodeService {
         String[] lines = errorOutput.split("\n");
         List<CompilationError> errors = new ArrayList<>();
 
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
+        int index = 0;
+        while (index < lines.length) {
+            String line = lines[index];
 
             // Skip annotation processing warnings
             if (line.contains("Annotation processing is enabled") ||
@@ -260,11 +260,12 @@ public class SubmissionCodeService {
                     line.contains("unless at least one processor") ||
                     line.contains("Use -Xlint:-options") ||
                     line.contains("Use -proc:none")) {
+                index++;
                 continue;
             }
 
             // Look for error pattern: filename:line: error: message
-            if (line.contains(".java:") && line.contains(": error:")) {
+            if (line.contains(JAVA_ERROR_MARKER) && line.contains(": error:")) {
                 String fileName = extractFileName(line);
                 int lineNumber = extractLineNumber(line);
                 String errorMessage = extractErrorMessage(line);
@@ -273,15 +274,15 @@ public class SubmissionCodeService {
                 String codeSnippet = null;
                 String pointer = null;
 
-                if (i + 1 < lines.length && !lines[i + 1].isEmpty() &&
-                        !lines[i + 1].contains(".java:")) {
-                    codeSnippet = lines[i + 1];
-                    i++; // Skip this line in next iteration
+                if (index + 1 < lines.length && !lines[index + 1].isEmpty() &&
+                        !lines[index + 1].contains(JAVA_ERROR_MARKER)) {
+                    codeSnippet = lines[index + 1];
+                    index++; // Skip this line in next iteration
                 }
 
-                if (i + 1 < lines.length && lines[i + 1].contains("^")) {
-                    pointer = lines[i + 1];
-                    i++; // Skip this line in next iteration
+                if (index + 1 < lines.length && lines[index + 1].contains("^")) {
+                    pointer = lines[index + 1];
+                    index++; // Skip this line in next iteration
                 }
 
                 errors.add(CompilationError.builder()
@@ -292,15 +293,16 @@ public class SubmissionCodeService {
                         .pointer(pointer)
                         .build());
             }
+            index++;
         }
 
         return errors;
     }
 
     private String extractFileName(String line) {
-        if (line.contains("/tmp/") && line.contains(".java:")) {
-            int fileNameStart = line.lastIndexOf("/") + 1;
-            int colonIndex = line.indexOf(":", fileNameStart);
+        if (line.contains("/tmp/") && line.contains(JAVA_ERROR_MARKER)) {
+            int fileNameStart = line.lastIndexOf('/') + 1;
+            int colonIndex = line.indexOf(':', fileNameStart);
             return line.substring(fileNameStart, colonIndex);
         }
         return null;
@@ -314,8 +316,8 @@ public class SubmissionCodeService {
                     return Integer.parseInt(parts[i + 1].trim());
                 }
             }
-        } catch (NumberFormatException e) {
-            // Handle parsing error
+        } catch (NumberFormatException exception) {
+            log.debug("Unable to parse compilation error line number from: {}", line, exception);
         }
         return -1;
     }

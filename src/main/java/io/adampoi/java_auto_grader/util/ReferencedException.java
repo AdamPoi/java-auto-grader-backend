@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.CONFLICT)
 public class ReferencedException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public ReferencedException() {
         super();
     }

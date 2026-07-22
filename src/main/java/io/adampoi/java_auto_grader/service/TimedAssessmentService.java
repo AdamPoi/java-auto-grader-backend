@@ -28,7 +28,10 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.CloseResource") // JCache instances are manager-owned and reused between requests.
 public class TimedAssessmentService {
+    private static final String PASSED_STATUS = "PASSED";
+
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
@@ -49,8 +52,8 @@ public class TimedAssessmentService {
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
         this.submissionService = submissionService;
-        if (springCacheManager instanceof JCacheCacheManager) {
-            this.jcacheManager = ((JCacheCacheManager) springCacheManager).getCacheManager();
+        if (springCacheManager instanceof JCacheCacheManager cacheManager) {
+            this.jcacheManager = cacheManager.getCacheManager();
         } else {
             throw new IllegalStateException("Expected a JCacheCacheManager!");
         }
@@ -90,7 +93,7 @@ public class TimedAssessmentService {
     @Transactional
     public TimedAssessmentAttempt start(UUID assignmentId, UUID studentId) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new EntityNotFoundException("Student not found"));
 
@@ -151,7 +154,7 @@ public class TimedAssessmentService {
     @Transactional(readOnly = true)
     public TimedAssessmentAttempt getStatus(UUID assignmentId, UUID studentId) {
         Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
 
         long baseTimeLimitMs = getAssignmentTimeLimitMs(assignment);
         long ttlMs = baseTimeLimitMs + (2 * 60 * 60 * 1000L);
@@ -192,7 +195,7 @@ public class TimedAssessmentService {
         }
 
         OffsetDateTime attemptStartedAt = attempt.getStartedAt();
-        long elapsedMs = 0;
+        long elapsedMs;
         if (attemptStartedAt != null) {
             elapsedMs = java.time.Duration.between(attemptStartedAt, OffsetDateTime.now()).toMillis();
         } else {
@@ -313,7 +316,7 @@ public class TimedAssessmentService {
         execEntity.setError(execDto.getError());
 
         String statusStr = execDto.getStatus();
-        if ("PASSED".equals(statusStr)) {
+        if (PASSED_STATUS.equals(statusStr)) {
             execEntity.setStatus(TestExecution.ExecutionStatus.PASSED);
         } else {
             execEntity.setStatus(TestExecution.ExecutionStatus.FAILED);
@@ -347,5 +350,3 @@ public class TimedAssessmentService {
         return rubricGrade;
     }
 }
-
-

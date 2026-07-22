@@ -6,6 +6,7 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.repository.ClassroomRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class ClassroomSeeder {
+
+    private static final int MINIMUM_STUDENTS = 30;
 
     private final ClassroomRepository classroomRepository;
     private final UserRepository userRepository;
@@ -33,7 +37,7 @@ public class ClassroomSeeder {
     @Transactional
     public void seedClassrooms() {
         if (classroomRepository.count() > 0) {
-            System.out.println("Classrooms already exist, skipping classroom seeding...");
+            log.info("Classrooms already exist, skipping classroom seeding");
             return;
         }
 
@@ -41,7 +45,7 @@ public class ClassroomSeeder {
         Role studentRole = roleRepository.findByName("student").orElse(null);
 
         if (teacherRole == null || studentRole == null) {
-            System.out.println("Teacher or Student roles not found, skipping classroom seeding...");
+            log.warn("Teacher or student roles not found, skipping classroom seeding");
             return;
         }
 
@@ -55,25 +59,25 @@ public class ClassroomSeeder {
                 .collect(Collectors.toList());
 
         if (teachers.isEmpty()) {
-            System.out.println("No teachers found, skipping classroom seeding...");
+            log.warn("No teachers found, skipping classroom seeding");
             return;
         }
 
-        if (students.size() < 30) { // Need at least 30 students for 5 classes of 6 each
-            System.out.println("Not enough students found (need at least 30), skipping classroom seeding...");
+        if (students.size() < MINIMUM_STUDENTS) { // Need at least 30 students for 5 classes of 6 each
+            log.warn("Not enough students found (need at least {}), skipping classroom seeding", MINIMUM_STUDENTS);
             return;
         }
 
         // Classroom data with more realistic course information
         ClassroomData[] classroomsData = {
-                new ClassroomData("CS 101 - Introduction to Programming", "Fall 2024", "MWF 9:00-10:00 AM"),
-                new ClassroomData("CS 201 - Data Structures & Algorithms", "Fall 2024", "TTh 11:00-12:30 PM"),
-                new ClassroomData("CS 102 - Object-Oriented Programming", "Fall 2024", "MWF 2:00-3:00 PM"),
-                new ClassroomData("CS 301 - Database Management Systems", "Fall 2024", "TTh 2:00-3:30 PM"),
-                new ClassroomData("CS 151 - Web Development Fundamentals", "Fall 2024", "MWF 10:00-11:00 AM"),
-                new ClassroomData("CS 250 - Software Engineering Principles", "Fall 2024", "TTh 9:30-11:00 AM"),
-                new ClassroomData("CS 350 - Computer Networks", "Fall 2024", "MWF 1:00-2:00 PM"),
-                new ClassroomData("CS 401 - Advanced Programming Concepts", "Fall 2024", "TTh 3:30-5:00 PM")
+                new ClassroomData("CS 101 - Introduction to Programming"),
+                new ClassroomData("CS 201 - Data Structures & Algorithms"),
+                new ClassroomData("CS 102 - Object-Oriented Programming"),
+                new ClassroomData("CS 301 - Database Management Systems"),
+                new ClassroomData("CS 151 - Web Development Fundamentals"),
+                new ClassroomData("CS 250 - Software Engineering Principles"),
+                new ClassroomData("CS 350 - Computer Networks"),
+                new ClassroomData("CS 401 - Advanced Programming Concepts")
         };
 
         List<Classroom> classroomsToSave = new ArrayList<>();
@@ -88,7 +92,7 @@ public class ClassroomSeeder {
 
         if (shuffledStudents.size() < totalStudentsNeeded) {
             studentsPerClass = shuffledStudents.size() / maxClassrooms;
-            System.out.println("Adjusting students per class to: " + studentsPerClass);
+            log.info("Adjusting students per class to: {}", studentsPerClass);
         }
 
         for (int i = 0; i < maxClassrooms; i++) {
@@ -96,7 +100,7 @@ public class ClassroomSeeder {
             ClassroomData data = classroomsData[i];
 
             Classroom classroom = new Classroom();
-            classroom.setName(data.getName());
+            classroom.setName(data.name());
             classroom.setTeacher(teacher);
 
             // Assign students to classroom - ensure users are managed entities
@@ -111,7 +115,7 @@ public class ClassroomSeeder {
 
             classroomsToSave.add(classroom);
 
-            System.out.printf("Created classroom: %s with teacher: %s and %d students%n",
+            log.info("Created classroom: {} with teacher: {} and {} students",
                     classroom.getName(),
                     teacher.getUsername(),
                     classroomStudents.size());
@@ -119,23 +123,10 @@ public class ClassroomSeeder {
 
         // Save all classrooms at once
         List<Classroom> savedClassrooms = classroomRepository.saveAll(classroomsToSave);
-        System.out.println("Successfully seeded " + savedClassrooms.size() + " classrooms");
+        log.info("Successfully seeded {} classrooms", savedClassrooms.size());
     }
 
-    private static class ClassroomData {
-        private final String name;
-        private final String semester;
-        private final String schedule;
-
-        public ClassroomData(String name, String semester, String schedule) {
-            this.name = name;
-            this.semester = semester;
-            this.schedule = schedule;
-        }
-
-        public String getName() {
-            return name;
-        }
+    private record ClassroomData(String name) {
 
 
     }

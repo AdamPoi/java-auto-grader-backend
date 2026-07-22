@@ -41,6 +41,7 @@ public class RubricGrade extends Auditable {
     private Set<TestExecution> testExecutions;
 
     @PrePersist
+    @SuppressWarnings("PMD.UnusedPrivateMethod") // Invoked reflectively by the JPA lifecycle.
     private void ensureId() {
         if (this.id == null) {
             this.id = UUID.randomUUID();

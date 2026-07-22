@@ -35,6 +35,9 @@ import java.util.UUID;
         produces = MediaType.APPLICATION_JSON_VALUE)
 public class CourseResource {
 
+    private static final String HTTP_OK = "200";
+    private static final String COURSE_ID = "courseId";
+
     private final CourseService courseService;
     private final UserRepository userRepository;
 
@@ -44,7 +47,7 @@ public class CourseResource {
     }
 
     @GetMapping
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('COURSE:LIST')")
     @Operation(summary = "Get Courses", description = "Get all courses with pagination and filtering capabilities")
     public ApiSuccessResponse<PageResponse<CourseDTO>> getAllCourses(
@@ -57,10 +60,10 @@ public class CourseResource {
     }
 
     @GetMapping("/{courseId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('COURSE:READ')")
     @Operation(summary = "Get Course", description = "Get a course by id")
-    public ApiSuccessResponse<CourseDTO> getCourse(@PathVariable(name = "courseId") final UUID courseId) {
+    public ApiSuccessResponse<CourseDTO> getCourse(@PathVariable(name = COURSE_ID) final UUID courseId) {
         return ApiSuccessResponse.<CourseDTO>builder()
                 .data(courseService.get(courseId))
                 .statusCode(HttpStatus.OK)
@@ -80,10 +83,10 @@ public class CourseResource {
     }
 
     @PatchMapping("/{courseId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('COURSE:UPDATE')")
     @Operation(summary = "Update Course", description = "Update an existing course")
-    public ApiSuccessResponse<CourseDTO> updateCourse(@PathVariable(name = "courseId") final UUID courseId,
+    public ApiSuccessResponse<CourseDTO> updateCourse(@PathVariable(name = COURSE_ID) final UUID courseId,
                                                       @RequestBody @Validated(CourseDTO.UpdateGroup.class) final CourseDTO courseDTO) {
         final CourseDTO updatedCourse = courseService.update(courseId, courseDTO);
         return ApiSuccessResponse.<CourseDTO>builder()
@@ -96,7 +99,7 @@ public class CourseResource {
     @ApiResponse(responseCode = "204")
     @PreAuthorize("hasAuthority('COURSE:DELETE')")
     @Operation(summary = "Delete Course", description = "Delete an existing course")
-    public ApiSuccessResponse<Void> deleteCourse(@PathVariable(name = "courseId") final UUID courseId) {
+    public ApiSuccessResponse<Void> deleteCourse(@PathVariable(name = COURSE_ID) final UUID courseId) {
         final ReferencedWarning referencedWarning = courseService.getReferencedWarning(courseId);
         if (referencedWarning != null) {
             throw new ReferencedException(referencedWarning);
@@ -108,11 +111,11 @@ public class CourseResource {
     }
 
     @GetMapping("/{courseId}/assignments")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('ASSIGNMENT:LIST')")
     @Operation(summary = "Get Course Assignments", description = "Get all courses with pagination and filtering capabilities")
     public ApiSuccessResponse<PageResponse<AssignmentDTO>> getAllAssignments(
-            @PathVariable(name = "courseId") final UUID courseId,
+            @PathVariable(name = COURSE_ID) final UUID courseId,
             @RequestParam(required = false, defaultValue = "") @QFParam(AssignmentFilterDef.class) QueryFilter<Assignment> filter,
             @ParameterObject Pageable pageable) {
         return ApiSuccessResponse.<PageResponse<AssignmentDTO>>builder()
@@ -122,7 +125,7 @@ public class CourseResource {
     }
 
     @GetMapping("/createdByTeacherValues")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @Operation(summary = "Get Created By Teacher Values", description = "Get created by teacher values for dropdowns")
     public ApiSuccessResponse<Map<UUID, String>> getCreatedByTeacherValues() {
         Map<UUID, String> teachers = userRepository.findAll(Sort.by("userId"))

@@ -7,10 +7,12 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,7 +61,7 @@ public class TestReportParser {
             Document document = builder.parse(xmlPath.toFile());
 
             return Optional.of(parseTestSuite(document.getDocumentElement(), document));
-        } catch (Exception e) {
+        } catch (ParserConfigurationException | SAXException | IOException e) {
             log.warn("Failed to parse XML report: {}", xmlPath, e);
             return Optional.empty();
         }

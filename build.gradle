@@ -18,6 +18,38 @@ java {
     }
 }
 
+jacoco {
+    toolVersion = '0.8.15'
+}
+
+def pmdStrict = providers.gradleProperty('pmdStrict')
+        .map { it.toBoolean() }
+        .orElse(false)
+
+pmd {
+    toolVersion = '7.24.0'
+    consoleOutput = true
+    ignoreFailures = !pmdStrict.get()
+    ruleSets = []
+    ruleSetFiles = files('config/pmd/ruleset.xml')
+    rulesMinimumPriority = 3
+}
+
+tasks.withType(Pmd).configureEach {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.named('pmdTest', Pmd) {
+    ruleSetFiles = files('config/pmd/test-ruleset.xml')
+}
+
+tasks.matching { it.name == 'pmdGatling' }.configureEach {
+    ruleSetFiles = files('config/pmd/gatling-ruleset.xml')
+}
+
 gatling {
     // WARNING: options below only work when logback config file isn't provided
     logLevel = 'WARN' // logback root level
@@ -34,7 +66,6 @@ configurations {
     }
 }
 
-// Replace the repository declarations that use deprecated Groovy space assignment.
 repositories {
     mavenCentral()
     maven { url = uri('https://repo.spring.io/milestone') }
@@ -125,17 +156,15 @@ pitest {
 }
 
 
-// PIT is slow, so run the benchmark explicitly instead of during every unit-test run.
-// Merge excludeTags into the existing tasks.named('test') block.
 tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'mutation', 'tryout-mutation'
     }
-    finalizedBy 'jacocoTestReport', 'jacocoCoreReport'
+    finalizedBy 'jacocoTestReport', 'jacocoCoreReport', 'jacocoRestReport'
 }
 
 jacocoTestReport {
-    dependsOn test // tests are required to run before generating the report
+    dependsOn test
     reports {
         html.required = true
         xml.required = true
@@ -154,10 +183,12 @@ def jacocoCoreIncludes = [
         'io/adampoi/java_auto_grader/config/JwtAuthenticationFilter*'
 ]
 
-def fullLineMinimum = (findProperty('jacocoFullLineMinimum') ?: '0.30') as BigDecimal
-def fullBranchMinimum = (findProperty('jacocoFullBranchMinimum') ?: '0.20') as BigDecimal
-def coreLineMinimum = (findProperty('jacocoCoreLineMinimum') ?: '0.30') as BigDecimal
-def coreBranchMinimum = (findProperty('jacocoCoreBranchMinimum') ?: '0.20') as BigDecimal
+def fullLineMinimum = (findProperty('jacocoFullLineMinimum') ?: '0.60') as BigDecimal
+def fullBranchMinimum = (findProperty('jacocoFullBranchMinimum') ?: '0.50') as BigDecimal
+def coreLineMinimum = (findProperty('jacocoCoreLineMinimum') ?: '0.60') as BigDecimal
+def coreBranchMinimum = (findProperty('jacocoCoreBranchMinimum') ?: '0.50') as BigDecimal
+def restLineMinimum = (findProperty('jacocoRestLineMinimum') ?: '0.35') as BigDecimal
+def restBranchMinimum = (findProperty('jacocoRestBranchMinimum') ?: '0.30') as BigDecimal
 
 tasks.register('jacocoCoreReport', JacocoReport) {
     group = 'verification'
@@ -175,6 +206,25 @@ tasks.register('jacocoCoreReport', JacocoReport) {
         xml.outputLocation = layout.buildDirectory.file('reports/jacoco/core/jacocoCoreReport.xml')
         csv.required = true
         csv.outputLocation = layout.buildDirectory.file('reports/jacoco/core/jacocoCoreReport.csv')
+    }
+}
+
+tasks.register('jacocoRestReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates a dedicated coverage report for REST controllers.'
+    dependsOn tasks.named('test')
+    executionData.from(layout.buildDirectory.file('jacoco/test.exec'))
+    sourceDirectories.setFrom(files(sourceSets.main.allSource.srcDirs))
+    classDirectories.setFrom(files(sourceSets.main.output.classesDirs.files.collect { directory ->
+        fileTree(dir: directory, includes: jacocoRestIncludes)
+    }))
+    reports {
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/rest/html')
+        xml.required = true
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/rest/jacocoRestReport.xml')
+        csv.required = true
+        csv.outputLocation = layout.buildDirectory.file('reports/jacoco/rest/jacocoRestReport.csv')
     }
 }
 
@@ -225,7 +275,16 @@ tasks.named('check') {
     dependsOn tasks.named('jacocoCoreCoverageVerification')
 }
 
-// PIT is slow, so run the benchmark explicitly instead of during every unit-test run.
+tasks.register('qualityCheck') {
+    group = 'verification'
+    description = 'Runs a clean, reproducible unit-test, JaCoCo, and PMD quality check.'
+    dependsOn tasks.named('clean'), tasks.named('check')
+}
+
+tasks.named('check') {
+    mustRunAfter tasks.named('clean')
+}
+
 tasks.register('tryoutMutationBenchmark', Test) {
     group = 'verification'
     description = 'Grades source-level mutants through the real tryout service path.'
@@ -265,7 +324,6 @@ tasks.named('tryoutMutationBenchmark') {
     finalizedBy tasks.named('validMutationReport')
 }
 
-// PIT is slow, so run the benchmark explicitly instead of during every unit-test run.
 tasks.register('mutationBenchmark', Test) {
     group = 'verification'
     description = 'Runs PIT against seeded assignment solutionCode and rubric testCode.'
@@ -282,7 +340,6 @@ tasks.register('mutationBenchmark', Test) {
 }
 
 
-// Replace the existing testlogger block with assignment syntax.
 testlogger {
     theme = 'mocha'
     showExceptions = true
@@ -303,7 +360,6 @@ testlogger {
     logLevel = 'lifecycle'
 }
 
-// Temporarily enable this to show the exact deprecated Java API and line.
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xlint:deprecation']
 }

@@ -9,6 +9,7 @@ import io.adampoi.java_auto_grader.repository.AssignmentRepository;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.SubmissionRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,12 +65,15 @@ public class DashboardService {
 
     public StudentDashboardDTO getStudentDashboardData(User authenticatedUser) {
         User student = userRepository.findByIdWithCoursesAndAssignments(authenticatedUser.getId())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Student not found"));
 
         StudentDashboardDTO dashboard = new StudentDashboardDTO();
         List<Submission> studentFinalSubmissions = submissionRepository.findAllByStudentAndType(student, Submission.SubmissionType.FINAL);
 
-        dashboard.setWelcomeBanner(createWelcomeBanner(student, new ArrayList<>(student.getEnrolledCourses().stream().flatMap(c -> c.getCourseAssignments().stream()).collect(Collectors.toList()))));
+        List<Assignment> enrolledAssignments = student.getEnrolledCourses().stream()
+                .flatMap(course -> course.getCourseAssignments().stream())
+                .toList();
+        dashboard.setWelcomeBanner(createWelcomeBanner(student, enrolledAssignments));
         dashboard.setRecentGrades(createRecentGrades(studentFinalSubmissions));
         dashboard.setOverallPerformance(createOverallPerformance(studentFinalSubmissions));
         dashboard.setCourseProgress(createCourseProgress(student, studentFinalSubmissions));
@@ -222,6 +226,7 @@ public class DashboardService {
 
     private List<CourseProgressDTO> createCourseProgress(User student, List<Submission> finalSubmissions) {
         Set<UUID> completedAssignmentIds = finalSubmissions.stream()
+                .filter(submission -> submission.getAssignment() != null)
                 .map(submission -> submission.getAssignment().getId())
                 .collect(Collectors.toSet());
 

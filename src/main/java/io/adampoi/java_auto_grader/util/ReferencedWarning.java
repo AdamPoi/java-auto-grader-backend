@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -11,8 +12,8 @@ import java.util.stream.Collectors;
 @Setter
 public class ReferencedWarning {
 
-    private String key = null;
-    private ArrayList<Object> params = new ArrayList<>();
+    private String key;
+    private List<Object> params = new ArrayList<>();
 
     public void addParam(final Object param) {
         params.add(param);

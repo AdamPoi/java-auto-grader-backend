@@ -8,15 +8,13 @@ import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.util.ReferencedWarning;
 import io.github.acoboh.query.filter.jpa.processor.QueryFilter;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,13 +94,4 @@ public class PermissionService {
         return null;
     }
 
-    private Specification<Permission> buildSpecification(final Map<String, PermissionDTO> params) {
-        return (root, query, cb) -> {
-            final List<Predicate> predicates = new ArrayList<>();
-            if (Objects.nonNull(params.get("name"))) {
-                predicates.add(cb.like(root.get("name"), "%" + params.get("name").getName() + "%"));
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-    }
 }

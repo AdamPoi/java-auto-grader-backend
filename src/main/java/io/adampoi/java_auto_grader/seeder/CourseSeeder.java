@@ -6,11 +6,13 @@ import io.adampoi.java_auto_grader.domain.User;
 import io.adampoi.java_auto_grader.repository.CourseRepository;
 import io.adampoi.java_auto_grader.repository.RoleRepository;
 import io.adampoi.java_auto_grader.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
+@Slf4j
 public class CourseSeeder {
 
     private final CourseRepository courseRepository;
@@ -27,7 +29,7 @@ public class CourseSeeder {
 
     public void seedCourses() {
         if (courseRepository.count() > 0) {
-            System.out.println("Courses already exist, skipping course seeding...");
+            log.info("Courses already exist, skipping course seeding");
             return;
         }
 
@@ -35,7 +37,7 @@ public class CourseSeeder {
         Role studentRole = roleRepository.findByName("student").orElse(null);
 
         if (teacherRole == null || studentRole == null) {
-            System.out.println("Teacher or Student roles not found, skipping course seeding...");
+            log.warn("Teacher or student roles not found, skipping course seeding");
             return;
         }
 
@@ -43,12 +45,12 @@ public class CourseSeeder {
         List<User> students = userRepository.findByUserRolesContaining(Collections.singleton(studentRole));
 
         if (teachers.isEmpty()) {
-            System.out.println("No teachers found, skipping course seeding...");
+            log.warn("No teachers found, skipping course seeding");
             return;
         }
 
         if (students.isEmpty()) {
-            System.out.println("Not enough students found, skipping course seeding...");
+            log.warn("No students found, skipping course seeding");
             return;
         }
 
@@ -72,7 +74,7 @@ public class CourseSeeder {
 
         if (shuffledStudents.size() < totalStudentsNeeded) {
             studentsPerCourse = shuffledStudents.size() / maxCourses;
-            System.out.println("Adjusting students per course to: " + studentsPerCourse);
+            log.info("Adjusting students per course to: {}", studentsPerCourse);
         }
 
         for (int i = 0; i < maxCourses; i++) {
@@ -95,15 +97,15 @@ public class CourseSeeder {
 
             coursesToSave.add(course);
 
-            System.out.println(String.format("Created course: %s - %s with teacher: %s and %d students",
+            log.info("Created course: {} - {} with teacher: {} and {} students",
                     course.getCode(),
                     course.getName(),
                     teacher.getUsername(),
-                    courseStudents.size()));
+                    courseStudents.size());
         }
 
         List<Course> savedCourses = courseRepository.saveAll(coursesToSave);
-        System.out.println("Successfully seeded " + savedCourses.size() + " courses");
+        log.info("Successfully seeded {} courses", savedCourses.size());
     }
 
     private static class CourseData {

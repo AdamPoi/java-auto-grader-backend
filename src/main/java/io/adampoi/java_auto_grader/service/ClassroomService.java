@@ -16,6 +16,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,10 +40,7 @@ public class ClassroomService {
         final Page<Classroom> page = classroomRepository.findAll(filter, pageable);
         Page<ClassroomDTO> dtoPage = new PageImpl<>(page.getContent()
                 .stream()
-                .map(classroom -> {
-
-                    return mapToDTO(classroom, new ClassroomDTO());
-                })
+                .map(classroom -> mapToDTO(classroom, new ClassroomDTO()))
                 .collect(Collectors.toList()),
                 pageable, page.getTotalElements());
         return PageResponse.from(dtoPage);
@@ -77,7 +76,9 @@ public class ClassroomService {
         classroomDTO.setName(classroom.getName());
         classroomDTO.setCreatedAt(classroom.getCreatedAt());
         classroomDTO.setUpdatedAt(classroom.getUpdatedAt());
-        classroomDTO.setEnrolledStudents(classroom.getEnrolledStudents().stream()
+        classroomDTO.setEnrolledStudents(Optional.ofNullable(classroom.getEnrolledStudents())
+                .orElse(Collections.emptySet())
+                .stream()
                 .map(student -> UserService.mapToDTO(student, new UserDTO()))
                 .collect(Collectors.toList()));
 
@@ -101,7 +102,7 @@ public class ClassroomService {
                     .orElseThrow(() -> new EntityNotFoundException("Teacher not found"));
             classroom.setTeacher(teacher);
         }
-        if (!classroomDTO.getStudentIds().isEmpty()) {
+        if (classroomDTO.getStudentIds() != null && !classroomDTO.getStudentIds().isEmpty()) {
             Set<User> students = classroomDTO.getStudentIds().stream()
                     .map(studentId -> userRepository.findById(studentId)
                             .orElseThrow(() -> new EntityNotFoundException("Student not found: " + studentId)))
@@ -113,11 +114,8 @@ public class ClassroomService {
     }
 
     public ReferencedWarning getReferencedWarning(final UUID classroomId) {
-        final ReferencedWarning referencedWarning = new ReferencedWarning();
-        final Classroom classroom = classroomRepository.findById(classroomId)
+        classroomRepository.findById(classroomId)
                 .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
-
-
         return null;
     }
 }

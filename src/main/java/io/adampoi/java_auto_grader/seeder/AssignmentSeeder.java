@@ -5,6 +5,7 @@ import io.adampoi.java_auto_grader.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
+@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Seeded Java lessons intentionally reuse syntax fragments.
 public class AssignmentSeeder {
 
     private final AssignmentRepository assignmentRepository;
@@ -43,31 +46,29 @@ public class AssignmentSeeder {
         if (assignmentRepository.count() > 0) {
             List<Assignment> existingAssignments = assignmentRepository.findAll();
             seedAssessmentDefinitions(existingAssignments);
-            System.out.println("Assignments already exist; ensured rubric, rubric-grade, and block-test seed data.");
+            log.info("Assignments already exist; ensured rubric, rubric-grade, and block-test seed data.");
             return;
         }
 
         Role teacherRole = roleRepository.findByName("teacher").orElse(null);
         if (teacherRole == null) {
-            System.out.println("Teacher role not found, skipping assignment seeding...");
+            log.warn("Teacher role not found, skipping assignment seeding");
             return;
         }
         List<User> teachers = userRepository.findByUserRolesContaining(Collections.singleton(teacherRole));
         if (teachers.isEmpty()) {
-            System.out.println("No teacher user found, skipping assignment seeding...");
+            log.warn("No teacher user found, skipping assignment seeding");
             return;
         }
 
         List<Course> courses = courseRepository.findAll();
         if (courses.isEmpty()) {
-            System.out.println("No courses found, skipping assignment seeding...");
+            log.warn("No courses found, skipping assignment seeding");
             return;
         }
 
 
         List<Assignment> assignmentsToSave = new ArrayList<>();
-        int totalAssignments = 0;
-
         for (Course course : courses) {
             List<AssignmentData> assignmentDataList = getAssignmentsForCourse(course.getCode());
 
@@ -98,10 +99,9 @@ public class AssignmentSeeder {
                         "}");
 
                 assignmentsToSave.add(assignment);
-                totalAssignments++;
             }
 
-            System.out.printf("Created %d assignments for course: %s - %s%n",
+            log.info("Created {} assignments for course: {} - {}",
                     assignmentDataList.size(),
                     course.getCode(),
                     course.getName());
@@ -109,7 +109,7 @@ public class AssignmentSeeder {
 
         List<Assignment> savedAssignments = assignmentRepository.saveAll(assignmentsToSave);
         seedAssessmentDefinitions(savedAssignments);
-        System.out.println("Successfully seeded " + savedAssignments.size() + " assignments across " + courses.size() + " courses");
+        log.info("Successfully seeded {} assignments across {} courses", savedAssignments.size(), courses.size());
     }
 
     /**
@@ -184,8 +184,8 @@ public class AssignmentSeeder {
             }
         }
 
-        System.out.printf(
-                "Assessment definitions ready for %d assignment variations (%d rubrics and %d rubric grades created).%n",
+        log.info(
+                "Assessment definitions ready for {} assignment variations ({} rubrics and {} rubric grades created).",
                 assignments.size(), createdRubrics, createdRubricGrades
         );
     }

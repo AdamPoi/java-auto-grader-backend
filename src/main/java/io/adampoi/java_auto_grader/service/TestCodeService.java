@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
@@ -28,6 +29,8 @@ import java.util.regex.Pattern;
 public class TestCodeService {
 
     private static final int TIMEOUT_SECONDS = 300;
+    private static final int SHORT_ERROR_MESSAGE_LENGTH = 20;
+    private static final String JAVA_ERROR_MARKER = ".java:";
     private static final Pattern MAVEN_COMPILATION_ERROR = Pattern.compile(
             "^\\[ERROR] (.+\\.java):\\[(\\d+),(\\d+)] (.+)$");
     private final ConcurrentMap<BuildTool, ContainerInstance> containers = new ConcurrentHashMap<>();
@@ -74,7 +77,10 @@ public class TestCodeService {
 
             return response;
 
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             log.error("Test execution failed for UUID: {}", uuid, e);
             return createErrorResponse("Test execution failed: " + e.getMessage());
         } finally {
@@ -89,7 +95,7 @@ public class TestCodeService {
             return BuildTool.GRADLE;
         }
         try {
-            return BuildTool.valueOf(request.getBuildTool().toUpperCase());
+            return BuildTool.valueOf(request.getBuildTool().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             log.warn("Invalid build tool specified: {}, defaulting to Gradle", request.getBuildTool());
             return BuildTool.GRADLE;
@@ -98,7 +104,7 @@ public class TestCodeService {
 
     private ContainerInstance ensureContainerReady(BuildTool buildTool) throws IOException, InterruptedException {
         ContainerInstance container = containers.computeIfAbsent(buildTool, bt -> {
-            String containerName = bt.name().toLowerCase() + "-sandbox";
+            String containerName = bt.name().toLowerCase(Locale.ROOT) + "-sandbox";
             return new ContainerInstance(containerName, bt);
         });
 
@@ -130,18 +136,14 @@ public class TestCodeService {
 
     private String buildCommand(BuildTool buildTool, String workspace) {
         String baseCommand = String.format("cd %s && ", workspace);
-        switch (buildTool) {
-            case GRADLE:
-                return baseCommand + "gradle test" +
+        return switch (buildTool) {
+            case GRADLE -> baseCommand + "gradle test" +
 //                        "-x compileJava"+
                         " --rerun-tasks " +
                         "--daemon --parallel --build-cache --configuration-cache " +
                         "--console=plain";
-            case MAVEN:
-                return baseCommand + "mvn test -Dmaven.repo.local=/workspace/.m2/repository";
-            default:
-                throw new IllegalArgumentException("Unsupported build tool: " + buildTool);
-        }
+            case MAVEN -> baseCommand + "mvn test -Dmaven.repo.local=/workspace/.m2/repository";
+        };
     }
 
     private void copyTestResults(ContainerInstance container, String workspace, Path tempDir) {
@@ -151,7 +153,10 @@ public class TestCodeService {
 
             dockerManager.copyFromContainer(container.getName(), testResultsGradle, tempDir.resolve("gradle-results"));
             dockerManager.copyFromContainer(container.getName(), testResultsMaven, tempDir.resolve("maven-results"));
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while copying test results", e);
+        } catch (IOException e) {
             log.warn("Failed to copy test results", e);
         }
     }
@@ -196,7 +201,7 @@ public class TestCodeService {
                                 log.warn("Failed to delete: {}", path, e);
                             }
                         });
-            } catch (Exception e) {
+            } catch (IOException e) {
                 log.warn("Failed to cleanup temp directory: {}", tempDir, e);
             }
         }
@@ -238,8 +243,9 @@ public class TestCodeService {
 
         boolean inCompilationSection = false;
 
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
+        int index = 0;
+        while (index < lines.length) {
+            String line = lines[index].trim();
 
             Matcher mavenError = MAVEN_COMPILATION_ERROR.matcher(line);
             if (mavenError.matches()) {
@@ -249,12 +255,14 @@ public class TestCodeService {
                         .line(Integer.parseInt(mavenError.group(2)) - 1)
                         .errorMessage(mavenError.group(4))
                         .build());
+                index++;
                 continue;
             }
 
             if (line.contains("> Task :compileJava FAILED") ||
                     line.contains("> Task :compileTestJava FAILED")) {
                 inCompilationSection = true;
+                index++;
                 continue;
             }
 
@@ -266,7 +274,7 @@ public class TestCodeService {
                 break;
             }
 
-            if (inCompilationSection && line.contains(".java:") && line.contains(": error:")) {
+            if (inCompilationSection && line.contains(JAVA_ERROR_MARKER) && line.contains(": error:")) {
                 String fileName = extractFileNameFromGradleError(line);
                 int lineNumber = extractLineNumberFromGradleError(line);
                 String errorMessage = extractErrorMessageFromGradleError(line);
@@ -276,20 +284,20 @@ public class TestCodeService {
                 String pointer = null;
 
                 // Check bounds before accessing next line
-                if (i + 1 < lines.length) {
-                    String nextLine = lines[i + 1];
+                if (index + 1 < lines.length) {
+                    String nextLine = lines[index + 1];
                     if (!nextLine.isEmpty() &&
-                            !nextLine.contains(".java:") &&
+                            !nextLine.contains(JAVA_ERROR_MARKER) &&
                             !nextLine.contains("FAILURE:") &&
                             !nextLine.matches("\\d+ errors?") &&
                             !nextLine.startsWith("[Incubating]")) {
                         codeSnippet = nextLine;
-                        i++; // Move to next line
+                        index++; // Move to next line
 
                         // Get the pointer line (line with ^)
-                        if (i + 1 < lines.length && lines[i + 1].contains("^")) {
-                            pointer = lines[i + 1];
-                            i++; // Move to next line
+                        if (index + 1 < lines.length && lines[index + 1].contains("^")) {
+                            pointer = lines[index + 1];
+                            index++; // Move to next line
                         }
                     }
                 }
@@ -302,6 +310,7 @@ public class TestCodeService {
                         .pointer(pointer)
                         .build());
             }
+            index++;
         }
 
         log.debug("Parsed {} compilation errors from build output", errors.size());
@@ -309,10 +318,10 @@ public class TestCodeService {
     }
 
     private String extractFileNameFromGradleError(String line) {
-        if (line.contains("/workspace/") && line.contains(".java:")) {
+        if (line.contains("/workspace/") && line.contains(JAVA_ERROR_MARKER)) {
             // Extract filename from path like: /workspace/uuid/src/main/java/workspace/Main.java:8: error:
-            int fileNameStart = line.lastIndexOf("/") + 1;
-            int colonIndex = line.indexOf(":", fileNameStart);
+            int fileNameStart = line.lastIndexOf('/') + 1;
+            int colonIndex = line.indexOf(':', fileNameStart);
             if (colonIndex != -1 && fileNameStart < colonIndex) {
                 return line.substring(fileNameStart, colonIndex);
             }
@@ -323,9 +332,9 @@ public class TestCodeService {
     private int extractLineNumberFromGradleError(String line) {
         try {
             // Pattern: filename.java:lineNumber: error:
-            if (line.contains(".java:")) {
-                int javaIndex = line.indexOf(".java:");
-                int nextColon = line.indexOf(":", javaIndex + 6);
+            if (line.contains(JAVA_ERROR_MARKER)) {
+                int javaIndex = line.indexOf(JAVA_ERROR_MARKER);
+                int nextColon = line.indexOf(':', javaIndex + 6);
                 if (nextColon != -1) {
                     String lineNumberStr = line.substring(javaIndex + 6, nextColon).trim();
                     return Integer.parseInt(lineNumberStr);
@@ -344,7 +353,7 @@ public class TestCodeService {
 
             // If the message is just a symbol like "';' expected",
             // try to create a more descriptive message
-            if (fullMessage.length() < 20) { // Short messages are likely just symbols
+            if (fullMessage.length() < SHORT_ERROR_MESSAGE_LENGTH) { // Short messages are likely just symbols
                 if (fullMessage.contains("';'")) {
                     return "Missing semicolon (;) at end of statement";
                 } else if (fullMessage.contains("')'")) {

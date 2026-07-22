@@ -22,6 +22,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@SuppressWarnings("PMD.AbstractClassWithoutAbstractMethod") // Prevents direct JPA instantiation of audit metadata.
 public abstract class Auditable {
 
     @CreatedDate

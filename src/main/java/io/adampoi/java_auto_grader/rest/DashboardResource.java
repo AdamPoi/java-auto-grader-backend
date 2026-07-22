@@ -24,8 +24,7 @@ public class DashboardResource {
 
     @GetMapping
     public ApiSuccessResponse<?> getDashboardData(@AuthenticationPrincipal User user) {
-        boolean isAdminOrTeacher = user.getUserRoles().stream()
-                .anyMatch(role -> role.getName().equals("admin") || role.getName().equals("teacher"));
+        boolean isAdminOrTeacher = user.isAdmin() || user.isTeacher();
 
         if (isAdminOrTeacher) {
             return ApiSuccessResponse.builder()

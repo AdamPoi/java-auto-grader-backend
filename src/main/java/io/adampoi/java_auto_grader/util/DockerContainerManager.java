@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
@@ -16,18 +17,20 @@ import java.util.concurrent.TimeUnit;
 public class DockerContainerManager {
 
     private static final int DEFAULT_TIMEOUT_SECONDS = 180;
+    private static final String DOCKER_COMMAND = "docker";
     private static final String GRADLE_USER_HOME = "/workspace/.gradle";
     private static final String MAVEN_USER_HOME = "/workspace/.m2";
 
     public boolean isContainerRunning(String containerName) throws IOException, InterruptedException {
         ProcessBuilder checkContainer = new ProcessBuilder(
-                "docker", "inspect", "--format={{.State.Running}}", containerName
+                DOCKER_COMMAND, "inspect", "--format={{.State.Running}}", containerName
         );
         Process checkProcess = checkContainer.start();
         checkProcess.waitFor();
 
         if (checkProcess.exitValue() == 0) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(checkProcess.getInputStream()))) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(checkProcess.getInputStream(), StandardCharsets.UTF_8))) {
                 String isRunning = reader.readLine();
                 return "true".equals(isRunning);
             }
@@ -67,7 +70,7 @@ public class DockerContainerManager {
         }
 
         ProcessBuilder copyCommand = new ProcessBuilder(
-                "docker", "cp", source.toString() + "/.",
+                DOCKER_COMMAND, "cp", source.toString() + "/.",
                 containerName + ":" + destination
         );
         copyCommand.redirectErrorStream(true);
@@ -83,7 +86,7 @@ public class DockerContainerManager {
     public void copyFromContainer(String containerName, String source, Path destination)
             throws IOException, InterruptedException {
         ProcessBuilder copyCommand = new ProcessBuilder(
-                "docker", "cp", containerName + ":" + source, destination.toString()
+                DOCKER_COMMAND, "cp", containerName + ":" + source, destination.toString()
         );
         copyCommand.redirectErrorStream(true);
         Process copyProcess = copyCommand.start();
@@ -113,7 +116,7 @@ public class DockerContainerManager {
     public ProcessResult executeCommand(String containerName, String command, int timeoutSeconds)
             throws IOException, InterruptedException {
         ProcessBuilder dockerExec = new ProcessBuilder(
-                "docker", "exec", "-t", containerName, "sh", "-c", command
+                DOCKER_COMMAND, "exec", "-t", containerName, "sh", "-c", command
         );
         long startTime = System.currentTimeMillis();
         Process process = dockerExec.start();
@@ -127,37 +130,27 @@ public class DockerContainerManager {
 
         String output = ProcessUtils.readOutput(process);
         String errors = ProcessUtils.readErrors(process);
-        int exitCode = process.exitValue();
-
-//        logExecutionResults(exitCode, output, errors);
-
         return new ProcessResult(process.exitValue(), output, errors, executionTime);
-    }
-
-    private void logExecutionResults(int exitCode, String output, String errors) {
-        log.info("=== Gradle Execution Summary");
-        log.info("Exit code: {}", exitCode);
-        log.info("Docker/Gradle standard output:\n{}", output);
-        if (!errors.isEmpty()) {
-            log.warn("Docker/Gradle error output:\n{}", errors);
-        }
     }
 
     public void cleanupWorkspace(String containerName, String workspace) {
         try {
             ProcessBuilder cleanupCommand = new ProcessBuilder(
-                    "docker", "exec", containerName, "sh", "-c", "rm -rf " + workspace
+                    DOCKER_COMMAND, "exec", containerName, "sh", "-c", "rm -rf " + workspace
             );
             Process cleanupProcess = cleanupCommand.start();
             cleanupProcess.waitFor();
             log.info("Cleaned up workspace: {}", workspace);
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while cleaning workspace: {}", workspace, e);
+        } catch (IOException e) {
             log.warn("Failed to cleanup workspace: {}", workspace, e);
         }
     }
 
     private void removeContainerIfExists(String containerName) throws IOException, InterruptedException {
-        ProcessBuilder removeContainer = new ProcessBuilder("docker", "rm", "-f", containerName);
+        ProcessBuilder removeContainer = new ProcessBuilder(DOCKER_COMMAND, "rm", "-f", containerName);
         removeContainer.start().waitFor();
     }
 
@@ -166,7 +159,7 @@ public class DockerContainerManager {
         String imageName = buildTool == BuildTool.GRADLE ? "gradle" : "maven-sandbox";
 
         return new String[]{
-                "docker", "run", "-d", "--name", containerName,
+                DOCKER_COMMAND, "run", "-d", "--name", containerName,
                 "-v", "/tmp:/workspace",
                 "--memory=3g", "--cpus=4", "--shm-size=1g",
                 "-e", "GRADLE_OPTS=-Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200",
@@ -180,7 +173,7 @@ public class DockerContainerManager {
             throws IOException, InterruptedException {
         String userHome = buildTool == BuildTool.GRADLE ? GRADLE_USER_HOME : MAVEN_USER_HOME;
         ProcessBuilder createHome = new ProcessBuilder(
-                "docker", "exec", containerName,
+                DOCKER_COMMAND, "exec", containerName,
                 "sh", "-c", "mkdir -p " + userHome + " && chmod 755 " + userHome
         );
         createHome.start().waitFor();

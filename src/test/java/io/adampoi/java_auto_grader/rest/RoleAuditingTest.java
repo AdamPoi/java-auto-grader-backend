@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-public class RoleAuditingTest {
+class RoleAuditingTest {
 
     @Autowired
     private RoleRepository roleRepository;
@@ -43,14 +43,14 @@ public class RoleAuditingTest {
     private Authentication authentication;
 
     @BeforeEach
-    public void init() {
+    void init() {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
         when(authentication.isAuthenticated()).thenReturn(true);
     }
 
     @Test
-    public void testCreatedByAuditing() {
+    void testCreatedByAuditing() {
         when(authentication.getName()).thenReturn("admin");
         UserDetails userDetails = new User("admin", "password", Collections.emptyList());
         when(authentication.getPrincipal()).thenReturn(userDetails);
@@ -68,7 +68,7 @@ public class RoleAuditingTest {
     }
 
     @Test
-    public void testModifiedByAuditing() {
+    void testModifiedByAuditing() {
         when(authentication.getName()).thenReturn("admin");
         UserDetails adminUser = new User("admin", "password", Collections.emptyList());
         when(authentication.getPrincipal()).thenReturn(adminUser);
@@ -99,7 +99,7 @@ public class RoleAuditingTest {
 
 
     @Test
-    public void testAuditingWithUnauthenticatedUser() {
+    void testAuditingWithUnauthenticatedUser() {
         when(authentication.isAuthenticated()).thenReturn(false);
         when(authentication.getPrincipal()).thenReturn(null);
 
@@ -116,7 +116,7 @@ public class RoleAuditingTest {
     }
 
     @Test
-    public void testAuditingWithNullAuthentication() {
+    void testAuditingWithNullAuthentication() {
         when(securityContext.getAuthentication()).thenReturn(null);
 
         Role role = Role.builder()
@@ -132,7 +132,7 @@ public class RoleAuditingTest {
     }
 
     @Test
-    public void testAuditingWithStringPrincipal() {
+    void testAuditingWithStringPrincipal() {
         when(authentication.getName()).thenReturn("stringUser");
         when(authentication.getPrincipal()).thenReturn("stringUser");
         when(authentication.isAuthenticated()).thenReturn(true);
@@ -149,7 +149,7 @@ public class RoleAuditingTest {
 
 
     @Test
-    public void testDeleteTriggersJpaAuditLogListener() {
+    void testDeleteTriggersJpaAuditLogListener() {
         when(authentication.getName()).thenReturn("admin");
         when(authentication.getPrincipal()).thenReturn(new User("admin", "password", Collections.emptyList()));
 
@@ -163,7 +163,7 @@ public class RoleAuditingTest {
 
 
     @Test
-    public void testAuditTimestampsOrder() {
+    void testAuditTimestampsOrder() {
         when(authentication.getName()).thenReturn("admin");
         when(authentication.getPrincipal()).thenReturn(new User("admin", "password", Collections.emptyList()));
 
@@ -189,7 +189,7 @@ public class RoleAuditingTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"alice", "bob", "user123", "", "system", "🤖"})
-    public void testAuditingWithVariousUsernames(String username) {
+    void testAuditingWithVariousUsernames(String username) {
         when(authentication.getName()).thenReturn(username);
         when(authentication.getPrincipal()).thenReturn(username);
         when(authentication.isAuthenticated()).thenReturn(true);

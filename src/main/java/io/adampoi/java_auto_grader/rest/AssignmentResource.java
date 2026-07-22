@@ -40,6 +40,9 @@ import java.util.UUID;
         produces = MediaType.APPLICATION_JSON_VALUE)
 public class AssignmentResource {
 
+    private static final String HTTP_OK = "200";
+    private static final String ASSIGNMENT_ID = "assignmentId";
+
     private final AssignmentService assignmentService;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
@@ -54,7 +57,7 @@ public class AssignmentResource {
     }
 
     @GetMapping
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('ASSIGNMENT:LIST')")
     @Operation(summary = "Get Assignments", description = "Get all assignments with pagination and filtering capabilities")
     public ApiSuccessResponse<PageResponse<AssignmentDTO>> getAllAssignments(
@@ -67,11 +70,11 @@ public class AssignmentResource {
     }
 
     @GetMapping("/{assignmentId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('ASSIGNMENT:READ')")
     @Operation(summary = "Get Assignment", description = "Get an assignment by id")
     public ApiSuccessResponse<AssignmentDTO> getAssignment(
-            @PathVariable(name = "assignmentId") final UUID assignmentId) {
+            @PathVariable(name = ASSIGNMENT_ID) final UUID assignmentId) {
         return ApiSuccessResponse.<AssignmentDTO>builder()
                 .data(assignmentService.get(assignmentId))
                 .statusCode(HttpStatus.OK)
@@ -92,11 +95,11 @@ public class AssignmentResource {
     }
 
     @PatchMapping("/{assignmentId}")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('ASSIGNMENT:UPDATE')")
     @Operation(summary = "Update Assignment", description = "Update an existing assignment")
     public ApiSuccessResponse<AssignmentDTO> updateAssignment(
-            @PathVariable(name = "assignmentId") final UUID assignmentId,
+            @PathVariable(name = ASSIGNMENT_ID) final UUID assignmentId,
             @RequestBody @Validated(AssignmentDTO.UpdateGroup.class) final AssignmentDTO assignmentDTO) {
         final AssignmentDTO updatedAssignment = assignmentService.update(assignmentId, assignmentDTO);
         return ApiSuccessResponse.<AssignmentDTO>builder()
@@ -110,7 +113,7 @@ public class AssignmentResource {
     @PreAuthorize("hasAuthority('ASSIGNMENT:DELETE')")
     @Operation(summary = "Delete Assignment", description = "Delete an existing assignment")
     public ApiSuccessResponse<Void> deleteAssignment(
-            @PathVariable(name = "assignmentId") final UUID assignmentId) {
+            @PathVariable(name = ASSIGNMENT_ID) final UUID assignmentId) {
         final ReferencedWarning referencedWarning = assignmentService.getReferencedWarning(assignmentId);
         if (referencedWarning != null) {
             throw new ReferencedException(referencedWarning);
@@ -122,11 +125,11 @@ public class AssignmentResource {
     }
 
     @GetMapping("/{assignmentId}/rubric-grades")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @PreAuthorize("hasAuthority('RUBRIC_GRADE:LIST')")
     @Operation(summary = "Get Course RubricGrades", description = "Get all assignments with pagination and filtering capabilities")
     public ApiSuccessResponse<PageResponse<RubricGradeDTO>> getAllRubricGrades(
-            @PathVariable(name = "assignmentId") final UUID assignmentId,
+            @PathVariable(name = ASSIGNMENT_ID) final UUID assignmentId,
             @RequestParam(required = false, defaultValue = "") @QFParam(RubricGradeFilterDef.class) QueryFilter<RubricGrade> filter,
             @ParameterObject Pageable pageable) {
         return ApiSuccessResponse.<PageResponse<RubricGradeDTO>>builder()
@@ -139,7 +142,7 @@ public class AssignmentResource {
     @PreAuthorize("hasAuthority('RUBRIC_GRADE:CREATE')")
     @Operation(summary = "Create Rubric Grade", description = "Create a new rubric grade")
     public ApiSuccessResponse<List<RubricGradeDTO>> saveManyRubricGrade(
-            @PathVariable(name = "assignmentId") final UUID assignmentId,
+            @PathVariable(name = ASSIGNMENT_ID) final UUID assignmentId,
             @RequestBody final List<@Valid RubricGradeDTO> rubricGradeDTOs) {
         final List<RubricGradeDTO> createdRubricGrade = rubricGradeService.saveManyByAssignment(assignmentId, rubricGradeDTOs);
         return ApiSuccessResponse.<List<RubricGradeDTO>>builder()
@@ -149,7 +152,7 @@ public class AssignmentResource {
     }
 
     @GetMapping("/courseValues")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @Operation(summary = "Get Course Values", description = "Get course values for dropdowns")
     public ApiSuccessResponse<Map<UUID, String>> getCourseValues() {
         Map<UUID, String> courses = courseRepository.findAll(Sort.by("courseId"))
@@ -162,7 +165,7 @@ public class AssignmentResource {
     }
 
     @GetMapping("/createdByTeacherValues")
-    @ApiResponse(responseCode = "200")
+    @ApiResponse(responseCode = HTTP_OK)
     @Operation(summary = "Get Created By Teacher Values", description = "Get created by teacher values for dropdowns")
     public ApiSuccessResponse<Map<UUID, String>> getCreatedByTeacherValues() {
         Map<UUID, String> teachers = userRepository.findAll(Sort.by("userId"))

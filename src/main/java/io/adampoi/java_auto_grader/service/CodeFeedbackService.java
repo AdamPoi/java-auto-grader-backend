@@ -1,71 +1,104 @@
 package io.adampoi.java_auto_grader.service;
 
+import io.adampoi.java_auto_grader.evaluation.rq3.Rq3ModelGateway;
+import io.adampoi.java_auto_grader.evaluation.rq3.Rq3ModelSpec;
+import io.adampoi.java_auto_grader.evaluation.rq3.StructuredFeedbackJsonSchema;
 import io.adampoi.java_auto_grader.model.request.ChatCodeAnalyzerRequest;
 import io.adampoi.java_auto_grader.model.type.CodeFile;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class CodeFeedbackService {
 
-    private final ChatClient chatClient;
+    private static final String SYSTEM_PROMPT = """
+            Anda adalah instruktur Java yang memberikan feedback berbasis bukti.
+            Evaluasi hanya instruksi, rubrik, dan kode bernomor yang diberikan.
+            Jangan menciptakan identifier, nomor baris, persyaratan, hasil eksekusi,
+            atau aturan style. Gunakan PRAISE untuk observasi positif dan UNCERTAINTY
+            jika bukti tidak cukup. Berikan saran konseptual tanpa membocorkan program
+            atau metode lengkap yang sudah diperbaiki.
+            Kembalikan tepat satu objek JSON tanpa Markdown fence atau teks tambahan.
+            """;
+    private static final String USER_PROMPT_TEMPLATE = """
+            Tinjau kode terhadap persyaratan dan rubrik berikut.
+            
+            PERSYARATAN:
+            {instructions}
+            
+            RUBRIK:
+            {rubrics}
+            
+            KODE MAHASISWA DENGAN NOMOR BARIS:
+            {codes}
+            
+            ATURAN CLAIM:
+            - type harus tepat satu dari: DEFECT, STYLE, PRAISE, UNCERTAINTY.
+            - category harus tepat satu dari: {categories}.
+            - Setiap identifier harus muncul verbatim pada kode.
+            - Setiap lineNumbers harus merujuk ke nomor baris yang diberikan.
+            - Gunakan claims kosong jika tidak ada claim yang didukung bukti.
+            - Gunakan CORRECTNESS untuk pujian tentang perilaku yang benar.
+            - Gunakan STYLE hanya untuk masalah maintainability yang negatif.
+            
+            Kembalikan tepat bentuk JSON ini:
+            {
+              "summary": "ringkasan singkat berbasis bukti",
+              "claims": [
+                {
+                  "type": "DEFECT",
+                  "category": "LOGIC",
+                  "message": "claim singkat",
+                  "evidence": "bukti langsung dari kode atau rubrik",
+                  "identifiers": ["identifierDalamKode"],
+                  "lineNumbers": [1]
+                }
+              ],
+              "completeSolutionProvided": false
+            }
+            """;
 
-    public CodeFeedbackService(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
+    private final Rq3ModelGateway modelGateway;
+    private final CodeFeedbackProperties properties;
+
+    public CodeFeedbackService(Rq3ModelGateway modelGateway,
+                               CodeFeedbackProperties properties) {
+        this.modelGateway = modelGateway;
+        this.properties = properties;
     }
 
     public String generateFeedback(ChatCodeAnalyzerRequest request) {
         String formattedStudentCodes = formatCodeFiles(request.getStudentCodes());
         String formattedRubrics = formatRubrics(request.getRubrics());
-        String promptTemplate = """
-                Anda adalah seorang instruktur Java yang sedang meninjau kode mahasiswa. Berikan feedback yang jelas dan membantu dalam bahasa Indonesia.
-                
-                Tinjau kode terhadap persyaratan dan berikan saran spesifik untuk perbaikan.
-                Bersikaplah konstruktif dan tunjukkan apa yang sudah baik dan apa yang perlu diperbaiki.
-                
-                Format respons Anda dalam markdown dengan bagian-bagian berikut:
-                - **Ringkasan:** Gambaran singkat tentang kualitas dan pendekatan submission secara keseluruhan
-                - **Kelebihan:** Apa yang sudah dikerjakan dengan baik oleh mahasiswa
-                - **Masalah:** Permasalahan spesifik yang perlu diperbaiki
-                - **Saran:** Bagaimana cara meningkatkan kode
-                
-                ---
-                **Persyaratan:**
-                {instructions}
-                
-                **Rubrik Penilaian:**
-                {rubrics}
-                
-                **Kode Mahasiswa:**
-                ```java
-                {codes}
-                ```
-                
-                Feedback Anda:
-                """;
-
-
-        return chatClient.prompt()
-                .user(p -> p.text(promptTemplate)
-                        .param("rubrics", formattedRubrics)
-                        .param("instructions", request.getInstructions())
-                        .param("codes", formattedStudentCodes))
-                .call()
-                .content();
+        String userPrompt = USER_PROMPT_TEMPLATE
+                .replace("{rubrics}", formattedRubrics)
+                .replace("{instructions}", request.getInstructions())
+                .replace("{codes}", formattedStudentCodes)
+                .replace("{categories}",
+                        String.join(", ", StructuredFeedbackJsonSchema.CATEGORIES));
+        Rq3ModelSpec model = properties.resolveModel(request.getModel());
+        Rq3ModelGateway.GenerationOptions options = new Rq3ModelGateway.GenerationOptions(
+                properties.getTemperature(), properties.getTopP(), properties.getSeed());
+        return modelGateway.generate(model, SYSTEM_PROMPT, userPrompt, options);
     }
 
     private String formatCodeFiles(List<CodeFile> codeFiles) {
         return codeFiles.stream()
                 .map(file ->
                         "--- File: " + file.getFileName() + " ---\n" +
-                                "```java\n" +
-                                file.getContent() + "\n" +
-                                "```"
+                                withLineNumbers(file.getContent())
                 )
                 .collect(Collectors.joining("\n\n"));
+    }
+
+    private String withLineNumbers(String source) {
+        String[] lines = source.split("\\R", -1);
+        return IntStream.range(0, lines.length)
+                .mapToObj(index -> "%4d | %s".formatted(index + 1, lines[index]))
+                .collect(Collectors.joining("\n"));
     }
 
     private String formatRubrics(List<ChatCodeAnalyzerRequest.SimpleRubric> rubrics) {
@@ -75,6 +108,6 @@ public class CodeFeedbackService {
         String rubricDetails = rubrics.stream()
                 .map(r -> "- " + r.getName() + ": " + r.getDescription())
                 .collect(Collectors.joining("\n"));
-        return "\n--- Grading Rubrics ---\n" + rubricDetails;
+        return rubricDetails;
     }
 }
